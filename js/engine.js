@@ -9,6 +9,7 @@ import { Player } from './player.js';
 import { Enemy } from './enemy.js';
 import { Projectile, Gem } from './entities.js';
 import { CHARACTERS, spriteLoader } from './sprites.js';
+import { WorldMap } from './world.js';
 
 export class GameEngine {
   constructor() {
@@ -72,6 +73,9 @@ export class GameEngine {
     this.zoom = 0.45; // Dézoom très large pour une vue panoramique stratégique de l'arène
     this.camera = { x: 3500, y: 3500 };
     this.screenShake = 0;
+
+    // Grande Carte du Monde Ouvert (3 Villages, Rivière sinueuse, Ponts, Forêts denses, Falaises)
+    this.worldMap = new WorldMap(this.worldSize);
 
     // 4 Portails Démoniaques Cardinaux
     this.portals = [
@@ -1099,13 +1103,10 @@ export class GameEngine {
     this.ctx.scale(this.zoom, this.zoom);
     this.ctx.translate(-this.camera.x, -this.camera.y);
 
-    // 1. Dalles de donjon gothique & runes anciennes avec moisissure verte
-    this.renderDungeonFloor();
+    // 1. Rendu du vaste monde RPG (3 villages, rivière sinueuse, ponts, routes, forêts denses, falaises)
+    this.worldMap.render(this.ctx, this, this.camera, this.zoom);
 
-    // 1.2. Piliers de pierre moussus & végétation sombre
-    this.renderPillarsAndMossDecor();
-
-    // 1.5. Portails Démoniaques de chaque côté
+    // 1.5. Portails Démoniaques aux 4 coins cardinaux
     this.renderPortals();
 
     // 1.8. Spores vertes flottantes d'ambiance

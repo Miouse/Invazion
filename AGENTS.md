@@ -30,6 +30,7 @@ Invazion/
 ├── js/
 │   ├── main.js             # Initialisation de l'application (instancie GameEngine sur DOMContentLoaded)
 │   ├── engine.js           # Moteur central : boucle 60 FPS, caméra, vagues, portails, HUD, collisions, clamping
+│   ├── world.js            # Générateur de monde RPG ouvert : 3 villages, rivière sinueuse, ponts, forêts, routes, falaises
 │   ├── player.js           # Entité Joueur : contrôles, dash, orientation 8-dir, armes, gestion XP/PV
 │   ├── enemy.js            # Entité Monstre & Boss : IA de poursuite, séparation, animations de sprites, colosse Souls
 │   ├── sprites.js          # Registre des héros (stats/bonus), catalogue de monstres, cache d'images et maths 8-directions
