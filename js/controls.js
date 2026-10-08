@@ -2,7 +2,7 @@
  * Module Contrôles & Entrées - ControlsManager
  * Centralise et gère tous les modes de déplacement et périphériques du jeu :
  * 1. ⌨️ Mode Clavier Classique (ZQSD / WASD / Flèches directionnelles, Espace pour Dash)
- * 2. 🖱️ Mode Souris Style League of Legends (Clic Droit au sol, marqueur vert LoL animé, suivi en continu)
+ * 2. 🖱️ Mode Souris Style League of Legends (Clic Gauche au sol, marqueur vert LoL animé, suivi en continu, Clic Droit / Espace pour Dash)
  * 3. 🎮 Mode Manette / Gamepad (Stick analogique 360° fluide, D-Pad, gâchettes, vibrations & détection automatique)
  * 4. 📱 Joystick Tactile Virtuel (pour écrans tactiles et mobiles)
  * 5. ⚙️ Interface et Modale de Réglages interactive avec persistance localStorage
@@ -27,6 +27,7 @@ export class ControlsManager {
 
     // État souris (Mode League of Legends)
     this.mouseTarget = null;
+    this.isMouseDown = false;
     this.isRightMouseDown = false;
     this.lastMouseWorld = { x: 3500, y: 3500 };
     this.clickMarkers = [];
@@ -118,17 +119,31 @@ export class ControlsManager {
     this.engine.canvas.addEventListener('pointerdown', (e) => {
       if (this.engine.state !== 'PLAYING') return;
 
-      // Clic Droit (Bouton 2) = Déplacement style RTS / MOBA
-      if (e.button === 2) {
-        e.preventDefault();
-        const worldCoords = this.screenToWorld(e.clientX, e.clientY);
-        this.lastMouseWorld = worldCoords;
+      const worldCoords = this.screenToWorld(e.clientX, e.clientY);
+      this.lastMouseWorld = worldCoords;
 
-        if (this.mode === 'mouse_lol') {
-          this.isRightMouseDown = true;
+      if (this.mode === 'mouse_lol') {
+        // Clic Gauche (Bouton 0) = Déplacement style LoL
+        if (e.button === 0) {
+          this.isMouseDown = true;
           this.setMouseDestination(worldCoords.x, worldCoords.y);
-        } else if (this.mode === 'keyboard') {
-          // Dash optionnel au clic droit en mode clavier
+        }
+        // Clic Droit (Bouton 2) = Dash d'esquive vers la direction du curseur
+        else if (e.button === 2) {
+          e.preventDefault();
+          if (this.engine.player) {
+            const dx = worldCoords.x - this.engine.player.x;
+            const dy = worldCoords.y - this.engine.player.y;
+            if (Math.hypot(dx, dy) > 10) {
+              this.engine.player.facingAngle = Math.atan2(dy, dx);
+            }
+            this.engine.player.triggerDash(this.engine);
+          }
+        }
+      } else if (this.mode === 'keyboard') {
+        // Dash optionnel au clic droit en mode clavier
+        if (e.button === 2) {
+          e.preventDefault();
           if (this.engine.player) {
             this.engine.player.triggerDash(this.engine);
           }
@@ -140,15 +155,15 @@ export class ControlsManager {
       const worldCoords = this.screenToWorld(e.clientX, e.clientY);
       this.lastMouseWorld = worldCoords;
 
-      // Maintien du clic droit : suit le curseur en direct comme dans LoL
-      if (this.isRightMouseDown && this.mode === 'mouse_lol' && this.engine.state === 'PLAYING') {
+      // Maintien du clic gauche : suit le curseur en direct comme dans LoL
+      if (this.isMouseDown && this.mode === 'mouse_lol' && this.engine.state === 'PLAYING') {
         this.mouseTarget = { x: worldCoords.x, y: worldCoords.y };
       }
     });
 
     window.addEventListener('pointerup', (e) => {
-      if (e.button === 2) {
-        this.isRightMouseDown = false;
+      if (e.button === 0) {
+        this.isMouseDown = false;
       }
     });
   }
@@ -384,11 +399,13 @@ export class ControlsManager {
 
     // Réinitialisation des déplacements souris en cours
     this.mouseTarget = null;
+    this.isMouseDown = false;
     this.isRightMouseDown = false;
   }
 
   resetMovement() {
     this.mouseTarget = null;
+    this.isMouseDown = false;
     this.isRightMouseDown = false;
     this.clickMarkers = [];
     this.joystickVector = { x: 0, y: 0 };
