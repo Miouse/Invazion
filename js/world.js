@@ -706,7 +706,7 @@ export class WorldMap {
     this.renderCliffs(ctx, left, right, top, bottom);
 
     // 6. Entités du décor ordonnées en Y (Bâtiments, Arbres, Tentes, Feux de camp)
-    this.renderYOrderedEntities(ctx, engine.gameTime, left, right, top, bottom);
+    this.renderYOrderedEntities(ctx, engine.gameTime, left, right, top, bottom, engine.player);
   }
 
   // 1. Sol d'herbe verdoyante
@@ -886,7 +886,7 @@ export class WorldMap {
   }
 
   // 6. Entités ordonnées en Y (Bâtiments, Arbres, Tentes, Feux) pour un relief naturel
-  renderYOrderedEntities(ctx, time, left, right, top, bottom) {
+  renderYOrderedEntities(ctx, time, left, right, top, bottom, player = null) {
     const drawList = [];
 
     // Ajouter les bâtiments de chaque village
@@ -959,7 +959,7 @@ export class WorldMap {
       if (item.kind === 'building') {
         this.drawBuilding(ctx, item.data, time);
       } else if (item.kind === 'tree') {
-        this.drawTree(ctx, item.data);
+        this.drawTree(ctx, item.data, player);
       } else if (item.kind === 'prop') {
         this.drawProp(ctx, item.data);
       } else if (item.kind === 'dungeon') {
@@ -1451,8 +1451,8 @@ export class WorldMap {
     ctx.restore();
   }
 
-  // Dessin des arbres pixel-art (identiques à l'image de référence)
-  drawTree(ctx, t) {
+  // Dessin des arbres pixel-art avec semi-transparence automatique sous le feuillage
+  drawTree(ctx, t, player = null) {
     ctx.save();
     ctx.translate(t.x, t.y);
 
@@ -1470,6 +1470,22 @@ export class WorldMap {
       ctx.ellipse(0, -6, 8, 4, 0, 0, Math.PI * 2);
       ctx.fill();
     } else {
+      // Détection de présence sous ou derrière le feuillage de l'arbre
+      let isUnderCanopy = false;
+      if (player) {
+        const canoY = t.y - t.size * 0.25;
+        const dx = player.x - t.x;
+        const dy = player.y - canoY;
+        const canopyR = t.size * 0.65;
+        if (dx * dx + dy * dy < canopyR * canopyR) {
+          isUnderCanopy = true;
+        }
+      }
+
+      if (isUnderCanopy) {
+        ctx.globalAlpha = 0.50; // Transparence magique à 50% quand le héros est sous le feuillage
+      }
+
       // Ombre portée au sol
       ctx.fillStyle = 'rgba(0, 0, 0, 0.32)';
       ctx.beginPath();
@@ -1652,31 +1668,8 @@ export class WorldMap {
       }
     }
 
-    // 3. Troncs d'arbres et souches (bloquent le joueur à la base)
-    for (const t of this.trees) {
-      if (t.isStump) {
-        this.colliders.push({
-          type: 'circle',
-          x: t.x,
-          y: t.y,
-          r: 10,
-          isTree: true,
-          solid: false,
-          blocksMonsters: false
-        });
-      } else {
-        const trunkR = Math.max(9, t.size * 0.18);
-        this.colliders.push({
-          type: 'circle',
-          x: t.x,
-          y: t.y + 6,
-          r: trunkR,
-          isTree: true,
-          solid: false,
-          blocksMonsters: false
-        });
-      }
-    }
+    // 3. Arbres et souches : Traversée 100% libre (aucune collision pour une fluidité totale dans les bois)
+    // Les arbres sont purement visuels avec effet de semi-transparence sous le feuillage
 
     // 4. Falaises et plateaux rocheux
     for (const c of this.cliffs) {

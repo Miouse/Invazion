@@ -96,7 +96,7 @@ Invazion/
     1. **Oakhaven** (Centre/Sud) : Bâtiments à pans de bois, place fortifiée, fontaine sacrée et entrée du *Donjon I : Crypte d'Oakhaven*.
     2. **Val-des-Ombres** (Nord-Ouest) : Citadelle gothique sur falaises sombres, braseros et entrée du *Donjon III : Bastion Démoniaque*.
     3. **Riverbend** (Sud-Est) : Cité lacustre sur pilotis, grands pontons, barques et entrée du *Donjon II : Antre des Eaux Sombres*.
-  - **Forêts Denses Médiévales** : 14 massifs forestiers majeurs abritant plus de 1 350 arbres pixel-art, clairières, souches et ruines en pierre.
+  - **Forêts Denses Médiévales & Traversée Libre** : 14 massifs forestiers majeurs abritant plus de 1 350 arbres pixel-art. **Collisions supprimées sur les arbres** pour une fluidité totale de course/dash, avec **semi-transparence automatique (50% d'opacité)** dès que le joueur passe sous le feuillage d'un arbre.
   - **Points d'Intérêt & Secrets** : 8 coffres au trésor médiévaux en bois et or, 4 stèles runiques de bénédiction (+vitesse, +dégâts, +régén, +aimant).
 - **Collisions physiques (Sliding Collision)** : Grille spatiale (buckets de 250 px), glissement d'axe séparé X/Y sur les obstacles solides et l'eau.
 - **Système de Pathfinding A* avec franchissement de ponts** :
