@@ -33,6 +33,7 @@ Invazion/
 │   ├── world.js            # Générateur de monde RPG ouvert & moteur de collisions physiques (grille spatiale, glissement, ponts, rivière, maisons)
 │   ├── player.js           # Entité Joueur : contrôles, dash, orientation 8-dir, armes, gestion XP/PV
 │   ├── enemy.js            # Entité Monstre & Boss : IA de poursuite, séparation, animations de sprites, colosse Souls
+│   ├── icons.js            # Moteur d'icônes Pixel-Art rétro 16-bit authentiques (or, montre, carte, potions, armes, astres)
 │   ├── sprites.js          # Registre des héros (stats/bonus), catalogue de monstres, cache d'images et maths 8-directions
 │   ├── entities.js         # Entités secondaires : Projectile, Gem (XP & cœurs), Particle, Shockwave, FloatingText
 │   ├── controls.js         # Gestionnaire des contrôles (Clavier ZQSD, Souris style LoL, Manette Gamepad 360°, Joystick tactile, Modale réglages)
