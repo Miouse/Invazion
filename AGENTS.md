@@ -90,7 +90,23 @@ Invazion/
 - **Système d'Amélioration Asynchrone** :
   - L'expérience et les niveaux s'accumulent dans `pendingUpgrades`. Le combat **ne s'interrompt pas** brutalement. Le joueur clique sur le bouton ⭐ ou appuie sur `U` pour ouvrir la modale à volonté.
 
-### 3. `js/player.js` — Entité Joueur
+### 3. `js/world.js` — Générateur de Monde RPG & Pathfinding A*
+- **Monde ouvert 7 000 × 7 000 px** : Plaines verdoyantes, rivière sinueuse (140 px de large), 2 ponts de bois stratégiques, 3 villages (Oakhaven, Camp des Éclaireurs, Riverbend), forêts et falaises.
+- **Collisions physiques (Sliding Collision)** : Grille spatiale (buckets de 250 px), glissement d'axe séparé X/Y sur les obstacles solides et l'eau.
+- **Système de Pathfinding A* avec franchissement de ponts** :
+  - Grille de navigation `navGrid` (cellules de 50 px) précalculée au démarrage.
+  - Test de ligne de vue instantané (`hasLineOfSight`) : si aucun obstacle ne barre la route, déplacement direct sans coût A* (60 FPS constants).
+  - Si un obstacle (rivière, falaise, maison) bloque la trajectoire directe, l'algorithme A* trouve le chemin optimal via le pont le plus proche.
+  - Lissage de trajectoire (*String-Pulling*) : supprime les marches d'escalier et fournit 3 à 4 waypoints purs.
+
+### 4. `js/controls.js` — Gestionnaire des Contrôles (`ControlsManager`)
+- **3 modes commutables** :
+  - `keyboard` : ZQSD / Flèches, Espace pour Dash.
+  - `mouse_lol` : Clic gauche pour déplacement avec Pathfinding A* + Clic droit ou Espace pour Dash d'esquive vers le curseur.
+  - `gamepad` : Stick analogique 360° avec deadzone 0.18, détection automatique.
+- Visualisation du chemin LoL : ligne pointillée verte émeraude reliant les waypoints et chevrons animés au point d'impact.
+
+### 5. `js/player.js` — Entité Joueur
 - Instancié avec `new Player(x, y, characterId)`.
 - Gère la vélocité, l'esquive Dash (invulnérabilité temporaire `invulnTimer`), la régénération passive, et les cooldowns des 4 armes/pouvoirs actifs.
 - **Armes disponibles** :
@@ -99,14 +115,14 @@ Invazion/
   - `orbit` : Orbes tournoyants protecteurs.
   - `aura` : Vortex de sang arcane de contact continu.
 
-### 4. `js/enemy.js` — Monstres & Boss Colosse
+### 6. `js/enemy.js` — Monstres & Boss Colosse
 - IA de meute avec répulsion dynamique pour éviter l'empilement statique de monstres.
 - Rendu pixel art net avec `ctx.imageSmoothingEnabled = false`.
 - Effet d'impact lumineux (*Hit Flash*) via `ctx.filter = 'brightness(3) saturate(0.2)'`.
 - Rendu du Slime avec *squash & stretch* dynamique synchronisé sur les 15 frames d'animation.
 - Boss Colosse : Rayon 95 px, ailes animées gigantesques, cercle runique tournoyant et attaque séquentielle de cercle de projectiles sombres.
 
-### 5. `js/config.js` — Équilibrage & Progression
+### 7. `js/config.js` — Équilibrage & Progression
 - Formule d'XP : `xpToNext = Math.floor(35 * Math.pow(1.35, level - 1))`.
 - Base de gemmes : Bleue = 1 XP, Verte = 4 XP, Cœur = Soin 35 PV.
 

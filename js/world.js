@@ -44,6 +44,9 @@ export class WorldMap {
     // 7. Initialisation du moteur de collisions physiques (bâtiments, eau, ponts, falaises, arbres)
     this.initColliders();
     this.buildSpatialGrid();
+
+    // 8. Grille de navigation pour Pathfinding A* (franchissement automatique des ponts)
+    this.initNavGrid();
   }
 
   loadImg(src) {
@@ -1391,5 +1394,258 @@ export class WorldMap {
       }
     }
     return null;
+  }
+
+  // ==========================================
+  // SYSTÈME DE PATHFINDING A* & FRANCHISSEMENT DES PONTS
+  // ==========================================
+  initNavGrid() {
+    this.navCellSize = 50;
+    this.navCols = Math.ceil(this.worldSize / this.navCellSize);
+    this.navGrid = new Uint8Array(this.navCols * this.navCols);
+
+    for (let gy = 0; gy < this.navCols; gy++) {
+      for (let gx = 0; gx < this.navCols; gx++) {
+        const wx = gx * this.navCellSize + this.navCellSize / 2;
+        const wy = gy * this.navCellSize + this.navCellSize / 2;
+        if (this.isColliding(wx, wy, 16, true)) {
+          this.navGrid[gy * this.navCols + gx] = 1;
+        }
+      }
+    }
+  }
+
+  // Vérifie si la ligne de vue directe entre 2 points est exempte de collision
+  hasLineOfSight(x1, y1, x2, y2, radius = 16, step = 25) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const dist = Math.hypot(dx, dy);
+    if (dist <= 0) return true;
+    const steps = Math.ceil(dist / step);
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps;
+      const px = x1 + dx * t;
+      const py = y1 + dy * t;
+      if (this.isColliding(px, py, radius, true)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Recherche du plus court chemin A* avec franchissement automatique des ponts
+  findPath(startX, startY, goalX, goalY, radius = 16) {
+    // 1. Si la ligne droite est entièrement libre (aucun obstacle / rivière), trajet direct instantané (0 ms)
+    if (this.hasLineOfSight(startX, startY, goalX, goalY, radius)) {
+      return [{ x: goalX, y: goalY }];
+    }
+
+    if (!this.navGrid) {
+      return [{ x: goalX, y: goalY }];
+    }
+
+    const cols = this.navCols;
+    const cellSize = this.navCellSize;
+
+    let sx = Math.max(0, Math.min(cols - 1, Math.floor(startX / cellSize)));
+    let sy = Math.max(0, Math.min(cols - 1, Math.floor(startY / cellSize)));
+    let gx = Math.max(0, Math.min(cols - 1, Math.floor(goalX / cellSize)));
+    let gy = Math.max(0, Math.min(cols - 1, Math.floor(goalY / cellSize)));
+
+    // Si la cible cliquée est sur un obstacle (eau profonde, maison), chercher la case praticable la plus proche
+    if (this.navGrid[gy * cols + gx] === 1) {
+      let found = false;
+      for (let r = 1; r <= 6 && !found; r++) {
+        for (let dy = -r; dy <= r && !found; dy++) {
+          for (let dx = -r; dx <= r && !found; dx++) {
+            const nx = gx + dx;
+            const ny = gy + dy;
+            if (nx >= 0 && nx < cols && ny >= 0 && ny < cols && this.navGrid[ny * cols + nx] === 0) {
+              gx = nx;
+              gy = ny;
+              found = true;
+            }
+          }
+        }
+      }
+      if (!found) return [{ x: goalX, y: goalY }];
+    }
+
+    // Si le départ est bloqué, chercher la case libre la plus proche
+    if (this.navGrid[sy * cols + sx] === 1) {
+      let found = false;
+      for (let r = 1; r <= 4 && !found; r++) {
+        for (let dy = -r; dy <= r && !found; dy++) {
+          for (let dx = -r; dx <= r && !found; dx++) {
+            const nx = sx + dx;
+            const ny = sy + dy;
+            if (nx >= 0 && nx < cols && ny >= 0 && ny < cols && this.navGrid[ny * cols + nx] === 0) {
+              sx = nx;
+              sy = ny;
+              found = true;
+            }
+          }
+        }
+      }
+    }
+
+    const startIdx = sy * cols + sx;
+    const goalIdx = gy * cols + gx;
+    if (startIdx === goalIdx) {
+      return [{ x: goalX, y: goalY }];
+    }
+
+    // Min-Heap binaire optimisé pour A* à 60 FPS
+    const heap = [];
+    const pushHeap = (item) => {
+      heap.push(item);
+      let idx = heap.length - 1;
+      while (idx > 0) {
+        const parent = (idx - 1) >> 1;
+        if (heap[idx].f < heap[parent].f) {
+          const tmp = heap[idx];
+          heap[idx] = heap[parent];
+          heap[parent] = tmp;
+          idx = parent;
+        } else break;
+      }
+    };
+    const popHeap = () => {
+      if (heap.length === 0) return null;
+      const top = heap[0];
+      const bottom = heap.pop();
+      if (heap.length > 0) {
+        heap[0] = bottom;
+        let idx = 0;
+        const len = heap.length;
+        while (true) {
+          const left = (idx << 1) + 1;
+          const right = left + 1;
+          let smallest = idx;
+          if (left < len && heap[left].f < heap[smallest].f) smallest = left;
+          if (right < len && heap[right].f < heap[smallest].f) smallest = right;
+          if (smallest !== idx) {
+            const tmp = heap[idx];
+            heap[idx] = heap[smallest];
+            heap[smallest] = tmp;
+            idx = smallest;
+          } else break;
+        }
+      }
+      return top;
+    };
+
+    const cameFrom = new Int32Array(cols * cols).fill(-1);
+    const gScore = new Float32Array(cols * cols).fill(Infinity);
+    const closed = new Uint8Array(cols * cols);
+
+    gScore[startIdx] = 0;
+    const startH = Math.hypot(gx - sx, gy - sy);
+    pushHeap({ idx: startIdx, f: startH });
+
+    const neighbors = [
+      { dx: 0, dy: -1, cost: 1.0 },
+      { dx: 0, dy: 1, cost: 1.0 },
+      { dx: -1, dy: 0, cost: 1.0 },
+      { dx: 1, dy: 0, cost: 1.0 },
+      { dx: -1, dy: -1, cost: 1.414 },
+      { dx: 1, dy: -1, cost: 1.414 },
+      { dx: -1, dy: 1, cost: 1.414 },
+      { dx: 1, dy: 1, cost: 1.414 }
+    ];
+
+    let maxIters = 2500;
+    let closestNode = startIdx;
+    let closestDist = startH;
+
+    while (heap.length > 0 && maxIters-- > 0) {
+      const top = popHeap();
+      const current = top.idx;
+
+      if (current === goalIdx) {
+        closestNode = current;
+        break;
+      }
+
+      if (closed[current]) continue;
+      closed[current] = 1;
+
+      const curX = current % cols;
+      const curY = (current / cols) | 0;
+
+      const distToGoal = Math.hypot(gx - curX, gy - curY);
+      if (distToGoal < closestDist) {
+        closestDist = distToGoal;
+        closestNode = current;
+      }
+
+      for (let i = 0; i < 8; i++) {
+        const n = neighbors[i];
+        const nx = curX + n.dx;
+        const ny = curY + n.dy;
+        if (nx < 0 || nx >= cols || ny < 0 || ny >= cols) continue;
+
+        const nIdx = ny * cols + nx;
+        if (closed[nIdx] || this.navGrid[nIdx] === 1) continue;
+
+        // Éviter de couper les coins solides en diagonale
+        if (n.dx !== 0 && n.dy !== 0) {
+          if (this.navGrid[curY * cols + nx] === 1 || this.navGrid[ny * cols + curX] === 1) {
+            continue;
+          }
+        }
+
+        const tentativeG = gScore[current] + n.cost;
+        if (tentativeG < gScore[nIdx]) {
+          cameFrom[nIdx] = current;
+          gScore[nIdx] = tentativeG;
+          const h = Math.hypot(gx - nx, gy - ny) * 1.03;
+          pushHeap({ idx: nIdx, f: tentativeG + h });
+        }
+      }
+    }
+
+    // Reconstitution du chemin inverse
+    const rawPath = [];
+    let curr = closestNode;
+    while (curr !== startIdx && curr !== -1) {
+      const cx = curr % cols;
+      const cy = (curr / cols) | 0;
+      rawPath.push({ x: cx * cellSize + cellSize / 2, y: cy * cellSize + cellSize / 2 });
+      curr = cameFrom[curr];
+    }
+    rawPath.reverse();
+
+    if (closestNode === goalIdx) {
+      rawPath.push({ x: goalX, y: goalY });
+    }
+
+    if (rawPath.length === 0) {
+      return [{ x: goalX, y: goalY }];
+    }
+
+    // Lissage du chemin par raycast (supprime les zigzags et crée des trajectoires parfaites)
+    return this.smoothPath(startX, startY, rawPath, radius);
+  }
+
+  // Lissage de trajectoire (String-Pulling avec Raycast)
+  smoothPath(startX, startY, rawPath, radius = 16) {
+    if (rawPath.length <= 1) return rawPath;
+    const full = [{ x: startX, y: startY }, ...rawPath];
+    const smoothed = [];
+    let currentIdx = 0;
+
+    while (currentIdx < full.length - 1) {
+      let furthest = currentIdx + 1;
+      for (let testIdx = full.length - 1; testIdx > currentIdx + 1; testIdx--) {
+        if (this.hasLineOfSight(full[currentIdx].x, full[currentIdx].y, full[testIdx].x, full[testIdx].y, radius)) {
+          furthest = testIdx;
+          break;
+        }
+      }
+      smoothed.push(full[furthest]);
+      currentIdx = furthest;
+    }
+    return smoothed;
   }
 }

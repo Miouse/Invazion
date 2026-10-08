@@ -25,11 +25,14 @@ export class ControlsManager {
     // État clavier
     this.keys = {};
 
-    // État souris (Mode League of Legends)
+    // État souris (Mode League of Legends avec Pathfinding A*)
     this.mouseTarget = null;
     this.isMouseDown = false;
     this.isRightMouseDown = false;
     this.lastMouseWorld = { x: 3500, y: 3500 };
+    this.pathWaypoints = [];
+    this.currentWaypointIndex = 0;
+    this.lastPathCalcTime = 0;
     this.clickMarkers = [];
 
     // État manette (Gamepad API)
@@ -155,9 +158,31 @@ export class ControlsManager {
       const worldCoords = this.screenToWorld(e.clientX, e.clientY);
       this.lastMouseWorld = worldCoords;
 
-      // Maintien du clic gauche : suit le curseur en direct comme dans LoL
+      // Maintien du clic gauche : suit le curseur en direct avec recherche de chemin fluide
       if (this.isMouseDown && this.mode === 'mouse_lol' && this.engine.state === 'PLAYING') {
-        this.mouseTarget = { x: worldCoords.x, y: worldCoords.y };
+        const now = performance.now();
+        if (now - this.lastPathCalcTime > 120) {
+          this.lastPathCalcTime = now;
+          if (this.engine.worldMap && this.engine.player) {
+            const path = this.engine.worldMap.findPath(
+              this.engine.player.x,
+              this.engine.player.y,
+              worldCoords.x,
+              worldCoords.y,
+              this.engine.player.radius || 18
+            );
+            if (path && path.length > 0) {
+              this.pathWaypoints = path;
+              this.currentWaypointIndex = 0;
+              this.mouseTarget = path[0];
+            } else {
+              this.pathWaypoints = [];
+              this.mouseTarget = { x: worldCoords.x, y: worldCoords.y };
+            }
+          } else {
+            this.mouseTarget = { x: worldCoords.x, y: worldCoords.y };
+          }
+        }
       }
     });
 
@@ -179,7 +204,27 @@ export class ControlsManager {
   }
 
   setMouseDestination(x, y) {
-    this.mouseTarget = { x, y };
+    // Calcul du plus court chemin A* évitant rivières, maisons et traversant les ponts
+    if (this.engine.worldMap && this.engine.player) {
+      const path = this.engine.worldMap.findPath(
+        this.engine.player.x,
+        this.engine.player.y,
+        x,
+        y,
+        this.engine.player.radius || 18
+      );
+      if (path && path.length > 0) {
+        this.pathWaypoints = path;
+        this.currentWaypointIndex = 0;
+        this.mouseTarget = path[0];
+      } else {
+        this.pathWaypoints = [];
+        this.mouseTarget = { x, y };
+      }
+    } else {
+      this.pathWaypoints = [];
+      this.mouseTarget = { x, y };
+    }
 
     // Ajouter le marqueur visuel vert LoL animé
     this.clickMarkers.push({
@@ -401,12 +446,16 @@ export class ControlsManager {
     this.mouseTarget = null;
     this.isMouseDown = false;
     this.isRightMouseDown = false;
+    this.pathWaypoints = [];
+    this.currentWaypointIndex = 0;
   }
 
   resetMovement() {
     this.mouseTarget = null;
     this.isMouseDown = false;
     this.isRightMouseDown = false;
+    this.pathWaypoints = [];
+    this.currentWaypointIndex = 0;
     this.clickMarkers = [];
     this.joystickVector = { x: 0, y: 0 };
   }
@@ -466,9 +515,10 @@ export class ControlsManager {
     if (this.keys['q'] || this.keys['a'] || this.keys['arrowleft']) moveX -= 1;
     if (this.keys['d'] || this.keys['arrowright']) moveX += 1;
 
-    // Si le clavier est utilisé, il annule la cible souris pour une réactivité instantanée
+    // Si le clavier est utilisé, il annule la cible souris et le chemin A*
     if (isKeyboardPressed) {
       this.mouseTarget = null;
+      this.pathWaypoints = [];
     }
 
     // 2. Manette (Gamepad)
@@ -477,6 +527,7 @@ export class ControlsManager {
       moveX = gpMove.moveX;
       moveY = gpMove.moveY;
       this.mouseTarget = null;
+      this.pathWaypoints = [];
     }
 
     // 3. Joystick tactile
@@ -484,20 +535,38 @@ export class ControlsManager {
       moveX = this.joystickVector.x;
       moveY = this.joystickVector.y;
       this.mouseTarget = null;
+      this.pathWaypoints = [];
     }
 
-    // 4. Mode Souris (League of Legends)
+    // 4. Mode Souris (League of Legends avec Pathfinding A* intelligent)
     if (this.mouseTarget && !isKeyboardPressed && (gpMove.moveX === 0 && gpMove.moveY === 0) && (this.joystickVector.x === 0 && this.joystickVector.y === 0)) {
       if (this.engine.player) {
-        const dx = this.mouseTarget.x - this.engine.player.x;
-        const dy = this.mouseTarget.y - this.engine.player.y;
-        const dist = Math.hypot(dx, dy);
+        let dx = this.mouseTarget.x - this.engine.player.x;
+        let dy = this.mouseTarget.y - this.engine.player.y;
+        let dist = Math.hypot(dx, dy);
 
-        if (dist > 18) {
+        // Rayon de transition vers le waypoint suivant
+        const isIntermediate = this.pathWaypoints.length > 0 && this.currentWaypointIndex < this.pathWaypoints.length - 1;
+        const arriveDist = isIntermediate ? 32 : 16;
+
+        if (dist <= arriveDist) {
+          if (isIntermediate) {
+            this.currentWaypointIndex++;
+            this.mouseTarget = this.pathWaypoints[this.currentWaypointIndex];
+            dx = this.mouseTarget.x - this.engine.player.x;
+            dy = this.mouseTarget.y - this.engine.player.y;
+            dist = Math.hypot(dx, dy);
+            if (dist > 0) {
+              moveX = dx / dist;
+              moveY = dy / dist;
+            }
+          } else {
+            this.mouseTarget = null;
+            this.pathWaypoints = [];
+          }
+        } else {
           moveX = dx / dist;
           moveY = dy / dist;
-        } else {
-          this.mouseTarget = null;
         }
       }
     }
@@ -514,9 +583,33 @@ export class ControlsManager {
   }
 
   // ==========================================
-  // RENDU DES MARQUEURS DE CLIC STYLE LEAGUE OF LEGENDS
+  // RENDU DES MARQUEURS DE CLIC ET TRACÉ A* STYLE LEAGUE OF LEGENDS
   // ==========================================
   renderClickMarkers(ctx) {
+    // 1. Tracé pointillé du chemin A* planifié (style MOBA / RTS)
+    if (this.pathWaypoints && this.pathWaypoints.length > 1 && this.engine.player) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(46, 213, 115, 0.45)';
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([6, 6]);
+      ctx.beginPath();
+      ctx.moveTo(this.engine.player.x, this.engine.player.y);
+      for (let i = this.currentWaypointIndex; i < this.pathWaypoints.length; i++) {
+        ctx.lineTo(this.pathWaypoints[i].x, this.pathWaypoints[i].y);
+      }
+      ctx.stroke();
+
+      // Petits repères lumineux sur chaque point de passage (ex: sur le pont)
+      ctx.fillStyle = '#2ed573';
+      for (let i = this.currentWaypointIndex; i < this.pathWaypoints.length - 1; i++) {
+        const wp = this.pathWaypoints[i];
+        ctx.beginPath();
+        ctx.arc(wp.x, wp.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
     if (!this.clickMarkers || this.clickMarkers.length === 0) return;
 
     for (let i = 0; i < this.clickMarkers.length; i++) {
