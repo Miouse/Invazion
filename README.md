@@ -13,17 +13,18 @@ Affrontez des vagues de monstres incessantes, récoltez des gemmes d'âme, monte
 
 ## 🎮 Fonctionnalités du Jeu
 
-- 🌊 **Système de Vagues par Élimination (Option A)** : Chaque vague vous confronte à un contingent précis de monstres. Éliminez la horde pour déclencher une phase d'accalmie, ramasser les gemmes bonus et vous préparer au prochain assaut !
+- 🌊 **Système de Vagues par Élimination (Option A)** : Chaque vague vous confronte à un contingent précis de monstres. Éliminez la horde pour déclencher 20 secondes d'accalmie, ramasser les gemmes bonus et choisir vos améliorations !
+- 🧭 **Flèches Rouges de Menace en Bordure d'Écran** : Indiquent en temps réel la direction et la distance des portails actifs et des Boss hors de votre champ de vision.
 - ⛩️ **4 Portails Démoniaques Cardinaux** : Les monstres n'apparaissent plus au hasard mais déferlent depuis d'immenses brèches animées (Nord, Sud, Est, Ouest) avec alertes visuelles.
-- 🗺️ **Vaste Arène Agrandie (5 000 × 5 000 px)** : Un terrain immense avec piliers, dalles gothiques, runes anciennes et barrières d'énergie.
+- 🗺️ **Vaste Arène Agrandie (7 000 × 7 000 px)** : Un terrain immense avec piliers moussus, dalles médiévales bien éclairées, moisissure/champignons fluorescents et barrières d'énergie.
 - ⚡ **Fluidité Optimisée (60-120+ FPS)** : Moteur Canvas 2D ultra-rapide avec répulsion naturelle de horde sans lag, suppression des CPU gaussian blurs et gestion mémoire propre.
-- 🪄 **Attaques & Sorts Automatiques** : Concentrez-vous sur le placement, l'esquive et le dash.
+- 🪄 **Attaques & Sorts Automatiques** : Visée rééquilibrée (580 px) pour n'attaquer que les monstres visibles à l'écran.
+- ⭐ **Améliorations à la Demande** : Le jeu ne s'arrête plus en plein combat. Gagnez vos niveaux, stockez-les et activez vos cartes quand vous le souhaitez (Bouton HUD ou touche `U`).
 - 💨 **Dash d'Urgence** : Jauge de dash rechargeable pour vous extirper des encerclements critiques.
-- 🔮 **Système de Montée de Niveau (Level Up)** : Choix parmi 3 cartes d'améliorations tirées aléatoirement à chaque palier.
 - 👹 **Combats de Boss Épiques** : Titans colossaux émergeant des portails avec barre de vie dédiée style *Dark Souls / Elden Ring*.
-- 🔊 **Moteur Audio Procédural** : Synthèse sonore intégrée via la **Web Audio API** (sons de cors de guerre pour les vagues, harpe de victoire, etc.).
+- 🔊 **Moteur Audio Procédural** : Synthèse sonore intégrée via la **Web Audio API** (cors de guerre, harpe de victoire, etc.).
 - 📱 **Compatible Desktop & Mobile** : Détection tactile automatique avec joystick virtuel et interface responsive.
-- 🎥 **Caméra Dézoomée & Contrôle Molette** : Champ de vision étendu avec zoom ajustable à la molette (0.5x à 1.1x).
+- 🎥 **Caméra Dézoomée Panoramique** : Champ de vision grand angle (zoom par défaut 0.45x, ajustable de 0.25x à 0.85x à la molette).
 
 ---
 
@@ -33,9 +34,11 @@ Affrontez des vagues de monstres incessantes, récoltez des gemmes d'âme, monte
 | :--- | :--- | :--- |
 | **Se déplacer** | `Z`, `Q`, `S`, `D` ou `Flèches directionnelles` | Joystick virtuel à l'écran |
 | **Dash / Esquive** | `Espace` ou `Clic Droit` | Bouton / geste de dash |
-| **Attaques** | Automatiques | Automatiques |
+| **Améliorations (Level Up)** | Touche `U` ou Bouton ⭐ en bas à droite | Bouton ⭐ en bas à droite |
+| **Attaques** | Automatiques (cibles visibles) | Automatiques (cibles visibles) |
 | **Pause** | Touche `Échap` ou bouton ⏸️ | Bouton ⏸️ |
 | **Zoom / Dézoom caméra** | Molette de la souris (Scroll) | — |
+| **Passer le répit (20s)** | Bouton ⚔️ en haut au centre | Bouton ⚔️ en haut au centre |
 | **Son (Mute/Unmute)** | Bouton 🔊 | Bouton 🔊 |
 
 ---

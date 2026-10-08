@@ -1099,6 +1099,155 @@ export class GameEngine {
     }
 
     this.ctx.restore();
+
+    // 11. Indicateurs directionnels en bordure d'écran (Flèches rouges vers les portails et boss hors-champ)
+    this.renderScreenEdgeIndicators();
+  }
+
+  // ==========================================
+  // FLÈCHES DIRECTIONNELLES ROUGES EN BORDURE D'ÉCRAN
+  // ==========================================
+  renderScreenEdgeIndicators() {
+    if (this.state !== 'PLAYING') return;
+
+    const centerX = this.width / 2;
+    const centerY = this.height / 2;
+    const margin = 55; // Marge par rapport aux bords de l'écran
+
+    // 1. Indicateurs des Portails Actifs Hors-Champ
+    for (const portal of this.portals) {
+      if (!portal.active) continue;
+
+      // Position projetée sur l'écran
+      const screenX = centerX + (portal.x - this.camera.x) * this.zoom;
+      const screenY = centerY + (portal.y - this.camera.y) * this.zoom;
+
+      // Vérifier si le portail est déjà visible dans l'écran
+      const isVisible = (
+        screenX >= margin && screenX <= this.width - margin &&
+        screenY >= margin && screenY <= this.height - margin
+      );
+
+      // Si le portail est hors de l'écran, on trace la flèche rouge de menace !
+      if (!isVisible) {
+        const angle = Math.atan2(screenY - centerY, screenX - centerX);
+        const dist = Math.hypot(portal.x - this.player.x, portal.y - this.player.y);
+
+        // Clamping le long des bords de l'écran
+        const boundW = (this.width / 2) - margin;
+        const boundH = (this.height / 2) - margin;
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+
+        const scaleX = cos !== 0 ? Math.abs(boundW / cos) : Infinity;
+        const scaleY = sin !== 0 ? Math.abs(boundH / sin) : Infinity;
+        const minScale = Math.min(scaleX, scaleY);
+
+        const edgeX = centerX + cos * minScale;
+        const edgeY = centerY + sin * minScale;
+
+        // Rendu de la flèche rouge
+        this.ctx.save();
+        this.ctx.translate(edgeX, edgeY);
+        this.ctx.rotate(angle);
+
+        const pulse = Math.sin(this.gameTime * 9) * 4;
+
+        // Halo d'énergie rouge derrière la flèche
+        this.ctx.fillStyle = 'rgba(255, 0, 85, 0.35)';
+        this.ctx.beginPath();
+        this.ctx.arc(0, 0, 24 + pulse, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // Flèche / Chevron rouge néon pointant vers le portail
+        this.ctx.fillStyle = '#ff0055';
+        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.lineWidth = 2.5;
+        this.ctx.beginPath();
+        this.ctx.moveTo(14 + pulse, 0);       // Pointe
+        this.ctx.lineTo(-12, -14);           // Aile gauche
+        this.ctx.lineTo(-6, 0);              // Creux
+        this.ctx.lineTo(-12, 14);            // Aile droite
+        this.ctx.closePath();
+        this.ctx.fill();
+        this.ctx.stroke();
+
+        this.ctx.restore();
+
+        // Badge texte d'orientation lisible
+        this.ctx.save();
+        this.ctx.font = "bold 13px 'Rajdhani', sans-serif";
+        this.ctx.textAlign = 'center';
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.shadowColor = 'rgba(0,0,0,0.9)';
+        this.ctx.shadowBlur = 5;
+        
+        const distM = Math.round(dist / 40) + 'm';
+        const labelY = edgeY + (sin > 0 ? -22 : 28);
+        this.ctx.fillText(`⚡ ${portal.name.replace('PORTAIL ', '')} (${distM})`, edgeX, labelY);
+        this.ctx.restore();
+      }
+    }
+
+    // 2. Si un Boss est vivant et hors de l'écran, flèche de Boss Titan 🔥
+    if (this.activeBoss && this.activeBoss.hp > 0) {
+      const bossScreenX = centerX + (this.activeBoss.x - this.camera.x) * this.zoom;
+      const bossScreenY = centerY + (this.activeBoss.y - this.camera.y) * this.zoom;
+      const isBossVisible = (
+        bossScreenX >= margin && bossScreenX <= this.width - margin &&
+        bossScreenY >= margin && bossScreenY <= this.height - margin
+      );
+
+      if (!isBossVisible) {
+        const bossAngle = Math.atan2(bossScreenY - centerY, bossScreenX - centerX);
+        const boundW = (this.width / 2) - margin;
+        const boundH = (this.height / 2) - margin;
+        const cos = Math.cos(bossAngle);
+        const sin = Math.sin(bossAngle);
+        const scaleX = cos !== 0 ? Math.abs(boundW / cos) : Infinity;
+        const scaleY = sin !== 0 ? Math.abs(boundH / sin) : Infinity;
+        const minScale = Math.min(scaleX, scaleY);
+        const edgeX = centerX + cos * minScale;
+        const edgeY = centerY + sin * minScale;
+
+        this.ctx.save();
+        this.ctx.translate(edgeX, edgeY);
+        this.ctx.rotate(bossAngle);
+
+        const pulse = Math.sin(this.gameTime * 12) * 5;
+
+        // Halo incandescent
+        this.ctx.fillStyle = 'rgba(255, 69, 0, 0.45)';
+        this.ctx.beginPath();
+        this.ctx.arc(0, 0, 28 + pulse, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // Flèche flamboyante
+        this.ctx.fillStyle = '#ff2a00';
+        this.ctx.strokeStyle = '#ffd700';
+        this.ctx.lineWidth = 3;
+        this.ctx.beginPath();
+        this.ctx.moveTo(18 + pulse, 0);
+        this.ctx.lineTo(-14, -16);
+        this.ctx.lineTo(-8, 0);
+        this.ctx.lineTo(-14, 16);
+        this.ctx.closePath();
+        this.ctx.fill();
+        this.ctx.stroke();
+
+        this.ctx.restore();
+
+        this.ctx.save();
+        this.ctx.font = "bold 14px 'Rajdhani', sans-serif";
+        this.ctx.textAlign = 'center';
+        this.ctx.fillStyle = '#ffd700';
+        this.ctx.shadowColor = 'rgba(0,0,0,0.9)';
+        this.ctx.shadowBlur = 6;
+        const labelY = edgeY + (sin > 0 ? -24 : 32);
+        this.ctx.fillText("🔥 BOSS TITAN", edgeX, labelY);
+        this.ctx.restore();
+      }
+    }
   }
 
   renderDungeonFloor() {
