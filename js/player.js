@@ -3,28 +3,40 @@
  */
 import { sfx } from './audio.js';
 import { Projectile } from './entities.js';
+import { CHARACTERS, spriteLoader, getSpriteRowFromAngle } from './sprites.js';
 
 export class Player {
-  constructor(x, y) {
+  constructor(x, y, characterId = 'warrior') {
     this.x = x;
     this.y = y;
     this.radius = 20;
-    this.baseSpeed = 265;
+
+    // Configuration de la classe / skin
+    const char = CHARACTERS[characterId] || CHARACTERS.warrior;
+    this.characterId = characterId;
+    this.characterConfig = char;
+    this.spriteSrc = char.sprite;
+
+    this.baseSpeed = 265 * (char.speedMult || 1.0);
     this.speed = this.baseSpeed;
-    this.maxHp = 100;
+    this.maxHp = 100 + (char.hpBonus || 0);
     this.hp = this.maxHp;
-    this.regen = 0;
+    this.regen = char.regenBonus || 0;
     this.invulnTimer = 0;
-    this.magnetRadius = 110;
-    this.damageMultiplier = 1;
-    this.facingAngle = 0;
+    this.magnetRadius = 110 * (char.magnetMult || 1.0);
+    this.damageMultiplier = char.dmgMult || 1.0;
+    this.facingAngle = Math.PI / 2; // Face vers le bas/Sud par défaut
 
     // Dash
-    this.dashCooldown = 1.3;
+    this.dashCooldown = 1.3 * (char.dashCdMult || 1.0);
     this.dashTimer = 0;
     this.isDashing = false;
     this.dashDuration = 0.16;
     this.dashRemaining = 0;
+
+    // Animation de marche & spritesheet
+    this.walkTimer = 0;
+    this.isMoving = false;
 
     // Progression
     this.level = 1;
@@ -74,6 +86,11 @@ export class Player {
       const ny = moveY / length;
       this.x += nx * currentSpeed * dt;
       this.y += ny * currentSpeed * dt;
+      this.facingAngle = Math.atan2(ny, nx);
+      this.walkTimer += dt * 8.5;
+      this.isMoving = true;
+    } else {
+      this.isMoving = false;
     }
 
     this.x = Math.max(this.radius, Math.min(worldSize - this.radius, this.x));
@@ -296,39 +313,29 @@ export class Player {
     ctx.arc(0, 0, this.radius * 2.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // Cape fluide derrière le joueur
-    const capeAngle = this.facingAngle + Math.PI;
-    const capeX = Math.cos(capeAngle) * 12;
-    const capeY = Math.sin(capeAngle) * 12;
-    ctx.fillStyle = '#0f172a';
-    ctx.beginPath();
-    ctx.arc(capeX, capeY, 14, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#00f0ff';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+    // 4. Rendu du sprite 8-directions du héros
+    const img = spriteLoader.getImage(this.spriteSrc);
+    if (img && img.complete && img.naturalWidth > 0) {
+      const row = getSpriteRowFromAngle(this.facingAngle);
+      const col = this.isMoving ? (Math.floor(this.walkTimer) % 4) : 0;
 
-    // Corps du héros
-    ctx.fillStyle = '#00f0ff';
-    ctx.beginPath();
-    ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-
-    // Viseur / Heaume éclairé
-    const eyeDist = 9;
-    const eyeX = Math.cos(this.facingAngle) * eyeDist;
-    const eyeY = Math.sin(this.facingAngle) * eyeDist;
-    ctx.fillStyle = '#060913';
-    ctx.beginPath();
-    ctx.arc(eyeX, eyeY, 6, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(eyeX + Math.cos(this.facingAngle) * 2, eyeY + Math.sin(this.facingAngle) * 2, 2.5, 0, Math.PI * 2);
-    ctx.fill();
+      ctx.imageSmoothingEnabled = false;
+      const drawSize = 54;
+      ctx.drawImage(
+        img,
+        col * 32, row * 32, 32, 32,
+        -drawSize / 2, -drawSize / 2 - 2, drawSize, drawSize
+      );
+    } else {
+      // Fallback
+      ctx.fillStyle = '#00f0ff';
+      ctx.beginPath();
+      ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
 
     // Orbes en orbite
     if (this.upgrades['orbit'] > 0) {

@@ -8,11 +8,16 @@ import { UPGRADE_CATALOG } from './config.js';
 import { Player } from './player.js';
 import { Enemy } from './enemy.js';
 import { Projectile, Gem } from './entities.js';
+import { CHARACTERS, spriteLoader } from './sprites.js';
 
 export class GameEngine {
   constructor() {
     this.canvas = document.getElementById('gameCanvas');
     this.ctx = this.canvas.getContext('2d');
+    
+    // Sélection du personnage actif
+    this.selectedCharacterId = 'warrior';
+    spriteLoader.preloadAll();
     
     // UI Écrans
     this.startScreen = document.getElementById('start-screen');
@@ -140,9 +145,78 @@ export class GameEngine {
     this.initWindow();
     this.setupInputs();
     this.setupUIEvents();
+    this.setupCharacterSelectionUI();
     
     // Lancement du cycle de rendu initial
     requestAnimationFrame((t) => this.loop(t));
+  }
+
+  setupCharacterSelectionUI() {
+    const grid = document.getElementById('char-selection-grid');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+    const charList = Object.values(CHARACTERS);
+
+    charList.forEach((char) => {
+      const isSelected = char.id === this.selectedCharacterId;
+      const card = document.createElement('div');
+      card.className = `char-card ${isSelected ? 'active' : ''}`;
+      card.dataset.charId = char.id;
+
+      card.innerHTML = `
+        <div class="char-avatar-box">
+          <canvas class="char-preview-canvas" width="32" height="32" id="preview-${char.id}"></canvas>
+        </div>
+        <div class="char-info">
+          <div class="char-name-row">
+            <span class="char-icon">${char.icon}</span>
+            <span class="char-name">${char.name}</span>
+          </div>
+          <div class="char-title">${char.title}</div>
+          <div class="char-bonus">${char.desc}</div>
+        </div>
+        <div class="char-check-badge">✓</div>
+      `;
+
+      card.addEventListener('click', () => {
+        this.selectedCharacterId = char.id;
+        document.querySelectorAll('.char-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        sfx.playPickup();
+      });
+
+      grid.appendChild(card);
+    });
+
+    this.startCharacterPreviewAnimation();
+  }
+
+  startCharacterPreviewAnimation() {
+    let animFrame = 0;
+    const animatePreviews = () => {
+      animFrame++;
+      const walkFrame = Math.floor(animFrame / 11) % 4;
+
+      for (const char of Object.values(CHARACTERS)) {
+        const canvas = document.getElementById(`preview-${char.id}`);
+        if (!canvas) continue;
+        const ctx = canvas.getContext('2d');
+        const img = spriteLoader.getImage(char.sprite);
+
+        if (img && img.complete && img.naturalWidth > 0) {
+          ctx.clearRect(0, 0, 32, 32);
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(img, walkFrame * 32, 0, 32, 32, 0, 0, 32, 32);
+        }
+      }
+
+      if (this.startScreen && this.startScreen.classList.contains('active')) {
+        requestAnimationFrame(animatePreviews);
+      }
+    };
+
+    requestAnimationFrame(animatePreviews);
   }
 
   initWindow() {
@@ -326,13 +400,18 @@ export class GameEngine {
     this.shockwaves = [];
     this.floatingTexts = [];
 
-    // Création Joueur au centre de la vaste arène et centrage caméra
-    this.player = new Player(this.worldSize / 2, this.worldSize / 2);
+    // Création Joueur au centre de la vaste arène avec la classe sélectionnée
+    this.player = new Player(this.worldSize / 2, this.worldSize / 2, this.selectedCharacterId);
     this.camera.x = this.player.x;
     this.camera.y = this.player.y;
     
-    // Débloque l'arme de départ (Baguette magique niveau 1)
-    this.player.upgrades['wand'] = 1;
+    // Débloque l'arme de départ selon le héros
+    const charCfg = CHARACTERS[this.selectedCharacterId] || CHARACTERS.warrior;
+    if (charCfg.startWeapon === 'meteor') {
+      this.player.upgrades['meteor'] = 1;
+    } else {
+      this.player.upgrades['wand'] = 1;
+    }
     this.updateEquipmentHud();
 
     this.state = 'PLAYING';

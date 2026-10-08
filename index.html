@@ -110,28 +110,19 @@
       <div class="wave-banner-info" id="wave-banner-info">Brèche Nord Activée</div>
     </div>
     <div id="start-screen" class="overlay-modal active">
-      <div class="modal-card">
+      <div class="modal-card start-modal-card">
         <div class="card-glow"></div>
         <span class="game-tag">ROGUELITE ARENA • VITE & NERVEUX</span>
         <h1 class="game-title">CRIMSON<br><span class="accent-text">SURVIVORS</span></h1>
-        <p class="subtitle">Survis aux vagues infernales, terrasse les titans et déchaîne des pouvoirs de zone destructeurs !</p>
         
-        <div class="instructions-panel">
-          <div class="instruction-item">
-            <span class="key-badge">ZQSD</span> ou <span class="key-badge">Flèches</span>
-            <span><strong>Déplacement du héros</strong></span>
+        <!-- Sélection du personnage -->
+        <div class="char-selection-section">
+          <div class="char-selection-header">
+            <span class="char-selection-tag">CHOISISSEZ VOTRE HÉROS</span>
+            <span class="char-selection-subtitle">Chaque héros dispose d'un style et d'avantages uniques</span>
           </div>
-          <div class="instruction-item">
-            <span class="key-badge">Espace</span>
-            <span><strong>Dash / Esquive rapide</strong></span>
-          </div>
-          <div class="instruction-item">
-            <span class="key-badge">Auto</span>
-            <span>Attaques et sorts de zone automatiques</span>
-          </div>
-          <div class="instruction-item">
-            <span class="key-badge">💎 Gemmes</span>
-            <span>Collecte l'expérience pour monter de niveau</span>
+          <div class="char-grid" id="char-selection-grid">
+            <!-- Généré dynamiquement avec aperçu animé et statistiques -->
           </div>
         </div>
 

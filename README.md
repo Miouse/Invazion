@@ -13,8 +13,10 @@ Affrontez des vagues de monstres incessantes, récoltez des gemmes d'âme, monte
 
 ## 🎮 Fonctionnalités du Jeu
 
+- 🧙 **Sélection de Héros au Menu Principal** : Choisissez parmi 6 classes aux atouts uniques (Valérian le Chevalier, Eldrin l'Arcaniste, Sylvia la Rôdeuse, Ignis le Pyromancien, Gorak le Berserker Orc, Marcus le Légionnaire) avec prévisualisation animée en direct.
+- 👾 **Sprites Pixel-Art & Rendu 8-Directions** : Héros et monstres entièrement animés (Araignées spectres, Loups d'ombre, Slimes corrompus à rebond fluide, Orcs lourds et Boss Colosse Souls) avec orientation dynamique et retour visuel d'impact (*hit flash*).
 - 🌊 **Système de Vagues par Élimination (Option A)** : Chaque vague vous confronte à un contingent précis de monstres. Éliminez la horde pour déclencher 20 secondes d'accalmie, ramasser les gemmes bonus et choisir vos améliorations !
-- 🧭 **Flèches Rouges de Menace en Bordure d'Écran** : Indiquent en temps réel la direction et la distance des portails actifs et des Boss hors de votre champ de vision.
+- 🧭 **Flèches Rouges de Menace en Bordure d'Écran** : Indiquent en temps réel la direction et la distance des portails actifs et des Boss hors de votre champ de vision, positionnées sous le HUD supérieur.
 - ⛩️ **4 Portails Démoniaques Cardinaux** : Les monstres n'apparaissent plus au hasard mais déferlent depuis d'immenses brèches animées (Nord, Sud, Est, Ouest) avec alertes visuelles.
 - 🗺️ **Vaste Arène Agrandie (7 000 × 7 000 px)** : Un terrain immense avec piliers moussus, dalles médiévales bien éclairées, moisissure/champignons fluorescents et barrières d'énergie.
 - ⚡ **Fluidité Optimisée (60-120+ FPS)** : Moteur Canvas 2D ultra-rapide avec répulsion naturelle de horde sans lag, suppression des CPU gaussian blurs et gestion mémoire propre.

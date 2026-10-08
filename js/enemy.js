@@ -2,6 +2,7 @@
  * Module Ennemis - Monstres et Colosse Boss
  */
 import { Projectile } from './entities.js';
+import { MONSTER_SPRITES, spriteLoader, getSpriteRowFromAngle } from './sprites.js';
 
 export class Enemy {
   constructor(x, y, type, gameTime = 0, wave = 1) {
@@ -10,6 +11,8 @@ export class Enemy {
     this.type = type;
     this.hitFlash = 0;
     this.attackTimer = 0;
+    this.animTimer = Math.random() * 10;
+    this.facingAngle = 0;
 
     const hpScale = (1 + (gameTime / 150) * 0.6) * (1 + (wave - 1) * 0.15);
 
@@ -85,6 +88,8 @@ export class Enemy {
 
     this.x += vx * dt;
     this.y += vy * dt;
+    this.facingAngle = angle;
+    this.animTimer += dt;
 
     if (this.hitFlash > 0) {
       this.hitFlash -= dt;
@@ -206,42 +211,58 @@ export class Enemy {
     }
 
     // ==========================================
-    // RENDU DES ENNEMIS STANDARDS
+    // RENDU DES MONSTRES AVEC SPRITESHEETS
     // ==========================================
-    ctx.fillStyle = this.hitFlash > 0 ? '#ffffff' : this.color;
-    ctx.beginPath();
-    ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
-    ctx.fill();
+    const cfg = MONSTER_SPRITES[this.type];
+    const img = cfg ? spriteLoader.getImage(cfg.path) : null;
 
-    // Ailes chauve-souris
-    if (this.type === 'bat') {
-      const flap = Math.sin(Date.now() * 0.02) * 8;
-      ctx.fillStyle = '#7a22a8';
+    if (img && img.complete && img.naturalWidth > 0) {
+      ctx.imageSmoothingEnabled = false;
+
+      // Flash blanc quand blessé
+      if (this.hitFlash > 0) {
+        ctx.filter = 'brightness(3) saturate(0.2)';
+      }
+
+      const size = cfg.drawSize;
+
+      if (cfg.isSlime) {
+        // Slime : 15 images sur 1 ligne avec effet rebond squash & stretch
+        const col = Math.floor(this.animTimer * 10) % cfg.cols;
+        const squash = 1 + Math.sin(this.animTimer * 10) * 0.12;
+        ctx.drawImage(
+          img,
+          col * 32, 0, 32, 32,
+          -size / 2, -size / 2 * squash - 2, size, size * squash
+        );
+      } else {
+        // Monstres 8 directions (Araignée, Loup, Orc)
+        const row = getSpriteRowFromAngle(this.facingAngle);
+        const col = Math.floor(this.animTimer * 8) % 4; // 4 frames de marche
+        ctx.drawImage(
+          img,
+          col * 32, row * 32, 32, 32,
+          -size / 2, -size / 2 - 2, size, size
+        );
+      }
+
+      if (this.hitFlash > 0) {
+        ctx.filter = 'none';
+      }
+    } else {
+      // Fallback procédural si le sprite est en chargement
+      ctx.fillStyle = this.hitFlash > 0 ? '#ffffff' : this.color;
       ctx.beginPath();
-      ctx.ellipse(-this.radius * 1.2, flap, this.radius * 0.9, 6, 0.4, 0, Math.PI * 2);
-      ctx.ellipse(this.radius * 1.2, flap, this.radius * 0.9, 6, -0.4, 0, Math.PI * 2);
+      ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Yeux rouges menaçants
+      ctx.fillStyle = '#ff0055';
+      ctx.beginPath();
+      ctx.arc(-this.radius * 0.35, -2, 2.5, 0, Math.PI * 2);
+      ctx.arc(this.radius * 0.35, -2, 2.5, 0, Math.PI * 2);
       ctx.fill();
     }
-
-    // Cornes démons
-    if (this.type === 'demon') {
-      ctx.fillStyle = '#ffd23f';
-      ctx.beginPath();
-      ctx.moveTo(-10, -this.radius);
-      ctx.lineTo(-16, -this.radius - 10);
-      ctx.lineTo(-4, -this.radius - 4);
-      ctx.moveTo(10, -this.radius);
-      ctx.lineTo(16, -this.radius - 10);
-      ctx.lineTo(4, -this.radius - 4);
-      ctx.fill();
-    }
-
-    // Yeux rouges menaçants
-    ctx.fillStyle = '#ff0055';
-    ctx.beginPath();
-    ctx.arc(-this.radius * 0.35, -2, 2.5, 0, Math.PI * 2);
-    ctx.arc(this.radius * 0.35, -2, 2.5, 0, Math.PI * 2);
-    ctx.fill();
 
     // Barre de vie des monstres blessés
     if (this.hp < this.maxHp) {
