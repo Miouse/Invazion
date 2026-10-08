@@ -78,6 +78,13 @@ Invazion/
 - **Économie & Butins Médiévaux** :
   - Les monstres et coffres lâchent des Pièces d'Or médiévales (🪙) et des Cœurs de Soin (❤️).
   - Fin de l'ancien système d'XP passive et des modales interrompant le jeu.
+- **Cycle Jour / Nuit & Survie (5 minutes = 24h)** :
+  - Aube (05h-08h), Plein Jour (08h-18h), Crépuscule (18h-21h), Nuit Noire (21h-05h).
+  - Éclairage nocturne avec masque dynamique et découpe radiale de lumière (halo du héros 310 px, feux de camp, fontaines, braseros). Yeux rouges luisants des monstres dans l'obscurité.
+- **Échoppe d'Aventure de Barnabé (Oakhaven)** :
+  - ⏱️ Montre à Gousset (25 🪙) : Révèle le jour exact et l'heure céleste dans le HUD.
+  - 🧭 Carte & Boussole (50 🪙) : Débloque la mini-carte avec Brouillard de Guerre.
+  - 🧪 Potion de Vitalité (15 🪙) : Restaure 60 PV.
 - **Barre d'Action Combat (`combat-action-bar`)** :
   - Slot 1 : Attaque Principale (recharge rapide).
   - Slot 2 : Compétence Spéciale (décompte secondes et overlay cooldown).
@@ -90,6 +97,7 @@ Invazion/
     2. **Val-des-Ombres** (Nord-Ouest) : Citadelle gothique sur falaises sombres, braseros et entrée du *Donjon III : Bastion Démoniaque*.
     3. **Riverbend** (Sud-Est) : Cité lacustre sur pilotis, grands pontons, barques et entrée du *Donjon II : Antre des Eaux Sombres*.
   - **Forêts Denses Médiévales & Traversée Libre** : 14 massifs forestiers majeurs (> 1 350 arbres). Semi-transparence automatique (50% d'opacité) sous les feuillages.
+  - **Brouillard de Guerre & Mini-Carte Dynamique** : Grille d'exploration (70 x 70 tuiles de 100 px). Seules les zones explorées dans un rayon de vision de 350 px sont révélées sur la mini-carte.
   - **Collisions physiques** : Grille spatiale (buckets de 250 px), glissement tangentiel et Pathfinding A*.
 
 ### 4. `js/controls.js` — Gestionnaire des Contrôles (`ControlsManager`)
