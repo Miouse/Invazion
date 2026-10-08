@@ -1584,7 +1584,6 @@ export class GameEngine {
       this.timeDisplay.innerHTML = `<span style="display:inline-flex; align-items:center; gap:6px;">${icon} <span>J${currentDay} — ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}</span></span>`;
     } else {
       this.timeDisplay.innerHTML = `<span style="display:inline-flex; align-items:center; gap:6px;"><span>Jour ${currentDay}</span> <span style="font-size:10.5px; color:#ffd700; opacity:0.85; display:inline-flex; align-items:center; gap:3px;">(${getPixelIcon('watch', 12)} Requis)</span></span>`;
-    } <span style="font-size:10px; color:#ffd700; opacity:0.85;">(🔒 Montre)</span>`;
     }
     this.killsDisplay.textContent = this.kills;
     if (this.gemsDisplay) {
