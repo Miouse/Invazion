@@ -25,6 +25,7 @@ export class Enemy {
     this.patrolTimer = Math.random() * 3.5;
     this.patrolTarget = { x: this.homeX, y: this.homeY };
     this.alertTimer = 0;
+    this.stunTimer = 0;
 
     const hpScale = 1 + (gameTime / 240) * 0.5;
 
@@ -83,6 +84,12 @@ export class Enemy {
     let aimX = player.x;
     let aimY = player.y;
     let moveSpeed = this.baseSpeed;
+
+    // Étourdissement actif (Bouclier / Séisme)
+    if (this.stunTimer > 0) {
+      this.stunTimer -= dt;
+      moveSpeed = 0;
+    }
 
     // IA contextuelle si attaché à un camp
     if (this.camp && this.type !== 'boss') {

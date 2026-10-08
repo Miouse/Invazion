@@ -41,8 +41,9 @@ export class ControlsManager {
     this.gamepadConnected = false;
     this.gamepadId = '';
     this.lastGpDashPressed = false;
+    this.lastGpAttackPressed = false;
+    this.lastGpSkillPressed = false;
     this.lastGpPausePressed = false;
-    this.lastGpUpgradePressed = false;
 
     // État tactile
     this.joystickVector = { x: 0, y: 0 };
@@ -92,16 +93,16 @@ export class ControlsManager {
         }
       }
 
+      // Compétence Spéciale avec touche E
+      if (e.key === 'e' || e.key === 'E') {
+        if (this.engine.player && this.engine.state === 'PLAYING' && this.lastMouseWorld) {
+          this.engine.player.triggerSpecialSkill(this.engine, this.lastMouseWorld.x, this.lastMouseWorld.y);
+        }
+      }
+
       // Pause avec Échap ou P
       if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
         this.engine.togglePause();
-      }
-
-      // Raccourci 'U' pour les améliorations
-      if (e.key === 'u' || e.key === 'U') {
-        if (this.engine.pendingUpgrades > 0 && this.engine.state === 'PLAYING') {
-          this.engine.openUpgradeModal();
-        }
       }
     });
 
@@ -128,29 +129,31 @@ export class ControlsManager {
       this.lastMouseWorld = worldCoords;
 
       if (this.mode === 'mouse_lol') {
-        // Clic Gauche (Bouton 0) = Déplacement style LoL
-        if (e.button === 0) {
-          this.isMouseDown = true;
+        // Clic Droit (Bouton 2) = Déplacement style League of Legends (MOBA)
+        if (e.button === 2) {
+          e.preventDefault();
+          this.isRightMouseDown = true;
           this.setMouseDestination(worldCoords.x, worldCoords.y);
         }
-        // Clic Droit (Bouton 2) = Dash d'esquive vers la direction du curseur
+        // Clic Gauche (Bouton 0) = Attaque Principale vers la position de la souris
+        else if (e.button === 0) {
+          if (this.engine.player) {
+            this.engine.player.triggerMainAttack(this.engine, worldCoords.x, worldCoords.y);
+          }
+        }
+      } else {
+        // Mode Clavier (ZQSD) :
+        // Clic Gauche (Bouton 0) = Attaque Principale
+        if (e.button === 0) {
+          if (this.engine.player) {
+            this.engine.player.triggerMainAttack(this.engine, worldCoords.x, worldCoords.y);
+          }
+        }
+        // Clic Droit (Bouton 2) = Compétence Spéciale
         else if (e.button === 2) {
           e.preventDefault();
           if (this.engine.player) {
-            const dx = worldCoords.x - this.engine.player.x;
-            const dy = worldCoords.y - this.engine.player.y;
-            if (Math.hypot(dx, dy) > 10) {
-              this.engine.player.facingAngle = Math.atan2(dy, dx);
-            }
-            this.engine.player.triggerDash(this.engine);
-          }
-        }
-      } else if (this.mode === 'keyboard') {
-        // Dash optionnel au clic droit en mode clavier
-        if (e.button === 2) {
-          e.preventDefault();
-          if (this.engine.player) {
-            this.engine.player.triggerDash(this.engine);
+            this.engine.player.triggerSpecialSkill(this.engine, worldCoords.x, worldCoords.y);
           }
         }
       }
@@ -160,8 +163,8 @@ export class ControlsManager {
       const worldCoords = this.screenToWorld(e.clientX, e.clientY);
       this.lastMouseWorld = worldCoords;
 
-      // Maintien du clic gauche : suit le curseur en direct avec recherche de chemin fluide
-      if (this.isMouseDown && this.mode === 'mouse_lol' && this.engine.state === 'PLAYING') {
+      // Maintien du clic droit en mode LoL : suit le curseur en direct avec recherche de chemin fluide
+      if (this.isRightMouseDown && this.mode === 'mouse_lol' && this.engine.state === 'PLAYING') {
         const now = performance.now();
         if (now - this.lastPathCalcTime > 120) {
           this.lastPathCalcTime = now;
@@ -189,6 +192,9 @@ export class ControlsManager {
     });
 
     window.addEventListener('pointerup', (e) => {
+      if (e.button === 2) {
+        this.isRightMouseDown = false;
+      }
       if (e.button === 0) {
         this.isMouseDown = false;
       }
@@ -289,9 +295,8 @@ export class ControlsManager {
         if (gp.buttons[14] && gp.buttons[14].pressed) moveX -= 1;
         if (gp.buttons[15] && gp.buttons[15].pressed) moveX += 1;
 
-        // 3. Bouton A (Croix) / Gâchette RT (R2) / RB : Dash
+        // 3. Bouton A (Croix) / RB : Dash
         const dashBtn = (gp.buttons[0] && gp.buttons[0].pressed) ||
-                        (gp.buttons[7] && gp.buttons[7].pressed) ||
                         (gp.buttons[5] && gp.buttons[5].pressed);
         if (dashBtn) {
           if (!this.lastGpDashPressed) {
@@ -304,7 +309,52 @@ export class ControlsManager {
           this.lastGpDashPressed = false;
         }
 
-        // 4. Bouton Start / Options (Index 9) : Pause
+        // 4. Bouton X (Carré) / Gâchette RT (R2) : Attaque Principale
+        const attackBtn = (gp.buttons[2] && gp.buttons[2].pressed) ||
+                          (gp.buttons[7] && gp.buttons[7].pressed);
+        if (attackBtn) {
+          if (!this.lastGpAttackPressed) {
+            if (this.engine.player && this.engine.state === 'PLAYING') {
+              let aimAngle = this.engine.player.facingAngle;
+              const rx = gp.axes[2] || 0;
+              const ry = gp.axes[3] || 0;
+              if (Math.hypot(rx, ry) > 0.25) {
+                aimAngle = Math.atan2(ry, rx);
+              }
+              const targetX = this.engine.player.x + Math.cos(aimAngle) * 150;
+              const targetY = this.engine.player.y + Math.sin(aimAngle) * 150;
+              this.engine.player.triggerMainAttack(this.engine, targetX, targetY);
+            }
+          }
+          this.lastGpAttackPressed = true;
+        } else {
+          this.lastGpAttackPressed = false;
+        }
+
+        // 5. Bouton B (Rond) / Y (Triangle) / Gâchette LT (L2) : Compétence Spéciale
+        const skillBtn = (gp.buttons[1] && gp.buttons[1].pressed) ||
+                         (gp.buttons[3] && gp.buttons[3].pressed) ||
+                         (gp.buttons[6] && gp.buttons[6].pressed);
+        if (skillBtn) {
+          if (!this.lastGpSkillPressed) {
+            if (this.engine.player && this.engine.state === 'PLAYING') {
+              let aimAngle = this.engine.player.facingAngle;
+              const rx = gp.axes[2] || 0;
+              const ry = gp.axes[3] || 0;
+              if (Math.hypot(rx, ry) > 0.25) {
+                aimAngle = Math.atan2(ry, rx);
+              }
+              const targetX = this.engine.player.x + Math.cos(aimAngle) * 150;
+              const targetY = this.engine.player.y + Math.sin(aimAngle) * 150;
+              this.engine.player.triggerSpecialSkill(this.engine, targetX, targetY);
+            }
+          }
+          this.lastGpSkillPressed = true;
+        } else {
+          this.lastGpSkillPressed = false;
+        }
+
+        // 6. Bouton Start / Options (Index 9) : Pause
         const pauseBtn = gp.buttons[9] && gp.buttons[9].pressed;
         if (pauseBtn) {
           if (!this.lastGpPausePressed) {
@@ -313,19 +363,6 @@ export class ControlsManager {
           this.lastGpPausePressed = true;
         } else {
           this.lastGpPausePressed = false;
-        }
-
-        // 5. Bouton Y / Triangle (Index 3) : Améliorations
-        const upgradeBtn = gp.buttons[3] && gp.buttons[3].pressed;
-        if (upgradeBtn) {
-          if (!this.lastGpUpgradePressed) {
-            if (this.engine.pendingUpgrades > 0 && this.engine.state === 'PLAYING') {
-              this.engine.openUpgradeModal();
-            }
-          }
-          this.lastGpUpgradePressed = true;
-        } else {
-          this.lastGpUpgradePressed = false;
         }
         break;
       }

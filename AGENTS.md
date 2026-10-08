@@ -53,42 +53,30 @@ Invazion/
 ## 🏛️ Architecture & Responsabilités des Modules
 
 ### 1. `js/sprites.js` — Registre & Moteur 8-Directions
-- **Rôle** : Centralise tous les assets graphiques et fournit les helpers d'animation.
-- **Roster Héros (`CHARACTERS`)** :
-  - `warrior` (*Valérian*) : +30 PV Max, +1.2 Régén/s.
-  - `mage` (*Eldrin*) : +25% dégâts sorts, +45% rayon d'aimant.
-  - `archer` (*Sylvia*) : +20% vitesse de course, -35% cooldown de Dash.
-  - `pyro` (*Ignis*) : Démarre d'office avec *Pluie de Météores (Niv. 1)*.
-  - `orc` (*Gorak*) : +45 PV Max, +15% puissance brute.
-  - `soldier` (*Marcus*) : Équilibré (+15 PV, +10% vit, +10% dmg).
+- **Rôle** : Centralise tous les assets graphiques et fournit les configurations d'armes médiévales des classes.
+- **Roster Héros & Armes Dédiées (`CHARACTERS`) — Option A** :
+  - `warrior` (*Valérian*) : ⚔️ Épée Royale (slash en cône 110°) + 🛡️ Coup de Bouclier & Parade (-60% dmg).
+  - `soldier` (*Marcus*) : 🗡️ Lance de Soldat (estoc perforant) + ⚡ Charge de Lance traversante.
+  - `archer` (*Sylvia*) : 🏹 Arc Sylvestre (flèches véloces) + 🏹 Volée de 5 Flèches en éventail.
+  - `mage` (*Eldrin*) : 🔮 Éclair d'Arcane (projectiles énergétiques) + 💫 Nova Stellaire à 360°.
+  - `pyro` (*Ignis*) : 🔥 Boule de Feu (projectiles incendiaires explosifs) + 🌊 Vague de Flammes.
+  - `orc` (*Gorak*) : 🪓 Fendoir Barbare Lourd (fendage de zone puissant) + 💥 Séisme Terrestre avec étourdissement.
 - **Catalogue Monstres (`MONSTER_SPRITES`)** :
   - `bat` ➔ Araignée Spectre (`Purple-Spider-32x32.png`).
   - `skeleton` ➔ Loup d'Ombre (`Gray-Wolf-32x32.png`).
   - `zombie` ➔ Slime Corrompu (`Slime.png`).
   - `demon` ➔ Orc Berserker (`Orc-Soldier-Red.png`).
-- **Mathématique 8-Directions (`getSpriteRowFromAngle(angle)`)** :
-  - L'angle Canvas ($0$ à l'Est, $\pi/2$ au Sud, etc.) est converti vers la ligne de la spritesheet :
-    - `Ligne 0` : Sud (face caméra)
-    - `Ligne 1` : Sud-Est
-    - `Ligne 2` : Est (droite)
-    - `Ligne 3` : Nord-Est
-    - `Ligne 4` : Nord (dos caméra)
-    - `Ligne 5` : Nord-Ouest
-    - `Ligne 6` : Ouest (gauche)
-    - `Ligne 7` : Sud-Ouest
 
-### 2. `js/engine.js` — Moteur de Jeu Principal & Monde Ouvert
+### 2. `js/engine.js` — Moteur de Jeu Principal & Barre d'Action
 - **Dimensions de l'arène** : `7 000 × 7 000 px` (Départ au centre d'Oakhaven en `3 160, 3 540`).
-- **Caméra & Zoom** : Échelle fixe verrouillée à `0.85` pour une vue rapprochée et immersive (zoom et dézoom à la molette désactivés).
-- **Structure Monde Ouvert Médiéval (Remplacement des Vagues Forcées)** :
-  - Disparition des vagues oppressantes avec spawn aléatoire. Le joueur explore librement le monde.
-  - 6 camps de monstres thématiques peuplés dès le départ (avec respawn intelligent temporisé de 25-30s si le joueur n'est pas en combat au camp).
-  - Gestion des Safe Zones des cités : les fontaines sacrées soignent continuellement le joueur (+16 PV/s).
-  - Gestion des 8 coffres au trésor dissimulés et 4 sanctuaires de bénédiction runiques.
-- **Boussole & Repères Hors-Champ (`renderScreenEdgeIndicators`)** :
-  - Pointeurs directionnels dynamiques avec distance en mètres indiquant les 3 Cités médiévales (*Oakhaven*, *Val-des-Ombres*, *Riverbend*) et leurs donjons.
-- **Système d'Amélioration Asynchrone** :
-  - L'expérience et les niveaux s'accumulent dans `pendingUpgrades`. Le combat **ne s'interrompt pas** brutalement. Le joueur clique sur le bouton ⭐ ou appuie sur `U` pour ouvrir la modale à volonté.
+- **Caméra & Zoom** : Échelle fixe verrouillée à `0.85` pour une vue rapprochée et immersive.
+- **Économie & Butins Médiévaux** :
+  - Les monstres et coffres lâchent des Pièces d'Or médiévales (🪙) et des Cœurs de Soin (❤️).
+  - Fin de l'ancien système d'XP passive et des modales interrompant le jeu.
+- **Barre d'Action Combat (`combat-action-bar`)** :
+  - Slot 1 : Attaque Principale (recharge rapide).
+  - Slot 2 : Compétence Spéciale (décompte secondes et overlay cooldown).
+  - Slot 3 : Dash d'Esquive (jauge de recharge).
 
 ### 3. `js/world.js` — Générateur de Monde RPG Médiéval & Pathfinding A*
 - **Monde ouvert 7 000 × 7 000 px** :
@@ -96,57 +84,32 @@ Invazion/
     1. **Oakhaven** (Centre/Sud) : Bâtiments à pans de bois, place fortifiée, fontaine sacrée et entrée du *Donjon I : Crypte d'Oakhaven*.
     2. **Val-des-Ombres** (Nord-Ouest) : Citadelle gothique sur falaises sombres, braseros et entrée du *Donjon III : Bastion Démoniaque*.
     3. **Riverbend** (Sud-Est) : Cité lacustre sur pilotis, grands pontons, barques et entrée du *Donjon II : Antre des Eaux Sombres*.
-  - **Forêts Denses Médiévales & Traversée Libre** : 14 massifs forestiers majeurs abritant plus de 1 350 arbres pixel-art. **Collisions supprimées sur les arbres** pour une fluidité totale de course/dash, avec **semi-transparence automatique (50% d'opacité)** dès que le joueur passe sous le feuillage d'un arbre.
-  - **Points d'Intérêt & Secrets** : 8 coffres au trésor médiévaux en bois et or, 4 stèles runiques de bénédiction (+vitesse, +dégâts, +régén, +aimant).
-- **Collisions physiques (Sliding Collision & Tangential Slide)** : Grille spatiale (buckets de 250 px), glissement d'axe séparé X/Y et déviation tangentielle le long des surfaces incurvées.
-- **Système de Pathfinding A* avec franchissement de ponts** :
-  - Grille de navigation `navGrid` (cellules de 50 px) précalculée au démarrage.
-  - Test de ligne de vue instantané (`hasLineOfSight`) avec pas de test fin (14 px) pour éviter tout écrêtage accidentel d'obstacles.
-  - Franchissement fluide des 2 grands ponts de bois reliant les rives avec détection élargie des rampes d'accès (entonnoirs de 220 px) et exclusion des colliders d'eau sous les ponts.
+  - **Forêts Denses Médiévales & Traversée Libre** : 14 massifs forestiers majeurs (> 1 350 arbres). Semi-transparence automatique (50% d'opacité) sous les feuillages.
+  - **Collisions physiques** : Grille spatiale (buckets de 250 px), glissement tangentiel et Pathfinding A*.
 
 ### 4. `js/controls.js` — Gestionnaire des Contrôles (`ControlsManager`)
 - **3 modes commutables** :
-  - `keyboard` : ZQSD / Flèches, Espace pour Dash.
-  - `mouse_lol` : Clic gauche pour déplacement avec Pathfinding A* + Clic droit ou Espace pour Dash d'esquive vers le curseur.
-  - `gamepad` : Stick analogique 360° avec deadzone 0.18, détection automatique.
-- **Watchdog Anti-Blocage & Shortcut Dynamique** :
-  - Surveillance active de progression (si le joueur ne progresse pas pendant > 0.20s contre un obstacle, saut automatique au waypoint suivant ou arrêt propre).
-  - Raccourci en ligne de vue (`hasLineOfSight`) vers le prochain waypoint pour adoucir les virages.
-- Visualisation du chemin LoL : ligne pointillée verte émeraude reliant les waypoints et chevrons animés au point d'impact.
+  - `keyboard` : ZQSD déplacement, Clic Gauche Attaque, Touche E ou Clic Droit Compétence, Espace Dash.
+  - `mouse_lol` : Clic Droit déplacement (style MOBA / LoL avec A*), Clic Gauche Attaque, Touche E Compétence, Espace Dash.
+  - `gamepad` : Stick analogique 360°, RT/X Attaque, LT/B Compétence, A Dash.
 
-### 5. `js/player.js` — Entité Joueur
+### 5. `js/player.js` — Entité Joueur & Compétences Actives
 - Instancié avec `new Player(x, y, characterId)`.
-- Gère la vélocité, l'esquive Dash (invulnérabilité temporaire `invulnTimer`), la régénération passive, et les cooldowns des 4 armes/pouvoirs actifs.
-- **Armes disponibles** :
-  - `wand` : Baguette éthérée (rafales directes sur ennemis proches, portée limitée à 4 cases de map soit 256 px).
-  - `meteor` : Pluie de météores explosives avec secousse d'écran.
-  - `orbit` : Orbes tournoyants protecteurs.
-  - `aura` : Vortex de sang arcane de contact continu.
-
-### 6. `js/enemy.js` — Monstres & Boss Colosse
-- IA de meute avec répulsion dynamique pour éviter l'empilement statique de monstres.
-- Rendu pixel art net avec `ctx.imageSmoothingEnabled = false`.
-- Effet d'impact lumineux (*Hit Flash*) via `ctx.filter = 'brightness(3) saturate(0.2)'`.
-- Rendu du Slime avec *squash & stretch* dynamique synchronisé sur les 15 frames d'animation.
-- Boss Colosse : Rayon 95 px, ailes animées gigantesques, cercle runique tournoyant et attaque séquentielle de cercle de projectiles sombres.
-
-### 7. `js/config.js` — Équilibrage & Progression
-- Formule d'XP dynamique : `xpToNext = Math.floor(25 * Math.pow(1.22, level - 1))`.
-- **Garantie de Progression** : Minimum 1 niveau garanti par vague complétée (`forceLevelUp` automatique si aucun niveau pris pendant la vague).
-- Base de gemmes d'âme : Bleue = 2 à 3 XP, Verte = 5 à 8 XP, Rouge (Boss) = 20 XP, Cœur = Soin 35 PV.
+- Gère `triggerMainAttack`, `triggerSpecialSkill`, `triggerDash`.
+- Calculs de zone en cône (`hitConeEnemies`), ligne (`hitLineEnemies`) et rayon (`hitRadialEnemies`), effets visuels de coups et parade de bouclier (-60% dégâts).
 
 ---
 
 ## 🎮 Commandes & Contrôles
 
-| Action | Clavier / Souris |
-| :--- | :--- |
-| **Déplacement** | `Z`, `Q`, `S`, `D` ou `Flèches directionnelles` |
-| **Dash / Esquive** | `Espace` ou `Clic Droit` |
-| **Ouvrir les Améliorations** | Touche `U` ou Bouton ⭐ flottant |
-| **Pause** | Touche `Échap` ou `P` |
-| **Zoom Caméra** | Molette de la souris |
-| **Son (Mute)** | Bouton 🔊 dans le HUD |
+| Action | Clavier / Souris | Souris (Mode LoL) | Manette (Gamepad) |
+| :--- | :--- | :--- | :--- |
+| **Déplacement** | `Z`, `Q`, `S`, `D` / Flèches | `Clic Droit` au sol (A*) | Stick Gauche 360° |
+| **Attaque Principale** | `Clic Gauche` | `Clic Gauche` | Gâchette RT / Bouton X |
+| **Compétence Spéciale** | `Touche E` ou `Clic Droit` | `Touche E` | Gâchette LT / Bouton B |
+| **Dash / Esquive** | `Espace` | `Espace` | Bouton A |
+| **Pause** | Touche `Échap` ou `P` | `Échap` / `P` | Bouton Start |
+| **Son (Mute)** | Bouton 🔊 dans le HUD | Bouton 🔊 | — |
 
 ---
 

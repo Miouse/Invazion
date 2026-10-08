@@ -183,6 +183,10 @@ export class GameEngine {
           </div>
           <div class="char-title">${char.title}</div>
           <div class="char-bonus">${char.desc}</div>
+          <div class="char-loadout">
+            <span class="weapon-tag">⚔️ ${char.mainName || 'Arme'}</span>
+            <span class="skill-tag">✨ ${char.specialName || 'Compétence'}</span>
+          </div>
         </div>
         <div class="char-check-badge">✓</div>
       `;
@@ -318,14 +322,8 @@ export class GameEngine {
       this.controls.resetMovement();
     }
     
-    // Débloque l'arme de départ selon le héros
-    const charCfg = CHARACTERS[this.selectedCharacterId] || CHARACTERS.warrior;
-    if (charCfg.startWeapon === 'meteor') {
-      this.player.upgrades['meteor'] = 1;
-    } else {
-      this.player.upgrades['wand'] = 1;
-    }
-    this.updateEquipmentHud();
+    // Configuration de la barre d'action selon le héros choisi
+    this.setupActionBar();
 
     this.state = 'PLAYING';
     this.pendingUpgrades = 0;
@@ -440,23 +438,34 @@ export class GameEngine {
     }
   }
 
-  updateEquipmentHud() {
-    this.equipmentHud.innerHTML = '';
-    for (const [id, lvl] of Object.entries(this.player.upgrades)) {
-      if (lvl > 0) {
-        const item = UPGRADE_CATALOG.find(u => u.id === id);
-        if (item) {
-          const slot = document.createElement('div');
-          slot.className = 'equip-slot';
-          slot.title = `${item.name} (Niveau ${lvl})`;
-          slot.innerHTML = `
-            <span>${item.icon}</span>
-            <span class="equip-level">${lvl}</span>
-          `;
-          this.equipmentHud.appendChild(slot);
-        }
-      }
-    }
+  setupActionBar() {
+    if (!this.player) return;
+    const char = this.player.characterConfig || CHARACTERS[this.player.characterId] || CHARACTERS.warrior;
+
+    const slotMainName = document.getElementById('slot-main-name');
+    const slotMainIcon = document.getElementById('slot-main-icon');
+    const slotSpecialName = document.getElementById('slot-special-name');
+    const slotSpecialIcon = document.getElementById('slot-special-icon');
+
+    const icons = {
+      sword: '⚔️',
+      spear: '🗡️',
+      bow: '🏹',
+      arcane_bolt: '🔮',
+      fireball: '🔥',
+      greatsword: '🪓',
+      shield_bash: '🛡️',
+      spear_charge: '⚡',
+      multishot: '🏹',
+      arcane_nova: '💫',
+      flame_wave: '🌊',
+      ground_slam: '💥'
+    };
+
+    if (slotMainName) slotMainName.textContent = char.mainName || 'Attaque';
+    if (slotMainIcon) slotMainIcon.textContent = icons[char.mainWeapon] || '⚔️';
+    if (slotSpecialName) slotSpecialName.textContent = char.specialName || 'Compétence';
+    if (slotSpecialIcon) slotSpecialIcon.textContent = icons[char.specialSkill] || '🛡️';
   }
 
   // ==========================================
@@ -466,7 +475,7 @@ export class GameEngine {
     this.wave = waveNum;
     this.waveState = 'ACTIVE';
     this.portalSpawnTimer = 0;
-    this.waveStartLevel = this.player ? this.player.level : 1;
+    this.waveStartLevel = 1;
     this.levelsGainedThisWave = 0;
 
     const isBossWave = (waveNum % 5 === 0);
@@ -583,20 +592,10 @@ export class GameEngine {
 
       sfx.playWaveClear();
 
-      // GARANTIE : Minimum 1 niveau gagné par vague !
-      if (this.player && this.levelsGainedThisWave === 0) {
-        this.player.forceLevelUp();
-        this.pendingUpgrades++;
-        this.levelsGainedThisWave++;
-        sfx.playLevelUp();
-        this.addFloatingText(this.player.x, this.player.y - 45, `⭐ NIVEAU GARANTI : RANG ${this.player.level} !`, '#ffd700', 28);
-        this.updatePendingUpgradeButton();
-      }
-
-      // Pluie de récompense généreuse (3 gemmes vertes + 1 cœur de soin)
-      for (let g = 0; g < 3; g++) {
-        const a = (g / 3) * Math.PI * 2;
-        this.gems.push(new Gem(this.player.x + Math.cos(a) * 45, this.player.y + Math.sin(a) * 45, 6, 'green'));
+      // Pluie de récompense généreuse (5 pièces d'or royales + 1 cœur de soin)
+      for (let g = 0; g < 5; g++) {
+        const a = (g / 5) * Math.PI * 2;
+        this.gems.push(new Gem(this.player.x + Math.cos(a) * 45, this.player.y + Math.sin(a) * 45, 10, 'coin'));
       }
       this.gems.push(new Gem(this.player.x, this.player.y, 0, 'heart'));
 
@@ -715,10 +714,9 @@ export class GameEngine {
     const sec = Math.floor(this.gameTime % 60);
     const formatted = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
 
-    this.endTime.textContent = formatted;
-    this.endKills.textContent = this.kills;
-    this.endLevel.textContent = this.player.level;
-    this.endGems.textContent = this.totalGemsCollected;
+    if (this.endTime) this.endTime.textContent = formatted;
+    if (this.endKills) this.endKills.textContent = this.kills;
+    if (this.endGems) this.endGems.textContent = this.player ? (this.player.gold || 0) : 0;
     if (this.endWave) this.endWave.textContent = this.wave;
 
     this.gameoverScreen.classList.add('active');
@@ -800,10 +798,10 @@ export class GameEngine {
             this.createHitParticles(ch.x, ch.y, '#2ec4b6', 10);
             this.addFloatingText(ch.x, ch.y - 25, `💰 ${ch.title} DÉVERROUILLÉ !`, '#ffd700', 22);
 
-            // Apparition des gemmes d'XP et cœur
-            for (let i = 0; i < ch.xpGems; i++) {
-              const a = (i / ch.xpGems) * Math.PI * 2;
-              this.gems.push(new Gem(ch.x + Math.cos(a) * 35, ch.y + Math.sin(a) * 35, 6, 'green'));
+            // Apparition des pièces d'or étincelantes et cœur de soin
+            for (let i = 0; i < (ch.xpGems || 5); i++) {
+              const a = (i / (ch.xpGems || 5)) * Math.PI * 2;
+              this.gems.push(new Gem(ch.x + Math.cos(a) * 35, ch.y + Math.sin(a) * 35, 6, 'coin'));
             }
             this.gems.push(new Gem(ch.x, ch.y, 0, 'heart'));
           }
@@ -926,9 +924,6 @@ export class GameEngine {
       if (this.screenShake < 0) this.screenShake = 0;
     }
 
-    // Gestion des armes & pouvoirs de zone du joueur
-    this.player.updateWeapons(dt, this);
-
     // Gestion de l'écologie du monde ouvert (respawn des camps, fontaines sacrées, coffres, sanctuaires)
     this.updateCampRespawns(dt);
     this.updateExplorationFeatures(dt);
@@ -977,28 +972,25 @@ export class GameEngine {
           this.addShockwave(enemy.x, enemy.y, 350, '#ff0055', 6);
           this.addFloatingText(enemy.x, enemy.y - 50, "👑 BOSS ÉLIMINÉ !", '#ffd23f', 32);
 
-          for (let g = 0; g < 5; g++) {
-            const angle = (g / 5) * Math.PI * 2;
+          for (let g = 0; g < 6; g++) {
+            const angle = (g / 6) * Math.PI * 2;
             const distG = 40 + Math.random() * 60;
-            this.gems.push(new Gem(enemy.x + Math.cos(angle) * distG, enemy.y + Math.sin(angle) * distG, 20, 'red'));
+            this.gems.push(new Gem(enemy.x + Math.cos(angle) * distG, enemy.y + Math.sin(angle) * distG, 10, 'coin'));
           }
           this.gems.push(new Gem(enemy.x, enemy.y, 0, 'heart'));
         } else {
-          let gemType = 'blue';
-          let gemValue = 2;
+          let coinValue = 2;
           if (enemy.type === 'skeleton') {
-            gemValue = 3;
+            coinValue = 3;
           } else if (enemy.type === 'zombie') {
-            gemType = 'green';
-            gemValue = 5;
+            coinValue = 4;
           } else if (enemy.type === 'demon') {
-            gemType = 'green';
-            gemValue = 8;
+            coinValue = 7;
           }
 
-          this.gems.push(new Gem(enemy.x, enemy.y, gemValue, gemType));
+          this.gems.push(new Gem(enemy.x, enemy.y, coinValue, 'coin'));
 
-          if (Math.random() < 0.03) {
+          if (Math.random() < 0.06) {
             this.gems.push(new Gem(enemy.x + 8, enemy.y, 0, 'heart'));
           }
         }
@@ -1082,7 +1074,7 @@ export class GameEngine {
       }
     }
 
-    // Gemmes
+    // Gemmes (Pièces d'or et cœurs de soin)
     for (let i = this.gems.length - 1; i >= 0; i--) {
       const gem = this.gems[i];
       gem.update(dt, this.player);
@@ -1091,18 +1083,14 @@ export class GameEngine {
       if (dist < this.player.radius + gem.radius) {
         if (gem.type === 'heart') {
           this.player.heal(35);
+          sfx.playPickup();
           this.addFloatingText(this.player.x, this.player.y - 25, '+35 PV', '#00ff88', 18);
         } else {
-          this.totalGemsCollected++;
-          const levelsGained = this.player.addXp(gem.value);
-          sfx.playGem();
-          if (levelsGained > 0) {
-            this.pendingUpgrades += levelsGained;
-            this.levelsGainedThisWave += levelsGained;
-            sfx.playLevelUp();
-            this.addFloatingText(this.player.x, this.player.y - 40, `⭐ NIVEAU ${this.player.level} !`, '#ffd700', 26);
-            this.updatePendingUpgradeButton();
-          }
+          const goldGain = gem.value || 1;
+          this.player.gold = (this.player.gold || 0) + goldGain;
+          this.totalGemsCollected += goldGain;
+          sfx.playCoin();
+          this.addFloatingText(this.player.x, this.player.y - 25, `+${goldGain} 🪙`, '#ffd700', 16);
         }
         this.gems.splice(i, 1);
       }
@@ -1139,7 +1127,9 @@ export class GameEngine {
     const sec = Math.floor(this.gameTime % 60);
     this.timeDisplay.textContent = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
     this.killsDisplay.textContent = this.kills;
-    this.gemsDisplay.textContent = this.totalGemsCollected;
+    if (this.gemsDisplay) {
+      this.gemsDisplay.textContent = this.player ? (this.player.gold || 0) : 0;
+    }
 
     // Localisation & Territoire actuel
     const locationDisplay = document.getElementById('location-display');
@@ -1183,10 +1173,34 @@ export class GameEngine {
         : 'linear-gradient(90deg, #0077b6, #00b4d8)';
     }
 
-    // XP
-    const xpRatio = Math.min(1, this.player.xp / this.player.xpToNext);
-    this.xpBarFill.style.width = `${xpRatio * 100}%`;
-    this.playerLevelSpan.textContent = this.player.level;
+    // Barre d'Action & Compétences Actives Cooldowns
+    if (this.player) {
+      const slotMainCd = document.getElementById('slot-main-cd');
+      const slotSpecialCd = document.getElementById('slot-special-cd');
+      const slotSpecialTimer = document.getElementById('slot-special-timer');
+      const slotDashCd = document.getElementById('slot-dash-cd');
+
+      if (slotMainCd) {
+        const cdRatio = Math.max(0, Math.min(1, this.player.mainAttackTimer / 0.40));
+        slotMainCd.style.height = `${cdRatio * 100}%`;
+      }
+
+      if (slotSpecialCd) {
+        const cdRatio = Math.max(0, Math.min(1, this.player.specialTimer / (this.player.specialCd || 3.5)));
+        slotSpecialCd.style.height = `${cdRatio * 100}%`;
+      }
+
+      if (slotSpecialTimer) {
+        slotSpecialTimer.textContent = this.player.specialTimer > 0 
+          ? `${this.player.specialTimer.toFixed(1)}s` 
+          : '';
+      }
+
+      if (slotDashCd) {
+        const dashCdRatio = Math.max(0, Math.min(1, this.player.dashTimer / this.player.dashCooldown));
+        slotDashCd.style.height = `${dashCdRatio * 100}%`;
+      }
+    }
   }
 
   // ==========================================

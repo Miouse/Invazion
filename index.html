@@ -17,15 +17,8 @@
     <canvas id="gameCanvas"></canvas>
 
     <!-- HUD Overlay -->
+    <!-- HUD Overlay -->
     <div id="hud">
-      <!-- Barre d'XP supérieure -->
-      <div class="xp-bar-container">
-        <div class="xp-bar-track">
-          <div id="xp-bar-fill" class="xp-bar-fill"></div>
-        </div>
-        <div class="level-badge" id="level-badge">LVL <span id="player-level">1</span></div>
-      </div>
-
       <!-- Informations de survie en haut -->
       <div class="top-stats">
         <div class="stat-pill location-pill" id="location-pill" title="Région & Territoire actuel">
@@ -41,7 +34,7 @@
           <span id="kills-display">0</span>
         </div>
         <div class="stat-pill gold-pill">
-          <span class="icon">💎</span>
+          <span class="icon">🪙</span>
           <span id="gems-display">0</span>
         </div>
         <button id="btn-sound" class="icon-btn" title="Activer / Couper le son" aria-label="Son">🔊</button>
@@ -68,24 +61,46 @@
           <div id="hp-bar-fill" class="hp-bar-fill"></div>
         </div>
         <div class="dash-row">
-          <span class="dash-label">DASH (Espace / Clic Droit)</span>
+          <span class="dash-label">DASH (Espace)</span>
           <div class="dash-bar-track">
             <div id="dash-bar-fill" class="dash-bar-fill"></div>
           </div>
         </div>
       </div>
 
-      <!-- Liste des armes & passifs actifs -->
-      <div class="equipment-hud" id="equipment-hud">
-        <!-- Rempli dynamiquement en JS -->
-      </div>
+      <!-- Barre d'Action & Compétences Médiévales (Action Bar) -->
+      <div id="combat-action-bar" class="combat-action-bar">
+        <!-- Slot 1 : Attaque Principale -->
+        <div class="action-slot" id="slot-main" title="Attaque Principale">
+          <div class="action-key-badge">CLIC G</div>
+          <div class="action-slot-inner">
+            <span class="action-slot-icon" id="slot-main-icon">⚔️</span>
+            <span class="action-slot-name" id="slot-main-name">Épée Royale</span>
+          </div>
+          <div class="action-cooldown-overlay" id="slot-main-cd"></div>
+        </div>
 
-      <!-- Bouton d'Amélioration Disponible (sans couper le combat) -->
-      <button id="btn-upgrade-pending" class="upgrade-pending-btn hidden" title="Ouvrir le choix des améliorations">
-        <span class="star-icon">⭐</span>
-        <span class="upgrade-btn-text">AMÉLIORATION DISPONIBLE</span>
-        <span id="pending-upgrade-count" class="badge-count">1</span>
-      </button>
+        <!-- Slot 2 : Compétence Spéciale -->
+        <div class="action-slot" id="slot-special" title="Compétence Spéciale">
+          <div class="action-key-badge">E / CLIC D</div>
+          <div class="action-slot-inner">
+            <span class="action-slot-icon" id="slot-special-icon">🛡️</span>
+            <span class="action-slot-name" id="slot-special-name">Coup de Bouclier</span>
+          </div>
+          <span class="action-timer-text" id="slot-special-timer"></span>
+          <div class="action-cooldown-overlay" id="slot-special-cd"></div>
+        </div>
+
+        <!-- Slot 3 : Dash / Esquive -->
+        <div class="action-slot" id="slot-dash" title="Dash d'Esquive">
+          <div class="action-key-badge">ESPACE</div>
+          <div class="action-slot-inner">
+            <span class="action-slot-icon">💨</span>
+            <span class="action-slot-name">Esquive</span>
+          </div>
+          <div class="action-cooldown-overlay" id="slot-dash-cd"></div>
+        </div>
+      </div>
 
       <!-- Bouton Passer le Répit / Lancer la vague suivante -->
       <button id="btn-skip-intermission" class="skip-intermission-btn hidden" title="Lancer la vague suivante immédiatement">
@@ -186,7 +201,15 @@
                 <span class="key-pill">Q / A</span>
                 <span class="key-pill">S</span>
                 <span class="key-pill">D</span>
-                <span class="key-label">ou Flèches directionnelles</span>
+                <span class="key-label">Déplacement</span>
+              </div>
+              <div class="key-pill-row">
+                <span class="key-pill">Clic Gauche</span>
+                <span class="key-label">Attaque Principale</span>
+              </div>
+              <div class="key-pill-row">
+                <span class="key-pill">E / Clic Droit</span>
+                <span class="key-label">Compétence Spéciale</span>
               </div>
               <div class="key-pill-row">
                 <span class="key-pill">Espace</span>
@@ -200,23 +223,27 @@
             <div class="control-card-header">
               <span class="control-icon">🖱️</span>
               <div class="control-info">
-                <span class="control-title">Souris (Mode League of Legends)</span>
-                <span class="control-desc">Clic gauche pour se déplacer au sol (MOBA / RTS)</span>
+                <span class="control-title">Souris (Mode MOBA / LoL)</span>
+                <span class="control-desc">Clic droit au sol pour se déplacer avec Pathfinding A*</span>
               </div>
               <div class="control-badge">✓</div>
             </div>
             <div class="control-details">
               <div class="key-pill-row">
+                <span class="key-pill">Clic Droit</span>
+                <span class="key-label">Déplacement au point cliqué (curseur vert LoL)</span>
+              </div>
+              <div class="key-pill-row">
                 <span class="key-pill">Clic Gauche</span>
-                <span class="key-label">Déplacement au point cliqué (curseur vert LoL animé)</span>
+                <span class="key-label">Attaque Principale</span>
               </div>
               <div class="key-pill-row">
-                <span class="key-pill">Maintenir Clic</span>
-                <span class="key-label">Suivre le curseur de la souris en temps réel</span>
+                <span class="key-pill">Touche E</span>
+                <span class="key-label">Compétence Spéciale</span>
               </div>
               <div class="key-pill-row">
-                <span class="key-pill">Clic Droit / Espace</span>
-                <span class="key-label">Dash d'esquive vers la direction du curseur</span>
+                <span class="key-pill">Espace</span>
+                <span class="key-label">Dash d'esquive</span>
               </div>
             </div>
           </div>
@@ -227,17 +254,25 @@
               <span class="control-icon">🎮</span>
               <div class="control-info">
                 <span class="control-title">Manette (Gamepad USB / Bluetooth)</span>
-                <span class="control-desc">Stick analogique 360° fluide & gâchettes</span>
+                <span class="control-desc">Stick analogique 360° fluide & boutons d'action</span>
               </div>
               <div class="control-badge">✓</div>
             </div>
             <div class="control-details">
               <div class="key-pill-row">
                 <span class="key-pill">Stick Gauche</span>
-                <span class="key-label">Déplacement analogique fluide 360°</span>
+                <span class="key-label">Déplacement 360°</span>
               </div>
               <div class="key-pill-row">
-                <span class="key-pill">Bouton A / RT</span>
+                <span class="key-pill">Bouton X / RT</span>
+                <span class="key-label">Attaque Principale</span>
+              </div>
+              <div class="key-pill-row">
+                <span class="key-pill">Bouton B / LT</span>
+                <span class="key-label">Compétence Spéciale</span>
+              </div>
+              <div class="key-pill-row">
+                <span class="key-pill">Bouton A</span>
                 <span class="key-label">Dash d'esquive</span>
               </div>
               <div class="gamepad-status-row">
@@ -278,11 +313,7 @@
             <span id="end-kills" class="summary-value">0</span>
           </div>
           <div class="summary-box">
-            <span class="summary-label">Niveau Atteint</span>
-            <span id="end-level" class="summary-value">1</span>
-          </div>
-          <div class="summary-box">
-            <span class="summary-label">Gemmes Récoltées</span>
+            <span class="summary-label">Pièces d'Or</span>
             <span id="end-gems" class="summary-value">0</span>
           </div>
         </div>

@@ -1,20 +1,21 @@
 /**
- * Module Entités - Projectiles et Gemmes d'Âme
+ * Module Entités - Projectiles Médiévaux et Butin (Pièces d'Or & Cœurs)
  */
 
 export class Projectile {
-  constructor(x, y, angle, speed, damage, pierce = 1, type = 'wand', isEnemy = false) {
+  constructor(x, y, angle, speed, damage, pierce = 1, type = 'arrow', isEnemy = false) {
     this.x = x;
     this.y = y;
+    this.angle = angle;
     this.vx = Math.cos(angle) * speed;
     this.vy = Math.sin(angle) * speed;
     this.damage = damage;
     this.pierce = pierce;
     this.type = type;
     this.isEnemy = isEnemy;
-    this.radius = isEnemy ? 9 : 6.5;
-    this.knockback = 14;
-    this.life = 1.6;
+    this.radius = type === 'fireball' ? 12 : (isEnemy ? 9 : 6);
+    this.knockback = type === 'fireball' ? 25 : (type === 'arrow' ? 16 : 14);
+    this.life = type === 'arrow' ? 1.8 : (type === 'fireball' ? 1.2 : 1.5);
     this.hitList = new Set();
     this.dead = false;
   }
@@ -24,8 +25,20 @@ export class Projectile {
     this.y += this.vy * dt;
     this.life -= dt;
 
-    if (Math.random() < 0.25 && engine) {
-      engine.createHitParticles(this.x, this.y, this.isEnemy ? '#ff0055' : '#00f0ff', 1);
+    if (engine) {
+      if (this.type === 'fireball') {
+        if (Math.random() < 0.6) {
+          engine.createHitParticles(this.x, this.y, Math.random() < 0.5 ? '#ff4d00' : '#ffaa00', 1);
+        }
+      } else if (this.type === 'arcane_bolt') {
+        if (Math.random() < 0.4) {
+          engine.createHitParticles(this.x, this.y, Math.random() < 0.5 ? '#00f0ff' : '#9b5de5', 1);
+        }
+      } else if (this.isEnemy) {
+        if (Math.random() < 0.3) {
+          engine.createHitParticles(this.x, this.y, '#ff0055', 1);
+        }
+      }
     }
   }
 
@@ -38,7 +51,7 @@ export class Projectile {
     ctx.translate(this.x, this.y);
 
     if (this.isEnemy) {
-      // Halo lumineux rapide sans Gaussian blur
+      // Orbe sombre des monstres
       ctx.fillStyle = 'rgba(255, 0, 85, 0.35)';
       ctx.beginPath();
       ctx.arc(0, 0, this.radius * 1.6, 0, Math.PI * 2);
@@ -53,8 +66,81 @@ export class Projectile {
       ctx.beginPath();
       ctx.arc(0, 0, this.radius * 0.45, 0, Math.PI * 2);
       ctx.fill();
+    } else if (this.type === 'arrow') {
+      // Flèche médiévale de l'archère (empennage, fût en bois, pointe en acier)
+      ctx.rotate(this.angle);
+
+      // Fût en bois
+      ctx.strokeStyle = '#8b5a2b';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(-14, 0);
+      ctx.lineTo(8, 0);
+      ctx.stroke();
+
+      // Pointe d'acier affûtée
+      ctx.fillStyle = '#e2e8f0';
+      ctx.beginPath();
+      ctx.moveTo(14, 0);
+      ctx.lineTo(6, -4);
+      ctx.lineTo(8, 0);
+      ctx.lineTo(6, 4);
+      ctx.closePath();
+      ctx.fill();
+
+      // Empennage (plumes blanches sylvestres)
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.moveTo(-14, 0);
+      ctx.lineTo(-8, -4);
+      ctx.lineTo(-11, 0);
+      ctx.lineTo(-8, 4);
+      ctx.closePath();
+      ctx.fill();
+    } else if (this.type === 'fireball') {
+      // Boule de feu du Pyromancien
+      ctx.rotate(this.angle);
+
+      const glow = ctx.createRadialGradient(0, 0, 2, 0, 0, this.radius * 1.8);
+      glow.addColorStop(0, '#fff3b0');
+      glow.addColorStop(0.35, '#ff7700');
+      glow.addColorStop(0.7, '#d90429');
+      glow.addColorStop(1, 'rgba(217, 4, 41, 0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(0, 0, this.radius * 1.8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Traînée de flammes arrière
+      ctx.fillStyle = '#ff9900';
+      ctx.beginPath();
+      ctx.moveTo(-4, -6);
+      ctx.lineTo(-16, 0);
+      ctx.lineTo(-4, 6);
+      ctx.closePath();
+      ctx.fill();
+    } else if (this.type === 'arcane_bolt') {
+      // Éclair d'Arcane du Mage
+      const pulse = Math.sin(Date.now() * 0.015) * 2;
+      const r = this.radius + pulse;
+
+      const glow = ctx.createRadialGradient(0, 0, 2, 0, 0, r * 1.6);
+      glow.addColorStop(0, '#ffffff');
+      glow.addColorStop(0.4, '#00f0ff');
+      glow.addColorStop(0.8, '#7b2cbf');
+      glow.addColorStop(1, 'rgba(123, 44, 191, 0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 1.6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Étoile d'énergie
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.5, 0, Math.PI * 2);
+      ctx.fill();
     } else {
-      // Projectile joueur lumineux
+      // Projectile standard
       ctx.fillStyle = 'rgba(0, 240, 255, 0.35)';
       ctx.beginPath();
       ctx.arc(0, 0, this.radius * 1.6, 0, Math.PI * 2);
@@ -75,12 +161,12 @@ export class Projectile {
 }
 
 export class Gem {
-  constructor(x, y, value, type = 'blue') {
+  constructor(x, y, value, type = 'coin') {
     this.x = x;
     this.y = y;
     this.value = value;
-    this.type = type;
-    this.radius = type === 'heart' ? 10 : 8;
+    this.type = type; // 'coin' | 'heart' | 'red'
+    this.radius = type === 'heart' ? 11 : 9;
     this.magnetized = false;
     this.speed = 0;
     this.floatOffset = Math.random() * Math.PI * 2;
@@ -95,7 +181,7 @@ export class Gem {
 
     if (this.magnetized) {
       const angle = Math.atan2(player.y - this.y, player.x - this.x);
-      this.speed += 1050 * dt;
+      this.speed += 1150 * dt;
       this.x += Math.cos(angle) * this.speed * dt;
       this.y += Math.sin(angle) * this.speed * dt;
     }
@@ -103,53 +189,59 @@ export class Gem {
 
   draw(ctx) {
     ctx.save();
-    const bob = Math.sin(Date.now() * 0.005 + this.floatOffset) * 3;
+    const bob = Math.sin(Date.now() * 0.006 + this.floatOffset) * 3;
     ctx.translate(this.x, this.y + bob);
 
     if (this.type === 'heart') {
-      ctx.fillStyle = 'rgba(255, 42, 85, 0.3)';
+      // Cœur de vie réparateur
+      ctx.fillStyle = 'rgba(255, 42, 85, 0.35)';
       ctx.beginPath();
-      ctx.arc(0, 0, 13, 0, Math.PI * 2);
+      ctx.arc(0, 0, 14, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.fillStyle = '#ff2a55';
       ctx.beginPath();
       ctx.arc(-4, -3, 5, Math.PI, 0, false);
       ctx.arc(4, -3, 5, Math.PI, 0, false);
-      ctx.lineTo(0, 7);
+      ctx.lineTo(0, 8);
       ctx.closePath();
       ctx.fill();
-    } else {
-      let color = '#00f0ff';
-      let aura = 'rgba(0, 240, 255, 0.35)';
-      if (this.type === 'green') { color = '#2ecc71'; aura = 'rgba(46, 204, 113, 0.35)'; }
-      if (this.type === 'red') { color = '#ff0055'; aura = 'rgba(255, 42, 85, 0.35)'; }
 
-      // Halo néon rapide
-      ctx.fillStyle = aura;
+      // Reflet brillant
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(-3, -4, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // 🪙 Pièce d'or médiévale étincelante
+      // Lueur d'or
+      ctx.fillStyle = 'rgba(255, 215, 0, 0.35)';
       ctx.beginPath();
       ctx.arc(0, 0, this.radius * 1.5, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.fillStyle = color;
-      // Losange facetté
+      // Tranche dorée
+      ctx.fillStyle = '#b8860b';
       ctx.beginPath();
-      ctx.moveTo(0, -this.radius);
-      ctx.lineTo(this.radius, 0);
-      ctx.lineTo(0, this.radius);
-      ctx.lineTo(-this.radius, 0);
-      ctx.closePath();
+      ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
       ctx.fill();
 
-      // Facette brillante
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      // Face de la pièce
+      ctx.fillStyle = '#ffd700';
       ctx.beginPath();
-      ctx.moveTo(0, -this.radius);
-      ctx.lineTo(this.radius * 0.4, 0);
-      ctx.lineTo(0, this.radius * 0.4);
-      ctx.lineTo(-this.radius * 0.4, 0);
-      ctx.closePath();
+      ctx.arc(0, 0, this.radius - 2, 0, Math.PI * 2);
       ctx.fill();
+
+      // Emblème royal intérieur
+      ctx.fillStyle = '#d4af37';
+      ctx.beginPath();
+      ctx.arc(0, 0, this.radius - 4.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Croix / Étoile centrale
+      ctx.fillStyle = '#fff3b0';
+      ctx.fillRect(-1.5, -3.5, 3, 7);
+      ctx.fillRect(-3.5, -1.5, 7, 3);
     }
 
     ctx.restore();
