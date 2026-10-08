@@ -1112,7 +1112,17 @@ export class GameEngine {
 
     const centerX = this.width / 2;
     const centerY = this.height / 2;
-    const margin = 55; // Marge par rapport aux bords de l'écran
+
+    // Marges asymétriques pour dégager totalement les barres de HUD supérieures (XP, stats, boss)
+    const marginTop = (this.activeBoss && this.activeBoss.hp > 0) ? 165 : 125;
+    const marginBottom = 65;
+    const marginLeft = 65;
+    const marginRight = 65;
+
+    const minX = marginLeft;
+    const maxX = this.width - marginRight;
+    const minY = marginTop;
+    const maxY = this.height - marginBottom;
 
     // 1. Indicateurs des Portails Actifs Hors-Champ
     for (const portal of this.portals) {
@@ -1124,67 +1134,112 @@ export class GameEngine {
 
       // Vérifier si le portail est déjà visible dans l'écran
       const isVisible = (
-        screenX >= margin && screenX <= this.width - margin &&
-        screenY >= margin && screenY <= this.height - margin
+        screenX >= minX && screenX <= maxX &&
+        screenY >= minY && screenY <= maxY
       );
 
       // Si le portail est hors de l'écran, on trace la flèche rouge de menace !
       if (!isVisible) {
         const angle = Math.atan2(screenY - centerY, screenX - centerX);
         const dist = Math.hypot(portal.x - this.player.x, portal.y - this.player.y);
-
-        // Clamping le long des bords de l'écran
-        const boundW = (this.width / 2) - margin;
-        const boundH = (this.height / 2) - margin;
         const cos = Math.cos(angle);
         const sin = Math.sin(angle);
 
-        const scaleX = cos !== 0 ? Math.abs(boundW / cos) : Infinity;
-        const scaleY = sin !== 0 ? Math.abs(boundH / sin) : Infinity;
-        const minScale = Math.min(scaleX, scaleY);
+        // Intersection rayon-rectangle pour un clamping parfait hors du HUD
+        let tX = Infinity;
+        if (cos > 0.0001) tX = (maxX - centerX) / cos;
+        else if (cos < -0.0001) tX = (minX - centerX) / cos;
 
-        const edgeX = centerX + cos * minScale;
-        const edgeY = centerY + sin * minScale;
+        let tY = Infinity;
+        if (sin > 0.0001) tY = (maxY - centerY) / sin;
+        else if (sin < -0.0001) tY = (minY - centerY) / sin;
 
-        // Rendu de la flèche rouge
+        const t = Math.min(tX, tY);
+        const edgeX = Math.max(minX, Math.min(maxX, centerX + cos * t));
+        const edgeY = Math.max(minY, Math.min(maxY, centerY + sin * t));
+
+        // Rendu de la pastille et de la flèche
         this.ctx.save();
         this.ctx.translate(edgeX, edgeY);
-        this.ctx.rotate(angle);
 
-        const pulse = Math.sin(this.gameTime * 9) * 4;
+        const pulse = Math.sin(this.gameTime * 8) * 5;
+        const waveProgress = (this.gameTime * 2) % 1;
 
-        // Halo d'énergie rouge derrière la flèche
-        this.ctx.fillStyle = 'rgba(255, 0, 85, 0.35)';
+        // Onde radar d'alerte
+        this.ctx.strokeStyle = `rgba(255, 0, 85, ${(1 - waveProgress) * 0.45})`;
+        this.ctx.lineWidth = 2;
         this.ctx.beginPath();
-        this.ctx.arc(0, 0, 24 + pulse, 0, Math.PI * 2);
+        this.ctx.arc(0, 0, 24 + waveProgress * 18, 0, Math.PI * 2);
+        this.ctx.stroke();
+
+        // Disque sombre d'arrière-plan haute lisibilité
+        this.ctx.fillStyle = 'rgba(10, 15, 30, 0.9)';
+        this.ctx.strokeStyle = '#ff0055';
+        this.ctx.lineWidth = 2.5;
+        this.ctx.beginPath();
+        this.ctx.arc(0, 0, 24, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.stroke();
+
+        // Halo interne
+        this.ctx.fillStyle = 'rgba(255, 0, 85, 0.25)';
+        this.ctx.beginPath();
+        this.ctx.arc(0, 0, 20, 0, Math.PI * 2);
         this.ctx.fill();
 
-        // Flèche / Chevron rouge néon pointant vers le portail
+        // Flèche / Chevron rouge néon orienté vers la cible
+        this.ctx.rotate(angle);
         this.ctx.fillStyle = '#ff0055';
         this.ctx.strokeStyle = '#ffffff';
         this.ctx.lineWidth = 2.5;
         this.ctx.beginPath();
-        this.ctx.moveTo(14 + pulse, 0);       // Pointe
-        this.ctx.lineTo(-12, -14);           // Aile gauche
-        this.ctx.lineTo(-6, 0);              // Creux
-        this.ctx.lineTo(-12, 14);            // Aile droite
+        this.ctx.moveTo(17 + pulse, 0);       // Pointe
+        this.ctx.lineTo(-11, -13);           // Aile gauche
+        this.ctx.lineTo(-5, 0);              // Creux
+        this.ctx.lineTo(-11, 13);            // Aile droite
         this.ctx.closePath();
         this.ctx.fill();
         this.ctx.stroke();
 
+        // Ligne de cœur lumineuse
+        this.ctx.strokeStyle = '#ffb3c6';
+        this.ctx.lineWidth = 2;
+        this.ctx.lineCap = 'round';
+        this.ctx.beginPath();
+        this.ctx.moveTo(-3, 0);
+        this.ctx.lineTo(11 + pulse, 0);
+        this.ctx.stroke();
+
         this.ctx.restore();
 
-        // Badge texte d'orientation lisible
+        // Badge texte d'orientation stylisé (en dessous si flèche en haut, au dessus si flèche en bas)
+        const distM = Math.round(dist / 40) + 'm';
+        const label = `⚡ ${portal.name.replace('PORTAIL ', '')} • ${distM}`;
+        
         this.ctx.save();
         this.ctx.font = "bold 13px 'Rajdhani', sans-serif";
+        const metrics = this.ctx.measureText(label);
+        const pillW = metrics.width + 18;
+        const pillH = 22;
+        const pillX = edgeX - pillW / 2;
+        const pillY = (edgeY < centerY ? edgeY + 28 : edgeY - 28 - pillH);
+
+        this.ctx.fillStyle = 'rgba(8, 12, 24, 0.92)';
+        this.ctx.strokeStyle = 'rgba(255, 0, 85, 0.6)';
+        this.ctx.lineWidth = 1.5;
+        this.ctx.beginPath();
+        if (this.ctx.roundRect) {
+          this.ctx.roundRect(pillX, pillY, pillW, pillH, 11);
+        } else {
+          this.ctx.rect(pillX, pillY, pillW, pillH);
+        }
+        this.ctx.fill();
+        this.ctx.stroke();
+
         this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
         this.ctx.fillStyle = '#ffffff';
-        this.ctx.shadowColor = 'rgba(0,0,0,0.9)';
-        this.ctx.shadowBlur = 5;
-        
-        const distM = Math.round(dist / 40) + 'm';
-        const labelY = edgeY + (sin > 0 ? -22 : 28);
-        this.ctx.fillText(`⚡ ${portal.name.replace('PORTAIL ', '')} (${distM})`, edgeX, labelY);
+        this.ctx.fillText(label, edgeX, pillY + pillH / 2);
         this.ctx.restore();
       }
     }
@@ -1194,57 +1249,94 @@ export class GameEngine {
       const bossScreenX = centerX + (this.activeBoss.x - this.camera.x) * this.zoom;
       const bossScreenY = centerY + (this.activeBoss.y - this.camera.y) * this.zoom;
       const isBossVisible = (
-        bossScreenX >= margin && bossScreenX <= this.width - margin &&
-        bossScreenY >= margin && bossScreenY <= this.height - margin
+        bossScreenX >= minX && bossScreenX <= maxX &&
+        bossScreenY >= minY && bossScreenY <= maxY
       );
 
       if (!isBossVisible) {
         const bossAngle = Math.atan2(bossScreenY - centerY, bossScreenX - centerX);
-        const boundW = (this.width / 2) - margin;
-        const boundH = (this.height / 2) - margin;
+        const bossDist = Math.hypot(this.activeBoss.x - this.player.x, this.activeBoss.y - this.player.y);
         const cos = Math.cos(bossAngle);
         const sin = Math.sin(bossAngle);
-        const scaleX = cos !== 0 ? Math.abs(boundW / cos) : Infinity;
-        const scaleY = sin !== 0 ? Math.abs(boundH / sin) : Infinity;
-        const minScale = Math.min(scaleX, scaleY);
-        const edgeX = centerX + cos * minScale;
-        const edgeY = centerY + sin * minScale;
+
+        let tX = Infinity;
+        if (cos > 0.0001) tX = (maxX - centerX) / cos;
+        else if (cos < -0.0001) tX = (minX - centerX) / cos;
+
+        let tY = Infinity;
+        if (sin > 0.0001) tY = (maxY - centerY) / sin;
+        else if (sin < -0.0001) tY = (minY - centerY) / sin;
+
+        const t = Math.min(tX, tY);
+        const edgeX = Math.max(minX, Math.min(maxX, centerX + cos * t));
+        const edgeY = Math.max(minY, Math.min(maxY, centerY + sin * t));
 
         this.ctx.save();
         this.ctx.translate(edgeX, edgeY);
-        this.ctx.rotate(bossAngle);
 
-        const pulse = Math.sin(this.gameTime * 12) * 5;
+        const pulse = Math.sin(this.gameTime * 12) * 6;
+        const waveProgress = (this.gameTime * 2.5) % 1;
 
-        // Halo incandescent
-        this.ctx.fillStyle = 'rgba(255, 69, 0, 0.45)';
+        // Onde radar orange/feu
+        this.ctx.strokeStyle = `rgba(255, 69, 0, ${(1 - waveProgress) * 0.55})`;
+        this.ctx.lineWidth = 2.5;
         this.ctx.beginPath();
-        this.ctx.arc(0, 0, 28 + pulse, 0, Math.PI * 2);
+        this.ctx.arc(0, 0, 26 + waveProgress * 22, 0, Math.PI * 2);
+        this.ctx.stroke();
+
+        // Disque sombre haute visibilité avec bord doré/flamboyant
+        this.ctx.fillStyle = 'rgba(15, 10, 20, 0.92)';
+        this.ctx.strokeStyle = '#ffd700';
+        this.ctx.lineWidth = 2.5;
+        this.ctx.beginPath();
+        this.ctx.arc(0, 0, 26, 0, Math.PI * 2);
         this.ctx.fill();
+        this.ctx.stroke();
 
         // Flèche flamboyante
+        this.ctx.rotate(bossAngle);
         this.ctx.fillStyle = '#ff2a00';
         this.ctx.strokeStyle = '#ffd700';
-        this.ctx.lineWidth = 3;
+        this.ctx.lineWidth = 2.5;
         this.ctx.beginPath();
-        this.ctx.moveTo(18 + pulse, 0);
-        this.ctx.lineTo(-14, -16);
-        this.ctx.lineTo(-8, 0);
-        this.ctx.lineTo(-14, 16);
+        this.ctx.moveTo(19 + pulse, 0);
+        this.ctx.lineTo(-13, -15);
+        this.ctx.lineTo(-6, 0);
+        this.ctx.lineTo(-13, 15);
         this.ctx.closePath();
         this.ctx.fill();
         this.ctx.stroke();
 
         this.ctx.restore();
 
+        // Badge texte Boss
+        const distM = Math.round(bossDist / 40) + 'm';
+        const label = `🔥 BOSS TITAN • ${distM}`;
+        
         this.ctx.save();
         this.ctx.font = "bold 14px 'Rajdhani', sans-serif";
+        const metrics = this.ctx.measureText(label);
+        const pillW = metrics.width + 20;
+        const pillH = 24;
+        const pillX = edgeX - pillW / 2;
+        const pillY = (edgeY < centerY ? edgeY + 30 : edgeY - 30 - pillH);
+
+        this.ctx.fillStyle = 'rgba(18, 8, 10, 0.92)';
+        this.ctx.strokeStyle = 'rgba(255, 180, 0, 0.7)';
+        this.ctx.lineWidth = 1.5;
+        this.ctx.beginPath();
+        if (this.ctx.roundRect) {
+          this.ctx.roundRect(pillX, pillY, pillW, pillH, 12);
+        } else {
+          this.ctx.rect(pillX, pillY, pillW, pillH);
+        }
+        this.ctx.fill();
+        this.ctx.stroke();
+
         this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
         this.ctx.fillStyle = '#ffd700';
-        this.ctx.shadowColor = 'rgba(0,0,0,0.9)';
-        this.ctx.shadowBlur = 6;
-        const labelY = edgeY + (sin > 0 ? -24 : 32);
-        this.ctx.fillText("🔥 BOSS TITAN", edgeX, labelY);
+        this.ctx.fillText(label, edgeX, pillY + pillH / 2);
         this.ctx.restore();
       }
     }
