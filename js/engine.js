@@ -335,6 +335,8 @@ export class GameEngine {
 
     this.state = 'PLAYING';
     this.pendingUpgrades = 0;
+    this.waveStartLevel = 1;
+    this.levelsGainedThisWave = 0;
     this.updatePendingUpgradeButton();
     if (this.btnSkipIntermission) {
       this.btnSkipIntermission.classList.add('hidden');
@@ -465,6 +467,8 @@ export class GameEngine {
     this.wave = waveNum;
     this.waveState = 'ACTIVE';
     this.portalSpawnTimer = 0;
+    this.waveStartLevel = this.player ? this.player.level : 1;
+    this.levelsGainedThisWave = 0;
 
     const isBossWave = (waveNum % 5 === 0);
 
@@ -580,10 +584,20 @@ export class GameEngine {
 
       sfx.playWaveClear();
 
-      // Pluie de récompense équilibrée (3 gemmes vertes + 1 cœur)
+      // GARANTIE : Minimum 1 niveau gagné par vague !
+      if (this.player && this.levelsGainedThisWave === 0) {
+        this.player.forceLevelUp();
+        this.pendingUpgrades++;
+        this.levelsGainedThisWave++;
+        sfx.playLevelUp();
+        this.addFloatingText(this.player.x, this.player.y - 45, `⭐ NIVEAU GARANTI : RANG ${this.player.level} !`, '#ffd700', 28);
+        this.updatePendingUpgradeButton();
+      }
+
+      // Pluie de récompense généreuse (3 gemmes vertes + 1 cœur de soin)
       for (let g = 0; g < 3; g++) {
         const a = (g / 3) * Math.PI * 2;
-        this.gems.push(new Gem(this.player.x + Math.cos(a) * 45, this.player.y + Math.sin(a) * 45, 4, 'green'));
+        this.gems.push(new Gem(this.player.x + Math.cos(a) * 45, this.player.y + Math.sin(a) * 45, 6, 'green'));
       }
       this.gems.push(new Gem(this.player.x, this.player.y, 0, 'heart'));
 
@@ -813,20 +827,20 @@ export class GameEngine {
           for (let g = 0; g < 5; g++) {
             const angle = (g / 5) * Math.PI * 2;
             const distG = 40 + Math.random() * 60;
-            this.gems.push(new Gem(enemy.x + Math.cos(angle) * distG, enemy.y + Math.sin(angle) * distG, 12, 'red'));
+            this.gems.push(new Gem(enemy.x + Math.cos(angle) * distG, enemy.y + Math.sin(angle) * distG, 20, 'red'));
           }
           this.gems.push(new Gem(enemy.x, enemy.y, 0, 'heart'));
         } else {
           let gemType = 'blue';
-          let gemValue = 1;
+          let gemValue = 2;
           if (enemy.type === 'skeleton') {
-            gemValue = 2;
+            gemValue = 3;
           } else if (enemy.type === 'zombie') {
             gemType = 'green';
-            gemValue = 3;
+            gemValue = 5;
           } else if (enemy.type === 'demon') {
             gemType = 'green';
-            gemValue = 5;
+            gemValue = 8;
           }
 
           this.gems.push(new Gem(enemy.x, enemy.y, gemValue, gemType));
@@ -927,10 +941,11 @@ export class GameEngine {
           this.addFloatingText(this.player.x, this.player.y - 25, '+35 PV', '#00ff88', 18);
         } else {
           this.totalGemsCollected++;
-          const leveledUp = this.player.addXp(gem.value);
+          const levelsGained = this.player.addXp(gem.value);
           sfx.playGem();
-          if (leveledUp) {
-            this.pendingUpgrades++;
+          if (levelsGained > 0) {
+            this.pendingUpgrades += levelsGained;
+            this.levelsGainedThisWave += levelsGained;
             sfx.playLevelUp();
             this.addFloatingText(this.player.x, this.player.y - 40, `⭐ NIVEAU ${this.player.level} !`, '#ffd700', 26);
             this.updatePendingUpgradeButton();

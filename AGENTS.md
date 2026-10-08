@@ -123,8 +123,9 @@ Invazion/
 - Boss Colosse : Rayon 95 px, ailes animées gigantesques, cercle runique tournoyant et attaque séquentielle de cercle de projectiles sombres.
 
 ### 7. `js/config.js` — Équilibrage & Progression
-- Formule d'XP : `xpToNext = Math.floor(35 * Math.pow(1.35, level - 1))`.
-- Base de gemmes : Bleue = 1 XP, Verte = 4 XP, Cœur = Soin 35 PV.
+- Formule d'XP dynamique : `xpToNext = Math.floor(25 * Math.pow(1.22, level - 1))`.
+- **Garantie de Progression** : Minimum 1 niveau garanti par vague complétée (`forceLevelUp` automatique si aucun niveau pris pendant la vague).
+- Base de gemmes d'âme : Bleue = 2 à 3 XP, Verte = 5 à 8 XP, Rouge (Boss) = 20 XP, Cœur = Soin 35 PV.
 
 ---
 

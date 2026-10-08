@@ -41,7 +41,7 @@ export class Player {
     // Progression
     this.level = 1;
     this.xp = 0;
-    this.xpToNext = 35;
+    this.xpToNext = 25;
     this.upgrades = {};
 
     // Cadences d'armes & Pouvoirs
@@ -265,13 +265,21 @@ export class Player {
 
   addXp(amount) {
     this.xp += amount;
-    if (this.xp >= this.xpToNext) {
+    let levelsGained = 0;
+    while (this.xp >= this.xpToNext) {
       this.level++;
       this.xp -= this.xpToNext;
-      this.xpToNext = Math.floor(35 * Math.pow(1.35, this.level - 1));
-      return true;
+      this.xpToNext = Math.floor(25 * Math.pow(1.22, this.level - 1));
+      levelsGained++;
     }
-    return false;
+    return levelsGained;
+  }
+
+  forceLevelUp() {
+    this.level++;
+    this.xp = 0;
+    this.xpToNext = Math.floor(25 * Math.pow(1.22, this.level - 1));
+    return true;
   }
 
   applyUpgrade(id) {
