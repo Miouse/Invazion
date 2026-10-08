@@ -1,0 +1,20 @@
+<svg class="pixel-icon pixel-icon-sun" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
+      <!-- 8 Rayons dorés pixelisés -->
+      <rect x="7" y="0" width="2" height="3" fill="#f59e0b" />
+      <rect x="7" y="13" width="2" height="3" fill="#f59e0b" />
+      <rect x="0" y="7" width="3" height="2" fill="#f59e0b" />
+      <rect x="13" y="7" width="3" height="2" fill="#f59e0b" />
+      <rect x="2" y="2" width="2" height="2" fill="#f59e0b" />
+      <rect x="12" y="2" width="2" height="2" fill="#f59e0b" />
+      <rect x="2" y="12" width="2" height="2" fill="#f59e0b" />
+      <rect x="12" y="12" width="2" height="2" fill="#f59e0b" />
+      <!-- Disque solaire externe -->
+      <rect x="5" y="3" width="6" height="10" fill="#b45309" />
+      <rect x="3" y="5" width="10" height="6" fill="#b45309" />
+      <!-- Disque solaire vif -->
+      <rect x="5" y="4" width="6" height="8" fill="#fbbf24" />
+      <rect x="4" y="5" width="8" height="6" fill="#fbbf24" />
+      <!-- Cœur rayonnant blanc -->
+      <rect x="6" y="6" width="4" height="4" fill="#ffffff" />
+      <rect x="7" y="7" width="2" height="2" fill="#fef08a" />
+    </svg>

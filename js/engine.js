@@ -428,6 +428,130 @@ export class GameEngine {
   // ==========================================
   // GESTION DE LA BIBLIOTHÈQUE DES ARCANES & GRIMOIRES
   // ==========================================
+  
+  // ==========================================
+  // ÉCHOPPE D'AVENTURE DE BARNABÉ (OBJETS, MONTRE, CARTE)
+  // ==========================================
+  openShop() {
+    if (this.state !== 'PLAYING' && this.state !== 'PAUSED') return;
+    this.state = 'SHOP';
+    sfx.playBook();
+    if (this.adventureShopScreen) {
+      this.adventureShopScreen.classList.add('active');
+    }
+    this.renderShopItems();
+  }
+
+  closeShop() {
+    if (this.state === 'SHOP') {
+      this.state = 'PLAYING';
+    }
+    if (this.adventureShopScreen) {
+      this.adventureShopScreen.classList.remove('active');
+    }
+  }
+
+  renderShopItems() {
+    if (!this.shopItemsGrid || !this.player) return;
+    if (this.shopGoldAmount) {
+      this.shopGoldAmount.textContent = this.player.gold || 0;
+    }
+
+    const items = [
+      {
+        id: 'watch',
+        name: "Montre à Gousset en Cuivre",
+        icon: getPixelIcon('watch', 32),
+        cost: 25,
+        desc: "Aiguilles finement gravées par les horlogers d'Oakhaven. Révèle le jour exact et l'heure céleste précise dans le HUD.",
+        isOwned: !!this.player.hasWatch,
+        consumable: false
+      },
+      {
+        id: 'map',
+        name: "Carte & Boussole d'Explorateur",
+        icon: getPixelIcon('map', 32),
+        cost: 50,
+        desc: "Parchemin cartographique enchanté. Affiche la mini-carte en haut à droite et dissipe le brouillard de guerre à chaque pas.",
+        isOwned: !!this.player.hasMiniMap,
+        consumable: false
+      },
+      {
+        id: 'potion',
+        name: "Élixir de Vitalité Majeure",
+        icon: getPixelIcon('potion', 32),
+        cost: 15,
+        desc: "Infusion revigorante aux herbes de la forêt. Restaure immédiatement +60 Points de Vie à votre héros.",
+        isOwned: false,
+        consumable: true
+      }
+    ];
+
+    this.shopItemsGrid.innerHTML = '';
+
+    for (const item of items) {
+      const card = document.createElement('div');
+      card.className = `shop-item-card ${item.isOwned ? 'purchased' : ''}`;
+
+      card.innerHTML = `
+        <div class="shop-item-top">
+          <div class="shop-item-icon-box">${item.icon}</div>
+          <div class="shop-item-cost">${item.cost} ${getPixelIcon('coin', 15)}</div>
+        </div>
+        <h3 class="shop-item-name">${item.name}</h3>
+        <p class="shop-item-desc">${item.desc}</p>
+      `;
+
+      if (item.isOwned) {
+        const badge = document.createElement('div');
+        badge.className = 'badge-purchased';
+        badge.textContent = 'ÉQUIPÉ ✅';
+        card.appendChild(badge);
+      } else {
+        const btn = document.createElement('button');
+        btn.className = 'btn-buy-shop-item';
+        btn.innerHTML = `<span>ACHETER</span><span>(${item.cost} ${getPixelIcon('coin', 14)})</span>`;
+        btn.disabled = (this.player.gold || 0) < item.cost;
+
+        btn.addEventListener('click', () => {
+          this.buyShopItem(item);
+        });
+
+        card.appendChild(btn);
+      }
+
+      this.shopItemsGrid.appendChild(card);
+    }
+  }
+
+  buyShopItem(item) {
+    if (!this.player || (this.player.gold || 0) < item.cost) {
+      sfx.playHit();
+      return;
+    }
+
+    this.player.gold -= item.cost;
+
+    if (item.id === 'watch') {
+      this.player.hasWatch = true;
+      sfx.playLevelUp();
+      this.addFloatingText(this.player.x, this.player.y - 35, "⏱️ MONTRE OBTENUE !", '#ffd700', 22);
+    } else if (item.id === 'map') {
+      this.player.hasMiniMap = true;
+      if (this.minimapContainer) this.minimapContainer.classList.remove('hidden');
+      sfx.playLevelUp();
+      this.addFloatingText(this.player.x, this.player.y - 35, "🗺️ CARTE DU MONDE ACTIVÉE !", '#38bdf8', 22);
+    } else if (item.id === 'potion') {
+      this.player.heal(60);
+      sfx.playPickup();
+      this.createHitParticles(this.player.x, this.player.y, '#2ec4b6', 15);
+      this.addFloatingText(this.player.x, this.player.y - 35, "+60 PV (Élixir)", '#2ec4b6', 22);
+    }
+
+    this.updateHUD();
+    this.renderShopItems();
+  }
+
   openLibrary() {
     if (this.state !== 'PLAYING' && this.state !== 'PAUSED') return;
     this.state = 'LIBRARY';
@@ -821,6 +945,10 @@ export class GameEngine {
     } else {
       this.btnUpgradePending.classList.add('hidden');
     }
+  }
+
+  updateEquipmentHud() {
+    // Mise à jour de l'inventaire rapide
   }
 
   setupActionBar() {
@@ -1621,6 +1749,7 @@ export class GameEngine {
         }
       }
     }
+  }
 
     // HP
     const hpRatio = Math.max(0, this.player.hp / this.player.maxHp);
@@ -1708,7 +1837,7 @@ export class GameEngine {
     }
 
     // 3. Aura du joueur (Vortex de Sang)
-    if (this.player && this.player.upgrades['aura'] > 0) {
+    if (this.player && this.player.upgrades && this.player.upgrades['aura'] > 0) {
       this.renderPlayerAura();
     }
 
@@ -2125,7 +2254,6 @@ export class GameEngine {
     this.ctx.strokeRect(0, 0, this.worldSize, this.worldSize);
     this.ctx.shadowBlur = 0;
   }
-  }
 
   // ==========================================
   // SPORES VERTES FLOTTANTES DANS L'AIR
@@ -2364,7 +2492,7 @@ export class GameEngine {
   }
 
   renderPlayerAura() {
-    const lvl = this.player.upgrades['aura'];
+    const lvl = (this.player.upgrades && this.player.upgrades['aura']) || 0;
     const radius = 90 + lvl * 24;
 
     const pulse = Math.sin(this.gameTime * 10) * 6;

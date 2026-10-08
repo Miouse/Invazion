@@ -9,7 +9,8 @@ const MIME = {
   '.js': 'application/javascript',
   '.json': 'application/json',
   '.png': 'image/png',
-  '.jpg': 'image/jpeg'
+  '.jpg': 'image/jpeg',
+  '.svg': 'image/svg+xml'
 };
 
 const server = http.createServer((req, res) => {

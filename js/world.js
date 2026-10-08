@@ -2918,4 +2918,177 @@ export class WorldMap {
     ctx.arc(cx + w / 2 - 15, cy - 20, 45, 0, Math.PI * 2);
     ctx.fill();
   }
+
+  // ==========================================
+  // SYSTÈME DE BROUILLARD DE GUERRE & MINI-CARTE
+  // ==========================================
+  initTerrainGrid() {
+    this.terrainGrid = new Uint8Array(this.fogCols * this.fogRows);
+    for (let r = 0; r < this.fogRows; r++) {
+      const y = r * this.fogCellSize + this.fogCellSize / 2;
+      for (let c = 0; c < this.fogCols; c++) {
+        const x = c * this.fogCellSize + this.fogCellSize / 2;
+        const idx = r * this.fogCols + c;
+
+        if (this.isNearRiver(x, y, 70)) {
+          this.terrainGrid[idx] = 2; // Eau / Rivière
+        } else if (this.isInsideVillage(x, y, 160)) {
+          this.terrainGrid[idx] = 4; // Cités & villages
+        } else if (this.isNearRoad(x, y, 50)) {
+          this.terrainGrid[idx] = 3; // Routes de terre
+        } else {
+          let isForest = false;
+          if (this.forestBounds) {
+            for (const fb of this.forestBounds) {
+              const dx = x - fb.x;
+              const dy = y - fb.y;
+              if (dx * dx + dy * dy < fb.r * fb.r) {
+                isForest = true;
+                break;
+              }
+            }
+          }
+          this.terrainGrid[idx] = isForest ? 1 : 0;
+        }
+      }
+    }
+  }
+
+  revealFog(px, py, radius = 350) {
+    const minCol = Math.max(0, Math.floor((px - radius) / this.fogCellSize));
+    const maxCol = Math.min(this.fogCols - 1, Math.floor((px + radius) / this.fogCellSize));
+    const minRow = Math.max(0, Math.floor((py - radius) / this.fogCellSize));
+    const maxRow = Math.min(this.fogRows - 1, Math.floor((py + radius) / this.fogCellSize));
+    const rSq = radius * radius;
+
+    for (let r = minRow; r <= maxRow; r++) {
+      const cellY = r * this.fogCellSize + this.fogCellSize / 2;
+      const dy = cellY - py;
+      const dy2 = dy * dy;
+      for (let c = minCol; c <= maxCol; c++) {
+        const idx = r * this.fogCols + c;
+        if (this.fogOfWar[idx] === 1) continue;
+        const cellX = c * this.fogCellSize + this.fogCellSize / 2;
+        const dx = cellX - px;
+        if (dx * dx + dy2 <= rSq) {
+          this.fogOfWar[idx] = 1;
+        }
+      }
+    }
+  }
+
+  drawMiniMap(ctx, player) {
+    if (!ctx) return;
+    const w = ctx.canvas.width;
+    const h = ctx.canvas.height;
+
+    // 1. Fond sombre de brouillard inexploré
+    ctx.fillStyle = '#080b12';
+    ctx.fillRect(0, 0, w, h);
+
+    const cellW = w / this.fogCols;
+    const cellH = h / this.fogRows;
+
+    const colors = [
+      '#1b4332', // 0: Plaines (vert sombre)
+      '#081c15', // 1: Forêt dense (vert très sombre)
+      '#1e40af', // 2: Rivière (bleu profond)
+      '#92400e', // 3: Routes de terre (ambre)
+      '#475569'  // 4: Cités & pierre
+    ];
+
+    // 2. Rendu des tuiles explorées
+    for (let r = 0; r < this.fogRows; r++) {
+      for (let c = 0; c < this.fogCols; c++) {
+        const idx = r * this.fogCols + c;
+        if (this.fogOfWar[idx] === 1) {
+          const type = this.terrainGrid[idx];
+          ctx.fillStyle = colors[type];
+          ctx.fillRect(c * cellW, r * cellH, cellW + 0.3, cellH + 0.3);
+        }
+      }
+    }
+
+    // 3. Marqueurs des 3 Cités si explorées
+    const landmarks = [
+      { name: 'OAKHAVEN', x: 3200, y: 3500, color: '#ffd700' },
+      { name: 'VAL-DES-OMBRES', x: 2100, y: 1800, color: '#c084fc' },
+      { name: 'RIVERBEND', x: 4500, y: 5000, color: '#38bdf8' }
+    ];
+
+    for (const lm of landmarks) {
+      const c = Math.floor(lm.x / this.fogCellSize);
+      const r = Math.floor(lm.y / this.fogCellSize);
+      if (c >= 0 && c < this.fogCols && r >= 0 && r < this.fogRows && this.fogOfWar[r * this.fogCols + c] === 1) {
+        const mx = (lm.x / this.worldSize) * w;
+        const my = (lm.y / this.worldSize) * h;
+        ctx.fillStyle = lm.color;
+        ctx.beginPath();
+        ctx.arc(mx, my, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    }
+
+    // 4. Position & Direction du Joueur
+    if (player) {
+      const px = (player.x / this.worldSize) * w;
+      const py = (player.y / this.worldSize) * h;
+
+      ctx.fillStyle = 'rgba(0, 240, 255, 0.25)';
+      ctx.beginPath();
+      ctx.arc(px, py, 7, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#00f0ff';
+      ctx.beginPath();
+      ctx.arc(px, py, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      const angle = player.facingAngle !== undefined ? player.facingAngle : 0;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(px + Math.cos(angle) * 7, py + Math.sin(angle) * 7);
+      ctx.lineTo(px + Math.cos(angle + 2.4) * 4, py + Math.sin(angle + 2.4) * 4);
+      ctx.lineTo(px + Math.cos(angle - 2.4) * 4, py + Math.sin(angle - 2.4) * 4);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  getLightSources(isInsideHouse) {
+    if (isInsideHouse) {
+      return [
+        { x: 3500, y: 9080, radius: 280, color: 'rgba(255, 140, 30, 0.95)' },
+        { x: 3480, y: 9220, radius: 160, color: 'rgba(255, 200, 60, 0.85)' }
+      ];
+    }
+
+    const lights = [
+      { x: 3160, y: 3510, radius: 240, color: 'rgba(46, 196, 182, 0.85)' },
+      { x: 3080, y: 3510, radius: 210, color: 'rgba(255, 183, 3, 0.95)' },
+      { x: 2020, y: 1730, radius: 220, color: 'rgba(255, 120, 20, 0.85)' },
+      { x: 2180, y: 1730, radius: 220, color: 'rgba(255, 120, 20, 0.85)' },
+      { x: 4570, y: 4930, radius: 220, color: 'rgba(255, 120, 20, 0.85)' },
+      { x: 6200, y: 4000, radius: 220, color: 'rgba(255, 120, 20, 0.85)' },
+      { x: 1950, y: 1650, radius: 200, color: 'rgba(192, 132, 252, 0.8)' },
+      { x: 2250, y: 1650, radius: 200, color: 'rgba(192, 132, 252, 0.8)' }
+    ];
+
+    if (this.shrines) {
+      for (const sh of this.shrines) {
+        if (sh.activeTimer && sh.activeTimer > 0) {
+          lights.push({ x: sh.x, y: sh.y, radius: 260, color: sh.color });
+        }
+      }
+    }
+
+    return lights;
+  }
+
 }

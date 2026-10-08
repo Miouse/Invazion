@@ -1,0 +1,23 @@
+<svg class="pixel-icon pixel-icon-castle" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
+      <!-- Contour pierre sombre -->
+      <path d="M2 3h3v2h2V3h2v2h2V3h3v11H2V3z" fill="#0f172a" />
+      <!-- Créneaux et tours -->
+      <rect x="3" y="4" width="2" height="3" fill="#475569" />
+      <rect x="7" y="5" width="2" height="2" fill="#475569" />
+      <rect x="11" y="4" width="2" height="3" fill="#475569" />
+      <!-- Corps de la muraille en pierre -->
+      <rect x="3" y="6" width="10" height="7" fill="#64748b" />
+      <!-- Lignes d'appareil de pierre -->
+      <rect x="3" y="8" width="10" height="1" fill="#334155" />
+      <rect x="3" y="11" width="10" height="1" fill="#334155" />
+      <rect x="6" y="6" width="1" height="2" fill="#334155" />
+      <rect x="9" y="9" width="1" height="2" fill="#334155" />
+      <!-- Porte ogivale cintrée en bois renforcé -->
+      <rect x="6" y="10" width="4" height="3" fill="#78350f" />
+      <rect x="7" y="9" width="2" height="1" fill="#78350f" />
+      <!-- Clou et ferrure de porte -->
+      <rect x="7" y="11" width="1" height="1" fill="#fbbf24" />
+      <!-- Bannière au sommet de la tour gauche -->
+      <rect x="3" y="1" width="1" height="3" fill="#e2e8f0" />
+      <rect x="4" y="1" width="2" height="1" fill="#ef4444" />
+    </svg>

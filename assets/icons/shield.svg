@@ -1,0 +1,20 @@
+<svg class="pixel-icon pixel-icon-shield" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
+      <!-- Contour acier forgé -->
+      <path d="M2 2h12v1h1v6h-1v2h-2v2h-2v1h-2v1H7v-1H5v-2H3v-2H1V9H0V3h1V2h1z" fill="#0f172a" />
+      <!-- Cerclage d'acier -->
+      <rect x="2" y="3" width="12" height="6" fill="#475569" />
+      <rect x="3" y="9" width="10" height="2" fill="#475569" />
+      <rect x="5" y="11" width="6" height="2" fill="#475569" />
+      <rect x="7" y="13" width="2" height="1" fill="#475569" />
+      <!-- Corps de l'écu bleu royal / pourpre -->
+      <rect x="3" y="4" width="10" height="4" fill="#1e3a8a" />
+      <rect x="4" y="8" width="8" height="2" fill="#1e3a8a" />
+      <rect x="6" y="10" width="4" height="2" fill="#1e3a8a" />
+      <!-- Croix de chevalier dorée au centre -->
+      <rect x="7" y="4" width="2" height="7" fill="#f59e0b" />
+      <rect x="4" y="6" width="8" height="2" fill="#f59e0b" />
+      <!-- Bossage central en or brillant -->
+      <rect x="7" y="6" width="2" height="2" fill="#fde047" />
+      <!-- Reflet d'acier supérieur -->
+      <rect x="2" y="2" width="6" height="1" fill="#cbd5e1" />
+    </svg>

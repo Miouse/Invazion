@@ -1,0 +1,19 @@
+<svg class="pixel-icon pixel-icon-coin" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
+      <!-- Ombre de contour -->
+      <path d="M5 1h6v1h2v2h1v2h1v4h-1v2h-1v2h-2v1H5v-1H3v-2H2v-2H1V6h1V4h1V2h2V1z" fill="#3b2005" />
+      <!-- Base or foncé -->
+      <path d="M5 2h6v1h2v2h1v6h-1v2h-2v1H5v-1H3v-2H2V5h1V3h2V2z" fill="#b45309" />
+      <!-- Corps de la pièce (Or chaud) -->
+      <path d="M5 3h6v1h1v1h1v6h-1v1h-1v1H5v-1H4v-1H3V5h1V4h1V3z" fill="#f59e0b" />
+      <!-- Face intérieure et éclat supérieur (Or brillant) -->
+      <path d="M5 4h5v1h1v5h-1v1H6v-1H5V5h-1V4h1z" fill="#fbbf24" />
+      <!-- Reflet lumineux blanc -->
+      <rect x="4" y="4" width="2" height="2" fill="#fef08a" />
+      <rect x="4" y="4" width="1" height="1" fill="#ffffff" />
+      <!-- Sceau de couronne royale gravée au centre -->
+      <rect x="6" y="7" width="4" height="2" fill="#78350f" />
+      <rect x="6" y="6" width="1" height="1" fill="#78350f" />
+      <rect x="8" y="5" width="1" height="1" fill="#78350f" />
+      <rect x="9" y="6" width="1" height="1" fill="#78350f" />
+      <rect x="7" y="7" width="2" height="1" fill="#fde047" />
+    </svg>

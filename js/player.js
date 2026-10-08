@@ -30,6 +30,7 @@ export class Player {
 
     // Économie médiévale (Pièces d'or récoltées)
     this.gold = 0;
+    this.upgrades = {};
 
     // Dash / Esquive
     this.dashCooldown = 1.3 * (char.dashCdMult || 1.0);
