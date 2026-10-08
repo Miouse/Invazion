@@ -49,6 +49,7 @@
           <span id="gems-display">0</span>
         </div>
         <button id="btn-sound" class="icon-btn" title="Activer / Couper le son" aria-label="Son">🔊</button>
+        <button id="btn-settings" class="icon-btn" title="Paramètres des contrôles (Souris LoL / Clavier / Manette)" aria-label="Réglages">⚙️</button>
         <button id="btn-pause" class="icon-btn" title="Mettre en pause (Échap)" aria-label="Pause">⏸️</button>
       </div>
 
@@ -126,10 +127,16 @@
           </div>
         </div>
 
-        <button id="btn-start" class="glow-btn">
-          <span>ENTRER DANS L'ARÈNE</span>
-          <span class="btn-arrow">⚔️</span>
-        </button>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%;">
+          <button id="btn-start" class="glow-btn">
+            <span>ENTRER DANS L'ARÈNE</span>
+            <span class="btn-arrow">⚔️</span>
+          </button>
+          <button id="btn-start-settings" class="settings-link-btn" title="Changer le type de contrôle">
+            <span>⚙️ Contrôles :</span>
+            <span id="start-control-mode-label" style="color: var(--accent-cyan); font-weight: 700;">Clavier (ZQSD)</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -152,6 +159,105 @@
         <h2>PAUSE</h2>
         <p>Prends ton souffle, l'arène t'attend.</p>
         <button id="btn-resume" class="glow-btn">REPRENDRE LA PARTIE</button>
+        <button id="btn-pause-settings" class="glow-btn secondary-glow" style="margin-top: 10px; font-size: 14px;">⚙️ OPTIONS DES CONTRÔLES</button>
+      </div>
+    </div>
+
+    <!-- Écran des Réglages / Options de Déplacement -->
+    <div id="settings-screen" class="overlay-modal">
+      <div class="modal-card settings-modal-card">
+        <div class="card-glow cyan"></div>
+        <div class="settings-header">
+          <span class="settings-tag">CONFIGURATION DU JEU</span>
+          <h2 class="settings-title">⚙️ TYPE DE DÉPLACEMENT</h2>
+          <p class="settings-subtitle">Choisissez votre méthode de contrôle favorite</p>
+        </div>
+
+        <div class="control-modes-grid" id="control-modes-grid">
+          <!-- 1. Mode Clavier -->
+          <div class="control-card active" data-mode="keyboard">
+            <div class="control-card-header">
+              <span class="control-icon">⌨️</span>
+              <div class="control-info">
+                <span class="control-title">Clavier Classique</span>
+                <span class="control-desc">Touches directionnelles 8-directions</span>
+              </div>
+              <div class="control-badge">✓</div>
+            </div>
+            <div class="control-details">
+              <div class="key-pill-row">
+                <span class="key-pill">Z / W</span>
+                <span class="key-pill">Q / A</span>
+                <span class="key-pill">S</span>
+                <span class="key-pill">D</span>
+                <span class="key-label">ou Flèches directionnelles</span>
+              </div>
+              <div class="key-pill-row">
+                <span class="key-pill">Espace</span>
+                <span class="key-label">Dash d'esquive</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Mode Souris (League of Legends) -->
+          <div class="control-card" data-mode="mouse_lol">
+            <div class="control-card-header">
+              <span class="control-icon">🖱️</span>
+              <div class="control-info">
+                <span class="control-title">Souris (Mode League of Legends)</span>
+                <span class="control-desc">Clic droit pour se déplacer au sol (MOBA / RTS)</span>
+              </div>
+              <div class="control-badge">✓</div>
+            </div>
+            <div class="control-details">
+              <div class="key-pill-row">
+                <span class="key-pill">Clic Droit</span>
+                <span class="key-label">Déplacement au point cliqué (curseur vert LoL animé)</span>
+              </div>
+              <div class="key-pill-row">
+                <span class="key-pill">Maintenir Clic</span>
+                <span class="key-label">Suivre le curseur de la souris en temps réel</span>
+              </div>
+              <div class="key-pill-row">
+                <span class="key-pill">Espace</span>
+                <span class="key-label">Dash d'esquive vers la direction du curseur</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Mode Manette (Gamepad) -->
+          <div class="control-card" data-mode="gamepad">
+            <div class="control-card-header">
+              <span class="control-icon">🎮</span>
+              <div class="control-info">
+                <span class="control-title">Manette (Gamepad USB / Bluetooth)</span>
+                <span class="control-desc">Stick analogique 360° fluide & gâchettes</span>
+              </div>
+              <div class="control-badge">✓</div>
+            </div>
+            <div class="control-details">
+              <div class="key-pill-row">
+                <span class="key-pill">Stick Gauche</span>
+                <span class="key-label">Déplacement analogique fluide 360°</span>
+              </div>
+              <div class="key-pill-row">
+                <span class="key-pill">Bouton A / RT</span>
+                <span class="key-label">Dash d'esquive</span>
+              </div>
+              <div class="gamepad-status-row">
+                <span class="gamepad-dot" id="gamepad-status-dot"></span>
+                <span id="gamepad-status-text">Recherche de manette connectée...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-actions">
+          <button id="btn-save-settings" class="glow-btn">
+            <span>ENREGISTRER & REPRENDRE</span>
+            <span class="btn-arrow">✓</span>
+          </button>
+        </div>
       </div>
     </div>
 

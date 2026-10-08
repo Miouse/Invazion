@@ -1,0 +1,550 @@
+/**
+ * Module Contrôles & Entrées - ControlsManager
+ * Centralise et gère tous les modes de déplacement et périphériques du jeu :
+ * 1. ⌨️ Mode Clavier Classique (ZQSD / WASD / Flèches directionnelles, Espace pour Dash)
+ * 2. 🖱️ Mode Souris Style League of Legends (Clic Droit au sol, marqueur vert LoL animé, suivi en continu)
+ * 3. 🎮 Mode Manette / Gamepad (Stick analogique 360° fluide, D-Pad, gâchettes, vibrations & détection automatique)
+ * 4. 📱 Joystick Tactile Virtuel (pour écrans tactiles et mobiles)
+ * 5. ⚙️ Interface et Modale de Réglages interactive avec persistance localStorage
+ */
+
+import { sfx } from './audio.js';
+
+export class ControlsManager {
+  constructor(engine) {
+    this.engine = engine;
+
+    // Mode actuel : 'keyboard' | 'mouse_lol' | 'gamepad'
+    this.mode = 'keyboard';
+    try {
+      this.mode = localStorage.getItem('invazion_control_mode') || 'keyboard';
+    } catch (e) {
+      this.mode = 'keyboard';
+    }
+
+    // État clavier
+    this.keys = {};
+
+    // État souris (Mode League of Legends)
+    this.mouseTarget = null;
+    this.isRightMouseDown = false;
+    this.lastMouseWorld = { x: 3500, y: 3500 };
+    this.clickMarkers = [];
+
+    // État manette (Gamepad API)
+    this.gamepadConnected = false;
+    this.gamepadId = '';
+    this.lastGpDashPressed = false;
+    this.lastGpPausePressed = false;
+    this.lastGpUpgradePressed = false;
+
+    // État tactile
+    this.joystickVector = { x: 0, y: 0 };
+
+    // Éléments du DOM (UI)
+    this.settingsScreen = document.getElementById('settings-screen');
+    this.btnSettings = document.getElementById('btn-settings');
+    this.btnStartSettings = document.getElementById('btn-start-settings');
+    this.btnPauseSettings = document.getElementById('btn-pause-settings');
+    this.btnSaveSettings = document.getElementById('btn-save-settings');
+    this.startControlLabel = document.getElementById('start-control-mode-label');
+    this.gamepadStatusDot = document.getElementById('gamepad-status-dot');
+    this.gamepadStatusText = document.getElementById('gamepad-status-text');
+
+    this.init();
+  }
+
+  init() {
+    this.setupKeyboard();
+    this.setupMouseLoL();
+    this.setupGamepad();
+    this.setupTouchJoystick();
+    this.setupSettingsUI();
+    this.setMode(this.mode, false);
+  }
+
+  // ==========================================
+  // 1. CLAVIER (ZQSD / FLÈCHES)
+  // ==========================================
+  setupKeyboard() {
+    window.addEventListener('keydown', (e) => {
+      this.keys[e.key.toLowerCase()] = true;
+
+      // Dash avec Barre Espace
+      if (e.code === 'Space' || e.key === ' ') {
+        e.preventDefault();
+        if (this.engine.player && this.engine.state === 'PLAYING') {
+          // En mode LoL, le Dash propulse vers le curseur de la souris
+          if (this.mode === 'mouse_lol' && this.lastMouseWorld) {
+            const dx = this.lastMouseWorld.x - this.engine.player.x;
+            const dy = this.lastMouseWorld.y - this.engine.player.y;
+            if (Math.hypot(dx, dy) > 10) {
+              this.engine.player.facingAngle = Math.atan2(dy, dx);
+            }
+          }
+          this.engine.player.triggerDash(this.engine);
+        }
+      }
+
+      // Pause avec Échap ou P
+      if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
+        this.engine.togglePause();
+      }
+
+      // Raccourci 'U' pour les améliorations
+      if (e.key === 'u' || e.key === 'U') {
+        if (this.engine.pendingUpgrades > 0 && this.engine.state === 'PLAYING') {
+          this.engine.openUpgradeModal();
+        }
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      this.keys[e.key.toLowerCase()] = false;
+    });
+  }
+
+  // ==========================================
+  // 2. SOURIS (MODE LEAGUE OF LEGENDS)
+  // ==========================================
+  setupMouseLoL() {
+    // Désactiver le menu contextuel par défaut du navigateur
+    window.addEventListener('contextmenu', (e) => {
+      if (this.engine.state === 'PLAYING') {
+        e.preventDefault();
+      }
+    });
+
+    this.engine.canvas.addEventListener('pointerdown', (e) => {
+      if (this.engine.state !== 'PLAYING') return;
+
+      // Clic Droit (Bouton 2) = Déplacement style RTS / MOBA
+      if (e.button === 2) {
+        e.preventDefault();
+        const worldCoords = this.screenToWorld(e.clientX, e.clientY);
+        this.lastMouseWorld = worldCoords;
+
+        if (this.mode === 'mouse_lol') {
+          this.isRightMouseDown = true;
+          this.setMouseDestination(worldCoords.x, worldCoords.y);
+        } else if (this.mode === 'keyboard') {
+          // Dash optionnel au clic droit en mode clavier
+          if (this.engine.player) {
+            this.engine.player.triggerDash(this.engine);
+          }
+        }
+      }
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      const worldCoords = this.screenToWorld(e.clientX, e.clientY);
+      this.lastMouseWorld = worldCoords;
+
+      // Maintien du clic droit : suit le curseur en direct comme dans LoL
+      if (this.isRightMouseDown && this.mode === 'mouse_lol' && this.engine.state === 'PLAYING') {
+        this.mouseTarget = { x: worldCoords.x, y: worldCoords.y };
+      }
+    });
+
+    window.addEventListener('pointerup', (e) => {
+      if (e.button === 2) {
+        this.isRightMouseDown = false;
+      }
+    });
+  }
+
+  // Projection coordonnées écran -> monde
+  screenToWorld(clientX, clientY) {
+    const rect = this.engine.canvas.getBoundingClientRect();
+    const canvasX = clientX - rect.left;
+    const canvasY = clientY - rect.top;
+    const worldX = this.engine.camera.x + (canvasX - this.engine.width / 2) / this.engine.zoom;
+    const worldY = this.engine.camera.y + (canvasY - this.engine.height / 2) / this.engine.zoom;
+    return { x: worldX, y: worldY };
+  }
+
+  setMouseDestination(x, y) {
+    this.mouseTarget = { x, y };
+
+    // Ajouter le marqueur visuel vert LoL animé
+    this.clickMarkers.push({
+      x,
+      y,
+      time: 0,
+      duration: 0.42
+    });
+
+    // Petit clic sonore réactif
+    sfx.playPickup();
+  }
+
+  // ==========================================
+  // 3. MANETTE / GAMEPAD API (HTML5 STANDARD)
+  // ==========================================
+  setupGamepad() {
+    window.addEventListener('gamepadconnected', (e) => {
+      this.gamepadConnected = true;
+      this.gamepadId = e.gamepad.id;
+      this.updateGamepadStatusUI();
+      if (this.engine.player) {
+        this.engine.addFloatingText(this.engine.player.x, this.engine.player.y - 45, "🎮 MANETTE CONNECTÉE", '#00f0ff', 22);
+      }
+    });
+
+    window.addEventListener('gamepaddisconnected', () => {
+      this.gamepadConnected = false;
+      this.updateGamepadStatusUI();
+    });
+  }
+
+  pollGamepad() {
+    if (!navigator.getGamepads) return { moveX: 0, moveY: 0 };
+    const gamepads = navigator.getGamepads();
+    let moveX = 0, moveY = 0;
+    let anyConnected = false;
+
+    for (let i = 0; i < gamepads.length; i++) {
+      const gp = gamepads[i];
+      if (gp && gp.connected) {
+        anyConnected = true;
+        this.gamepadConnected = true;
+        this.gamepadId = gp.id;
+
+        // 1. Stick analogique gauche (360°)
+        const axisX = gp.axes[0] || 0;
+        const axisY = gp.axes[1] || 0;
+        const deadzone = 0.18;
+        if (Math.hypot(axisX, axisY) > deadzone) {
+          moveX = axisX;
+          moveY = axisY;
+        }
+
+        // 2. Croix directionnelle (D-Pad)
+        if (gp.buttons[12] && gp.buttons[12].pressed) moveY -= 1;
+        if (gp.buttons[13] && gp.buttons[13].pressed) moveY += 1;
+        if (gp.buttons[14] && gp.buttons[14].pressed) moveX -= 1;
+        if (gp.buttons[15] && gp.buttons[15].pressed) moveX += 1;
+
+        // 3. Bouton A (Croix) / Gâchette RT (R2) / RB : Dash
+        const dashBtn = (gp.buttons[0] && gp.buttons[0].pressed) ||
+                        (gp.buttons[7] && gp.buttons[7].pressed) ||
+                        (gp.buttons[5] && gp.buttons[5].pressed);
+        if (dashBtn) {
+          if (!this.lastGpDashPressed) {
+            if (this.engine.player && this.engine.state === 'PLAYING') {
+              this.engine.player.triggerDash(this.engine);
+            }
+          }
+          this.lastGpDashPressed = true;
+        } else {
+          this.lastGpDashPressed = false;
+        }
+
+        // 4. Bouton Start / Options (Index 9) : Pause
+        const pauseBtn = gp.buttons[9] && gp.buttons[9].pressed;
+        if (pauseBtn) {
+          if (!this.lastGpPausePressed) {
+            this.engine.togglePause();
+          }
+          this.lastGpPausePressed = true;
+        } else {
+          this.lastGpPausePressed = false;
+        }
+
+        // 5. Bouton Y / Triangle (Index 3) : Améliorations
+        const upgradeBtn = gp.buttons[3] && gp.buttons[3].pressed;
+        if (upgradeBtn) {
+          if (!this.lastGpUpgradePressed) {
+            if (this.engine.pendingUpgrades > 0 && this.engine.state === 'PLAYING') {
+              this.engine.openUpgradeModal();
+            }
+          }
+          this.lastGpUpgradePressed = true;
+        } else {
+          this.lastGpUpgradePressed = false;
+        }
+        break;
+      }
+    }
+
+    if (!anyConnected) {
+      this.gamepadConnected = false;
+    }
+
+    this.updateGamepadStatusUI();
+    return { moveX, moveY };
+  }
+
+  // ==========================================
+  // 4. JOYSTICK VIRTUEL TACTILE
+  // ==========================================
+  setupTouchJoystick() {
+    const joystick = document.getElementById('virtual-joystick');
+    const knob = document.getElementById('joystick-knob');
+    if (!joystick || !knob) return;
+
+    let isTouching = false;
+    let startX = 0, startY = 0;
+
+    const handleTouch = (touch) => {
+      const dx = touch.clientX - startX;
+      const dy = touch.clientY - startY;
+      const dist = Math.hypot(dx, dy);
+      const maxDist = 40;
+      const clampedDist = Math.min(dist, maxDist);
+      const angle = Math.atan2(dy, dx);
+
+      const knobX = Math.cos(angle) * clampedDist;
+      const knobY = Math.sin(angle) * clampedDist;
+      knob.style.transform = `translate(${knobX}px, ${knobY}px)`;
+
+      this.joystickVector.x = clampedDist > 5 ? knobX / maxDist : 0;
+      this.joystickVector.y = clampedDist > 5 ? knobY / maxDist : 0;
+    };
+
+    joystick.addEventListener('touchstart', (e) => {
+      isTouching = true;
+      const rect = joystick.getBoundingClientRect();
+      startX = rect.left + rect.width / 2;
+      startY = rect.top + rect.height / 2;
+      handleTouch(e.touches[0]);
+    }, { passive: false });
+
+    window.addEventListener('touchmove', (e) => {
+      if (!isTouching) return;
+      handleTouch(e.touches[0]);
+    }, { passive: false });
+
+    const endTouch = () => {
+      isTouching = false;
+      knob.style.transform = `translate(0px, 0px)`;
+      this.joystickVector.x = 0;
+      this.joystickVector.y = 0;
+    };
+
+    window.addEventListener('touchend', endTouch);
+    window.addEventListener('touchcancel', endTouch);
+  }
+
+  // ==========================================
+  // 5. INTERFACE & MODALE DES RÉGLAGES
+  // ==========================================
+  setupSettingsUI() {
+    if (this.btnSettings) {
+      this.btnSettings.addEventListener('click', () => this.openSettings());
+    }
+    if (this.btnStartSettings) {
+      this.btnStartSettings.addEventListener('click', () => this.openSettings());
+    }
+    if (this.btnPauseSettings) {
+      this.btnPauseSettings.addEventListener('click', () => this.openSettings());
+    }
+    if (this.btnSaveSettings) {
+      this.btnSaveSettings.addEventListener('click', () => this.closeSettings());
+    }
+
+    const cards = document.querySelectorAll('.control-card');
+    cards.forEach((card) => {
+      card.addEventListener('click', () => {
+        const selected = card.dataset.mode;
+        if (selected) {
+          this.setMode(selected);
+          sfx.playPickup();
+        }
+      });
+    });
+  }
+
+  setMode(mode, save = true) {
+    this.mode = mode;
+    if (save) {
+      try {
+        localStorage.setItem('invazion_control_mode', mode);
+      } catch (e) {}
+    }
+
+    // Mise à jour visuelle des cartes
+    document.querySelectorAll('.control-card').forEach((c) => {
+      if (c.dataset.mode === mode) {
+        c.classList.add('active');
+      } else {
+        c.classList.remove('active');
+      }
+    });
+
+    // Mise à jour du label au menu de départ
+    if (this.startControlLabel) {
+      const labels = {
+        keyboard: 'Clavier (ZQSD)',
+        mouse_lol: 'Souris (Mode LoL)',
+        gamepad: 'Manette (Gamepad)'
+      };
+      this.startControlLabel.textContent = labels[mode] || mode;
+    }
+
+    // Réinitialisation des déplacements souris en cours
+    this.mouseTarget = null;
+    this.isRightMouseDown = false;
+  }
+
+  resetMovement() {
+    this.mouseTarget = null;
+    this.isRightMouseDown = false;
+    this.clickMarkers = [];
+    this.joystickVector = { x: 0, y: 0 };
+  }
+
+  openSettings() {
+    this.previousState = this.engine.state;
+    if (this.engine.state === 'PLAYING') {
+      this.engine.state = 'PAUSED';
+    }
+    if (this.settingsScreen) {
+      this.settingsScreen.classList.add('active');
+    }
+    this.updateGamepadStatusUI();
+    sfx.playPickup();
+  }
+
+  closeSettings() {
+    if (this.settingsScreen) {
+      this.settingsScreen.classList.remove('active');
+    }
+    if (this.previousState === 'PLAYING') {
+      this.engine.state = 'PLAYING';
+    }
+    sfx.playPickup();
+  }
+
+  updateGamepadStatusUI() {
+    if (!this.gamepadStatusText || !this.gamepadStatusDot) return;
+    if (this.gamepadConnected) {
+      this.gamepadStatusDot.classList.add('connected');
+      const cleanName = this.gamepadId ? this.gamepadId.split('(')[0].trim() : 'Manette Active';
+      this.gamepadStatusText.textContent = `Connectée : ${cleanName}`;
+      this.gamepadStatusText.style.color = '#00f0ff';
+    } else {
+      this.gamepadStatusDot.classList.remove('connected');
+      this.gamepadStatusText.textContent = 'En attente d\'une manette (appuyez sur une touche)...';
+      this.gamepadStatusText.style.color = 'var(--text-muted)';
+    }
+  }
+
+  // ==========================================
+  // CALCUL DES VECTEURS DE DÉPLACEMENT
+  // ==========================================
+  getMovementVector(dt) {
+    let moveX = 0, moveY = 0;
+
+    // 1. Clavier (ZQSD / WASD / Flèches)
+    const isKeyboardPressed = (
+      this.keys['z'] || this.keys['w'] || this.keys['arrowup'] ||
+      this.keys['s'] || this.keys['arrowdown'] ||
+      this.keys['q'] || this.keys['a'] || this.keys['arrowleft'] ||
+      this.keys['d'] || this.keys['arrowright']
+    );
+
+    if (this.keys['z'] || this.keys['w'] || this.keys['arrowup']) moveY -= 1;
+    if (this.keys['s'] || this.keys['arrowdown']) moveY += 1;
+    if (this.keys['q'] || this.keys['a'] || this.keys['arrowleft']) moveX -= 1;
+    if (this.keys['d'] || this.keys['arrowright']) moveX += 1;
+
+    // Si le clavier est utilisé, il annule la cible souris pour une réactivité instantanée
+    if (isKeyboardPressed) {
+      this.mouseTarget = null;
+    }
+
+    // 2. Manette (Gamepad)
+    const gpMove = this.pollGamepad();
+    if (gpMove.moveX !== 0 || gpMove.moveY !== 0) {
+      moveX = gpMove.moveX;
+      moveY = gpMove.moveY;
+      this.mouseTarget = null;
+    }
+
+    // 3. Joystick tactile
+    if (this.joystickVector.x !== 0 || this.joystickVector.y !== 0) {
+      moveX = this.joystickVector.x;
+      moveY = this.joystickVector.y;
+      this.mouseTarget = null;
+    }
+
+    // 4. Mode Souris (League of Legends)
+    if (this.mouseTarget && !isKeyboardPressed && (gpMove.moveX === 0 && gpMove.moveY === 0) && (this.joystickVector.x === 0 && this.joystickVector.y === 0)) {
+      if (this.engine.player) {
+        const dx = this.mouseTarget.x - this.engine.player.x;
+        const dy = this.mouseTarget.y - this.engine.player.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist > 18) {
+          moveX = dx / dist;
+          moveY = dy / dist;
+        } else {
+          this.mouseTarget = null;
+        }
+      }
+    }
+
+    // Mise à jour de la durée des marqueurs LoL
+    for (let i = this.clickMarkers.length - 1; i >= 0; i--) {
+      this.clickMarkers[i].time += dt;
+      if (this.clickMarkers[i].time >= this.clickMarkers[i].duration) {
+        this.clickMarkers.splice(i, 1);
+      }
+    }
+
+    return { moveX, moveY };
+  }
+
+  // ==========================================
+  // RENDU DES MARQUEURS DE CLIC STYLE LEAGUE OF LEGENDS
+  // ==========================================
+  renderClickMarkers(ctx) {
+    if (!this.clickMarkers || this.clickMarkers.length === 0) return;
+
+    for (let i = 0; i < this.clickMarkers.length; i++) {
+      const m = this.clickMarkers[i];
+      const progress = m.time / m.duration; // 0 à 1
+      if (progress >= 1) continue;
+
+      const alpha = 1 - progress;
+      const radius = 24 * (1 - progress * 0.45); // Cercle qui rétrécit vers le centre
+      const rotation = progress * 1.5;
+
+      ctx.save();
+      ctx.translate(m.x, m.y);
+      ctx.rotate(rotation);
+
+      // 1. Cercle pulsé vert émeraude LoL
+      ctx.strokeStyle = `rgba(46, 213, 115, ${alpha * 0.95})`;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, radius, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 2. 4 Chevrons intérieurs iconiques (style curseur de déplacement LoL)
+      ctx.fillStyle = `rgba(38, 222, 129, ${alpha})`;
+      for (let a = 0; a < 4; a++) {
+        const ang = (a * Math.PI) / 2;
+        ctx.save();
+        ctx.rotate(ang);
+        ctx.beginPath();
+        ctx.moveTo(radius + 4, 0);
+        ctx.lineTo(radius + 11, -5);
+        ctx.lineTo(radius + 8, 0);
+        ctx.lineTo(radius + 11, 5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // 3. Éclat lumineux central
+      ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+      ctx.beginPath();
+      ctx.arc(0, 0, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+  }
+}

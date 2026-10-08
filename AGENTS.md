@@ -35,6 +35,7 @@ Invazion/
 │   ├── enemy.js            # Entité Monstre & Boss : IA de poursuite, séparation, animations de sprites, colosse Souls
 │   ├── sprites.js          # Registre des héros (stats/bonus), catalogue de monstres, cache d'images et maths 8-directions
 │   ├── entities.js         # Entités secondaires : Projectile, Gem (XP & cœurs), Particle, Shockwave, FloatingText
+│   ├── controls.js         # Gestionnaire des contrôles (Clavier ZQSD, Souris style LoL, Manette Gamepad 360°, Joystick tactile, Modale réglages)
 │   ├── config.js           # Catalogue des améliorations (armes et passifs), paliers et niveaux max
 │   └── audio.js            # Moteur sonore procédural (Web Audio API synthétique, 0 fichier audio externe)
 │

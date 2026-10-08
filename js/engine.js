@@ -10,6 +10,7 @@ import { Enemy } from './enemy.js';
 import { Projectile, Gem } from './entities.js';
 import { CHARACTERS, spriteLoader } from './sprites.js';
 import { WorldMap } from './world.js';
+import { ControlsManager } from './controls.js';
 
 export class GameEngine {
   constructor() {
@@ -142,9 +143,8 @@ export class GameEngine {
     this.floatingTexts = [];
     this.activeBoss = null;
 
-    // Clavier & Input
-    this.keys = {};
-    this.joystickVector = { x: 0, y: 0 };
+    // Gestionnaire des Contrôles & Périphériques (Clavier, Souris LoL, Manette, Tactile, Réglages)
+    this.controls = new ControlsManager(this);
 
     this.initWindow();
     this.setupInputs();
@@ -153,6 +153,10 @@ export class GameEngine {
     
     // Lancement du cycle de rendu initial
     requestAnimationFrame((t) => this.loop(t));
+  }
+  
+  get keys() {
+    return this.controls ? this.controls.keys : {};
   }
 
   setupCharacterSelectionUI() {
@@ -236,51 +240,6 @@ export class GameEngine {
   }
 
   setupInputs() {
-    // Clavier
-    window.addEventListener('keydown', (e) => {
-      this.keys[e.key.toLowerCase()] = true;
-
-      // Dash avec Barre Espace
-      if (e.code === 'Space' || e.key === ' ') {
-        e.preventDefault();
-        if (this.player && this.state === 'PLAYING') {
-          this.player.triggerDash(this);
-        }
-      }
-
-      // Pause avec Échap ou P
-      if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
-        this.togglePause();
-      }
-
-      // Raccourci 'U' pour ouvrir les améliorations disponibles
-      if (e.key === 'u' || e.key === 'U') {
-        if (this.pendingUpgrades > 0 && this.state === 'PLAYING') {
-          this.openUpgradeModal();
-        }
-      }
-    });
-
-    window.addEventListener('keyup', (e) => {
-      this.keys[e.key.toLowerCase()] = false;
-    });
-
-    // Clic droit optionnel pour Dash
-    window.addEventListener('mousedown', (e) => {
-      if (e.button === 2) {
-        e.preventDefault();
-        if (this.player && this.state === 'PLAYING') {
-          this.player.triggerDash(this);
-        }
-      }
-    });
-
-    window.addEventListener('contextmenu', (e) => {
-      if (this.state === 'PLAYING') {
-        e.preventDefault();
-      }
-    });
-
     // Molette souris pour ajuster le zoom en jeu (entre 0.30 et 1.15)
     window.addEventListener('wheel', (e) => {
       if (this.state === 'PLAYING') {
@@ -291,53 +250,6 @@ export class GameEngine {
         }
       }
     }, { passive: true });
-
-    // Joystick Tactile pour support mobile
-    const joystick = document.getElementById('virtual-joystick');
-    const knob = document.getElementById('joystick-knob');
-    if (joystick && knob) {
-      let isTouching = false;
-      let startX = 0, startY = 0;
-
-      const handleTouch = (touch) => {
-        const dx = touch.clientX - startX;
-        const dy = touch.clientY - startY;
-        const dist = Math.hypot(dx, dy);
-        const maxDist = 40;
-        const clampedDist = Math.min(dist, maxDist);
-        const angle = Math.atan2(dy, dx);
-        
-        const knobX = Math.cos(angle) * clampedDist;
-        const knobY = Math.sin(angle) * clampedDist;
-        knob.style.transform = `translate(${knobX}px, ${knobY}px)`;
-
-        this.joystickVector.x = clampedDist > 5 ? knobX / maxDist : 0;
-        this.joystickVector.y = clampedDist > 5 ? knobY / maxDist : 0;
-      };
-
-      joystick.addEventListener('touchstart', (e) => {
-        isTouching = true;
-        const rect = joystick.getBoundingClientRect();
-        startX = rect.left + rect.width / 2;
-        startY = rect.top + rect.height / 2;
-        handleTouch(e.touches[0]);
-      }, { passive: false });
-
-      window.addEventListener('touchmove', (e) => {
-        if (!isTouching) return;
-        handleTouch(e.touches[0]);
-      }, { passive: false });
-
-      const endTouch = () => {
-        isTouching = false;
-        knob.style.transform = `translate(0px, 0px)`;
-        this.joystickVector.x = 0;
-        this.joystickVector.y = 0;
-      };
-
-      window.addEventListener('touchend', endTouch);
-      window.addEventListener('touchcancel', endTouch);
-    }
   }
 
   setupUIEvents() {
@@ -408,6 +320,9 @@ export class GameEngine {
     this.player = new Player(this.worldSize / 2, this.worldSize / 2, this.selectedCharacterId);
     this.camera.x = this.player.x;
     this.camera.y = this.player.y;
+    if (this.controls) {
+      this.controls.resetMovement();
+    }
     
     // Débloque l'arme de départ selon le héros
     const charCfg = CHARACTERS[this.selectedCharacterId] || CHARACTERS.warrior;
@@ -815,18 +730,8 @@ export class GameEngine {
   update(dt) {
     this.gameTime += dt;
 
-    // 1. Déplacement Clavier (ZQSD / WASD / Flèches)
-    let moveX = 0, moveY = 0;
-    if (this.keys['z'] || this.keys['w'] || this.keys['arrowup']) moveY -= 1;
-    if (this.keys['s'] || this.keys['arrowdown']) moveY += 1;
-    if (this.keys['q'] || this.keys['a'] || this.keys['arrowleft']) moveX -= 1;
-    if (this.keys['d'] || this.keys['arrowright']) moveX += 1;
-
-    // 2. Joystick tactile
-    if (this.joystickVector.x !== 0 || this.joystickVector.y !== 0) {
-      moveX = this.joystickVector.x;
-      moveY = this.joystickVector.y;
-    }
+    // Déplacement via ControlsManager (Clavier ZQSD, Souris style LoL, Manette Gamepad 360°, ou Tactile)
+    const { moveX, moveY } = this.controls.getMovementVector(dt);
 
     // Orientation du regard selon la direction de déplacement
     if (moveX !== 0 || moveY !== 0) {
@@ -1120,6 +1025,9 @@ export class GameEngine {
 
     // 1. Rendu du vaste monde RPG (3 villages, rivière sinueuse, ponts, routes, forêts denses, falaises)
     this.worldMap.render(this.ctx, this, this.camera, this.zoom);
+
+    // 1.2. Marqueurs de clic au sol style League of Legends
+    this.controls.renderClickMarkers(this.ctx);
 
     // 1.5. Portails Démoniaques aux 4 coins cardinaux
     this.renderPortals();
