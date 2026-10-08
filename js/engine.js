@@ -46,6 +46,17 @@ export class GameEngine {
     this.btnLibrary = document.getElementById('btn-library');
     this.btnCloseLibrary = document.getElementById('btn-close-library');
 
+    // Bouton & invite d'interaction universelle (Touche F)
+    this.interactionHudContainer = document.getElementById('interaction-hud-container');
+    this.btnInteract = document.getElementById('btn-interact');
+    this.interactIcon = document.getElementById('interact-icon');
+    this.interactLabel = document.getElementById('interact-label');
+
+    // État d'exploration intérieure
+    this.isInsideHouse = false;
+    this.savedOutdoorPos = null;
+    this.currentInteractable = null;
+
     // Boss HUD
     this.bossHud = document.getElementById('boss-hud');
     this.bossBarFill = document.getElementById('boss-bar-fill');
@@ -309,6 +320,12 @@ export class GameEngine {
         this.closeLibrary();
       });
     }
+
+    if (this.btnInteract) {
+      this.btnInteract.addEventListener('click', () => {
+        this.triggerInteraction();
+      });
+    }
   }
 
   startNewGame() {
@@ -348,6 +365,17 @@ export class GameEngine {
     this.updatePendingUpgradeButton();
     if (this.btnSkipIntermission) {
       this.btnSkipIntermission.classList.add('hidden');
+    }
+
+    // Réinitialisation de l'exploration intérieure
+    this.isInsideHouse = false;
+    this.savedOutdoorPos = null;
+    this.currentInteractable = null;
+    if (this.interactionHudContainer) {
+      this.interactionHudContainer.classList.add('hidden');
+    }
+    if (this.worldMap) {
+      this.worldMap.interiorChestOpened = false;
     }
     
     // Peuplement du monde ouvert (camps de monstres et forêts)
@@ -503,6 +531,173 @@ export class GameEngine {
     if (!this.player) return;
     this.player.equipGrimoire(grimoireId, this);
     this.renderGrimoiresGrid();
+  }
+
+  // ==========================================
+  // SYSTÈME UNIVERSEL D'INTERACTION (TOUCHE F / BOUTON)
+  // ==========================================
+  updateInteractionPrompt() {
+    if (this.state !== 'PLAYING' || !this.worldMap || !this.player) {
+      if (this.interactionHudContainer) this.interactionHudContainer.classList.add('hidden');
+      return;
+    }
+
+    this.currentInteractable = this.worldMap.getNearbyInteractable(this.player.x, this.player.y, this.isInsideHouse);
+
+    if (this.currentInteractable) {
+      if (this.interactIcon) this.interactIcon.textContent = this.currentInteractable.icon || '✨';
+      if (this.interactLabel) this.interactLabel.textContent = this.currentInteractable.actionText || this.currentInteractable.label.toUpperCase();
+      if (this.interactionHudContainer) this.interactionHudContainer.classList.remove('hidden');
+    } else {
+      if (this.interactionHudContainer) this.interactionHudContainer.classList.add('hidden');
+    }
+  }
+
+  triggerInteraction() {
+    if (this.state !== 'PLAYING' || !this.currentInteractable) return;
+
+    const it = this.currentInteractable;
+
+    switch (it.type) {
+      case 'house_door':
+        this.enterHouse(it.building);
+        break;
+
+      case 'exit_door':
+        this.exitHouse();
+        break;
+
+      case 'bed':
+        this.restInBed();
+        break;
+
+      case 'fireplace':
+        this.warmAtFire();
+        break;
+
+      case 'interior_chest':
+        this.openInteriorChest();
+        break;
+
+      case 'chest':
+        this.openOutdoorChest(it.chest);
+        break;
+
+      case 'shrine':
+        this.activateShrine(it.shrine);
+        break;
+
+      case 'fountain':
+        this.drinkFountain(it.fountain);
+        break;
+
+      case 'library_building':
+      case 'library_npc':
+        this.openLibrary();
+        break;
+    }
+  }
+
+  enterHouse(building) {
+    sfx.playDoor();
+    this.savedOutdoorPos = { x: this.player.x, y: this.player.y + 15 };
+    this.isInsideHouse = true;
+
+    // Positionner le joueur sur le paillasson de l'entrée intérieure
+    this.player.x = 3500;
+    this.player.y = 9325;
+    this.player.facingAngle = -Math.PI / 2; // Regard vers le haut
+    this.camera.x = 3500;
+    this.camera.y = 9200;
+
+    const bName = (building && building.name) ? building.name : "l'Auberge";
+    this.addFloatingText(3500, 9240, `🏠 Bienvenue dans ${bName} !`, '#ffd700', 22);
+    this.updateInteractionPrompt();
+  }
+
+  exitHouse() {
+    sfx.playDoor();
+    this.isInsideHouse = false;
+
+    if (this.savedOutdoorPos) {
+      this.player.x = this.savedOutdoorPos.x;
+      this.player.y = this.savedOutdoorPos.y;
+    } else {
+      this.player.x = 3160;
+      this.player.y = 3540;
+    }
+    this.player.facingAngle = Math.PI / 2;
+    this.camera.x = this.player.x;
+    this.camera.y = this.player.y;
+
+    this.addFloatingText(this.player.x, this.player.y - 30, "🌲 Retour à l'extérieur", '#2ec4b6', 20);
+    this.updateInteractionPrompt();
+  }
+
+  restInBed() {
+    if (!this.player) return;
+    this.player.hp = this.player.maxHp;
+    sfx.playRest();
+    this.addFloatingText(3660, 9070, "💤 Sommeil revigorant ! PV 100%", '#00ff88', 22);
+    this.createHitParticles(this.player.x, this.player.y, '#00ff88', 25);
+    this.updateHUD();
+  }
+
+  warmAtFire() {
+    sfx.playLevelUp();
+    this.applyShrineBuff('regen', 25);
+    this.addFloatingText(3500, 9040, "🔥 Réconfort du foyer (+8 PV/s)", '#ff7b00', 20);
+    this.createHitParticles(3500, 9060, '#ffaa00', 16);
+  }
+
+  openInteriorChest() {
+    if (!this.worldMap) return;
+    this.worldMap.interiorChestOpened = true;
+    sfx.playLevelUp();
+    this.triggerScreenShake(3);
+    this.createHitParticles(3320, 9120, '#ffd700', 20);
+    this.addFloatingText(3320, 9090, "💰 +15 🪙 OR DU MANOIR !", '#ffd700', 22);
+    this.player.gold = (this.player.gold || 0) + 15;
+    this.gems.push(new Gem(3320, 9140, 0, 'heart'));
+    this.updateHUD();
+    this.updateInteractionPrompt();
+  }
+
+  openOutdoorChest(ch) {
+    if (!ch || ch.opened) return;
+    ch.opened = true;
+    sfx.playLevelUp();
+    this.triggerScreenShake(4);
+    this.createHitParticles(ch.x, ch.y, '#ffd700', 16);
+    this.createHitParticles(ch.x, ch.y, '#2ec4b6', 10);
+    this.addFloatingText(ch.x, ch.y - 25, `💰 ${ch.title.toUpperCase()} DÉVERROUILLÉ !`, '#ffd700', 22);
+
+    for (let i = 0; i < (ch.xpGems || 5); i++) {
+      const a = (i / (ch.xpGems || 5)) * Math.PI * 2;
+      this.gems.push(new Gem(ch.x + Math.cos(a) * 35, ch.y + Math.sin(a) * 35, 6, 'coin'));
+    }
+    this.gems.push(new Gem(ch.x, ch.y, 0, 'heart'));
+    this.updateInteractionPrompt();
+  }
+
+  activateShrine(sh) {
+    if (!sh) return;
+    sh.activeTimer = 25;
+    sfx.playLevelUp();
+    this.addShockwave(sh.x, sh.y, 160, sh.color, 6);
+    this.createHitParticles(sh.x, sh.y, sh.color, 20);
+    this.addFloatingText(this.player.x, this.player.y - 35, `✨ ${sh.name.toUpperCase()} !`, sh.color, 22);
+    this.applyShrineBuff(sh.buff, 25);
+    this.updateInteractionPrompt();
+  }
+
+  drinkFountain(fountain) {
+    if (!this.player) return;
+    this.player.heal(40);
+    sfx.playPickup();
+    this.createHitParticles(this.player.x, this.player.y, '#2ec4b6', 15);
+    this.addFloatingText(this.player.x, this.player.y - 25, "+40 PV (Eau Sacrée)", '#2ec4b6', 20);
+    this.updateHUD();
   }
 
   // ==========================================
@@ -1002,75 +1197,35 @@ export class GameEngine {
   updateExplorationFeatures(dt) {
     if (!this.worldMap || !this.player) return;
 
-    // 1. Fontaine sacrée des cités (soin continu passif)
-    const fountain = this.worldMap.getNearbyFountain(this.player.x, this.player.y);
-    if (fountain) {
-      if (this.player.hp < this.player.maxHp) {
-        this.player.heal(fountain.healPerSec * dt);
-        if (Math.random() < 0.22) {
-          this.createHitParticles(this.player.x, this.player.y, '#2ec4b6', 1);
-        }
-      }
-    }
-
-    // 2. Coffres au trésor dissimulés
-    if (this.worldMap.chests) {
-      for (const ch of this.worldMap.chests) {
-        if (!ch.opened) {
-          const d = Math.hypot(this.player.x - ch.x, this.player.y - ch.y);
-          if (d <= 36) {
-            ch.opened = true;
-            sfx.playLevelUp();
-            this.triggerScreenShake(4);
-            this.createHitParticles(ch.x, ch.y, '#ffd700', 16);
-            this.createHitParticles(ch.x, ch.y, '#2ec4b6', 10);
-            this.addFloatingText(ch.x, ch.y - 25, `💰 ${ch.title} DÉVERROUILLÉ !`, '#ffd700', 22);
-
-            // Apparition des pièces d'or étincelantes et cœur de soin
-            for (let i = 0; i < (ch.xpGems || 5); i++) {
-              const a = (i / (ch.xpGems || 5)) * Math.PI * 2;
-              this.gems.push(new Gem(ch.x + Math.cos(a) * 35, ch.y + Math.sin(a) * 35, 6, 'coin'));
-            }
-            this.gems.push(new Gem(ch.x, ch.y, 0, 'heart'));
+    // 1. Fontaine sacrée des cités (soin continu passif si à l'extérieur)
+    if (!this.isInsideHouse) {
+      const fountain = this.worldMap.getNearbyFountain(this.player.x, this.player.y);
+      if (fountain) {
+        if (this.player.hp < this.player.maxHp) {
+          this.player.heal(fountain.healPerSec * dt);
+          if (Math.random() < 0.22) {
+            this.createHitParticles(this.player.x, this.player.y, '#2ec4b6', 1);
           }
         }
       }
     }
 
-    // 3. Sanctuaires et stèles runiques
-    if (this.worldMap.shrines) {
-      for (const sh of this.worldMap.shrines) {
-        const d = Math.hypot(this.player.x - sh.x, this.player.y - sh.y);
-        if (d <= 42 && (!sh.activeTimer || sh.activeTimer <= 0)) {
-          sh.activeTimer = 25;
-          sfx.playLevelUp();
-          this.addShockwave(sh.x, sh.y, 160, sh.color, 6);
-          this.createHitParticles(sh.x, sh.y, sh.color, 20);
-          this.addFloatingText(this.player.x, this.player.y - 35, `✨ ${sh.name} !`, sh.color, 22);
-          this.applyShrineBuff(sh.buff, 25);
-        }
-        if (sh.activeTimer > 0) sh.activeTimer -= dt;
-      }
-    }
-
-    // 4. Détection de proximité des entrées de Donjons
-    for (const v of this.worldMap.villages) {
-      if (v.dungeonEntrance) {
-        const d = v.dungeonEntrance;
-        const dist = Math.hypot(this.player.x - d.x, this.player.y - d.y);
-        if (dist <= 50 && (!d._announced || this.gameTime - d._announced > 8)) {
-          d._announced = this.gameTime;
-          this.addFloatingText(d.x, d.y - 45, `🚪 ${d.name} (${d.sub})`, d.color || '#2ec4b6', 20);
+    // 2. Détection de proximité des entrées de Donjons
+    if (!this.isInsideHouse) {
+      for (const v of this.worldMap.villages) {
+        if (v.dungeonEntrance) {
+          const d = v.dungeonEntrance;
+          const dist = Math.hypot(this.player.x - d.x, this.player.y - d.y);
+          if (dist <= 50 && (!d._announced || this.gameTime - d._announced > 8)) {
+            d._announced = this.gameTime;
+            this.addFloatingText(d.x, d.y - 45, `🚪 ${d.name} (${d.sub})`, d.color || '#2ec4b6', 20);
+          }
         }
       }
     }
 
-    // 5. Détection de proximité de l'Archimage Kaelen (Bibliothèque)
-    const distToKaelen = Math.hypot(this.player.x - 3260, this.player.y - 3490);
-    if (distToKaelen <= 50 && (!this._libraryAnnounced || this.gameTime - this._libraryAnnounced > 10)) {
-      this._libraryAnnounced = this.gameTime;
-      this.addFloatingText(3260, 3435, "📖 OUVREZ LA BIBLIOTHÈQUE (B)", '#c084fc', 20);
-    }
+    // 3. Invite d'interaction universelle (Touche F)
+    this.updateInteractionPrompt();
   }
 
   applyShrineBuff(buffType, duration) {
@@ -1149,9 +1304,14 @@ export class GameEngine {
       if (spore.x > this.worldSize) spore.x = 0;
     }
 
-    // Caméra lisse centrée sur le joueur (dézoomée)
-    this.camera.x += (this.player.x - this.camera.x) * 0.12;
-    this.camera.y += (this.player.y - this.camera.y) * 0.12;
+    // Caméra lisse centrée sur le joueur (ou sur l'intérieur de la maison)
+    if (this.isInsideHouse) {
+      this.camera.x += (3500 - this.camera.x) * 0.15;
+      this.camera.y += (9200 - this.camera.y) * 0.15;
+    } else {
+      this.camera.x += (this.player.x - this.camera.x) * 0.12;
+      this.camera.y += (this.player.y - this.camera.y) * 0.12;
+    }
 
     // Screen Shake
     if (this.screenShake > 0) {
@@ -1178,21 +1338,23 @@ export class GameEngine {
     // Ennemis
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       const enemy = this.enemies[i];
-      enemy.update(dt, this.player, this);
+      if (!this.isInsideHouse) {
+        enemy.update(dt, this.player, this);
 
-      // Contact avec le joueur
-      const distToPlayer = Math.hypot(enemy.x - this.player.x, enemy.y - this.player.y);
-      if (distToPlayer < enemy.radius + this.player.radius) {
-        if (this.player.invulnTimer <= 0) {
-          const dmg = enemy.damage;
-          this.player.takeDamage(dmg);
-          this.triggerScreenShake(8);
-          sfx.playHit();
-          this.addFloatingText(this.player.x, this.player.y - 20, `-${dmg}`, '#ff2a55', 22);
-          
-          if (this.player.hp <= 0) {
-            this.gameOver();
-            return;
+        // Contact avec le joueur
+        const distToPlayer = Math.hypot(enemy.x - this.player.x, enemy.y - this.player.y);
+        if (distToPlayer < enemy.radius + this.player.radius) {
+          if (this.player.invulnTimer <= 0) {
+            const dmg = enemy.damage;
+            this.player.takeDamage(dmg);
+            this.triggerScreenShake(8);
+            sfx.playHit();
+            this.addFloatingText(this.player.x, this.player.y - 20, `-${dmg}`, '#ff2a55', 22);
+            
+            if (this.player.hp <= 0) {
+              this.gameOver();
+              return;
+            }
           }
         }
       }
@@ -1381,11 +1543,15 @@ export class GameEngine {
     const locationDisplay = document.getElementById('location-display');
     const locationIcon = document.getElementById('location-icon');
     if (locationDisplay && locationIcon && this.worldMap && this.player) {
-      const v = this.worldMap.getCurrentVillage(this.player.x, this.player.y);
-      if (v) {
-        locationIcon.textContent = v.dungeonEntrance ? v.dungeonEntrance.icon : '🏛️';
-        locationDisplay.textContent = `${v.name.toUpperCase()} • ZONE SÛRE`;
+      if (this.isInsideHouse) {
+        locationIcon.textContent = '🏠';
+        locationDisplay.textContent = "INTÉRIEUR DU MANOIR • REPOS & SÉCURITÉ";
       } else {
+        const v = this.worldMap.getCurrentVillage(this.player.x, this.player.y);
+        if (v) {
+          locationIcon.textContent = v.dungeonEntrance ? v.dungeonEntrance.icon : '🏛️';
+          locationDisplay.textContent = `${v.name.toUpperCase()} • ZONE SÛRE`;
+        } else {
         if (this.player.y < 2500) {
           locationIcon.textContent = '🌲';
           locationDisplay.textContent = "FORÊT DES CIMES DU NORD";
@@ -1539,6 +1705,32 @@ export class GameEngine {
       this.ctx.restore();
     }
 
+    // 9.5. Marqueur interactif [F] au-dessus de la cible
+    if (this.currentInteractable) {
+      const it = this.currentInteractable;
+      const pulse = Math.sin(this.gameTime * 6) * 3;
+      this.ctx.save();
+      this.ctx.translate(it.x, it.y - 34 + pulse);
+      this.ctx.fillStyle = 'rgba(12, 16, 28, 0.92)';
+      this.ctx.strokeStyle = '#ffd700';
+      this.ctx.lineWidth = 2;
+      this.ctx.beginPath();
+      if (this.ctx.roundRect) {
+        this.ctx.roundRect(-42, -14, 84, 26, 6);
+      } else {
+        this.ctx.rect(-42, -14, 84, 26);
+      }
+      this.ctx.fill();
+      this.ctx.stroke();
+
+      this.ctx.font = "bold 13px 'Rajdhani', sans-serif";
+      this.ctx.fillStyle = '#ffd700';
+      this.ctx.textAlign = 'center';
+      this.ctx.textBaseline = 'middle';
+      this.ctx.fillText(`[F] ${it.icon || '✨'}`, 0, 0);
+      this.ctx.restore();
+    }
+
     // 10. Éclairage d'ambiance (Vignette & Lanterne arcanique autour du joueur)
     if (this.player) {
       this.renderDynamicLighting();
@@ -1554,7 +1746,7 @@ export class GameEngine {
   // FLÈCHES DIRECTIONNELLES ROUGES EN BORDURE D'ÉCRAN
   // ==========================================
   renderScreenEdgeIndicators() {
-    if (this.state !== 'PLAYING') return;
+    if (this.state !== 'PLAYING' || this.isInsideHouse) return;
 
     const centerX = this.width / 2;
     const centerY = this.height / 2;

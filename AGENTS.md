@@ -113,6 +113,8 @@ Invazion/
 | **Attaque Principale** | `Clic Gauche` | `Clic Gauche` | Gâchette RT / Bouton X |
 | **Compétence Spéciale** | `Touche E` ou `Clic Droit` | `Touche E` | Gâchette LT / Bouton B |
 | **Dash / Esquive** | `Espace` | `Espace` | Bouton A |
+| **Interaction Universelle** | `Touche F` / Bouton [F] | `Touche F` / Bouton [F] | Bouton Y |
+| **Bibliothèque (Mage)** | `Touche B` / Bouton 📖 | `Touche B` / Bouton 📖 | — |
 | **Pause** | Touche `Échap` ou `P` | `Échap` / `P` | Bouton Start |
 | **Son (Mute)** | Bouton 🔊 dans le HUD | Bouton 🔊 | — |
 

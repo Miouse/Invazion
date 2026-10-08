@@ -38,6 +38,9 @@ export class WorldMap {
     // 5. Camps de monstres avec zones d'aggro
     this.initMonsterCamps();
 
+    // État d'exploration intérieure (maisons)
+    this.interiorChestOpened = false;
+
     // 6. Coffres au trésor dissimulés & Sanctuaires runiques
     this.initChests();
     this.initShrines();
@@ -695,6 +698,12 @@ export class WorldMap {
   // RENDU DU MONDE COMPLET (AVEC CULLING)
   // ==========================================
   render(ctx, engine, camera, zoom) {
+    // Si le joueur est à l'intérieur d'une maison
+    if (engine && engine.isInsideHouse) {
+      this.renderHouseInterior(ctx, engine, engine.gameTime);
+      return;
+    }
+
     const viewW = engine.width / zoom;
     const viewH = engine.height / zoom;
     const left = camera.x - viewW / 2 - 120;
@@ -1917,6 +1926,34 @@ export class WorldMap {
 
   // Teste si une position entre en collision
   isColliding(x, y, radius, isPlayer = true) {
+    // 0. Si le joueur est à l'intérieur d'une maison (zone isolée x: 3500, y: 9200)
+    if (y > 8500) {
+      const cx = 3500, cy = 9200, w = 480, h = 340;
+      const minX = cx - w / 2 + 10;
+      const maxX = cx + w / 2 - 10;
+      const minY = cy - h / 2 + 15;
+      const maxY = cy + h / 2 - 10;
+
+      // Bords extérieurs de la pièce
+      if (x - radius < minX || x + radius > maxX || y - radius < minY || y + radius > maxY) {
+        return true;
+      }
+
+      // Lit à baldaquin (en haut à droite)
+      if (x + radius > 3625 && x - radius < 3705 && y + radius > 9045 && y - radius < 9130) {
+        return true;
+      }
+      // Table de banquet (au centre)
+      if (x + radius > 3385 && x - radius < 3475 && y + radius > 9155 && y - radius < 9205) {
+        return true;
+      }
+      // Cheminée en pierre (en haut au centre)
+      if (x + radius > 3455 && x - radius < 3545 && y + radius > 9030 && y - radius < 9075) {
+        return true;
+      }
+      return false;
+    }
+
     // 1. Limites du monde
     if (x - radius < 25 || x + radius > this.worldSize - 25 ||
         y - radius < 25 || y + radius > this.worldSize - 25) {
@@ -2452,5 +2489,370 @@ export class WorldMap {
       currentIdx = furthest;
     }
     return smoothed;
+  }
+
+  // ==========================================
+  // DÉTECTION DES OBJETS ET BÂTIMENTS INTERACTIFS (TOUCHE F)
+  // ==========================================
+  getNearbyInteractable(px, py, isInsideHouse = false) {
+    if (isInsideHouse) {
+      // 1. Porte de sortie (au bas de la pièce)
+      const dExit = Math.hypot(px - 3500, py - 9345);
+      if (dExit <= 55) {
+        return {
+          type: 'exit_door',
+          x: 3500,
+          y: 9345,
+          label: 'Sortir dehors',
+          actionText: 'SORTIR DEHORS',
+          icon: '🚪'
+        };
+      }
+
+      // 2. Lit douillet
+      const dBed = Math.hypot(px - 3660, py - 9110);
+      if (dBed <= 60) {
+        return {
+          type: 'bed',
+          x: 3660,
+          y: 9110,
+          label: 'Se reposer dans le lit (Restaure 100% PV)',
+          actionText: 'SE REPOSER (100% PV)',
+          icon: '🛏️'
+        };
+      }
+
+      // 3. Cheminée crépitante
+      const dFire = Math.hypot(px - 3500, py - 9080);
+      if (dFire <= 55) {
+        return {
+          type: 'fireplace',
+          x: 3500,
+          y: 9080,
+          label: 'Se réchauffer au foyer',
+          actionText: 'SE RÉCHAUFFER AU FEU',
+          icon: '🔥'
+        };
+      }
+
+      // 4. Coffre secret intérieur
+      if (!this.interiorChestOpened) {
+        const dChest = Math.hypot(px - 3320, py - 9120);
+        if (dChest <= 50) {
+          return {
+            type: 'interior_chest',
+            x: 3320,
+            y: 9120,
+            label: 'Fouiller le coffre de la maison',
+            actionText: 'FOUILLER LE COFFRE',
+            icon: '💰'
+          };
+        }
+      }
+
+      return null;
+    }
+
+    // --- MONDE EXTÉRIEUR ---
+    let closest = null;
+    let minDist = 55;
+
+    // A. Portes des maisons et bâtiments des villages
+    if (this.villages) {
+      for (const v of this.villages) {
+        for (const b of v.buildings) {
+          if (b.type === 'house' || b.type === 'castle') {
+            const doorX = b.x;
+            const doorY = b.y + b.h / 2;
+            const d = Math.hypot(px - doorX, py - doorY);
+            if (d < minDist) {
+              minDist = d;
+              closest = {
+                type: 'house_door',
+                building: b,
+                x: doorX,
+                y: doorY,
+                label: b.name || (b.type === 'castle' ? 'Entrer dans le Château' : 'Entrer dans la Maison'),
+                actionText: b.type === 'castle' ? 'ENTRER DANS LE CHÂTEAU' : 'ENTRER DANS LA MAISON',
+                icon: '🚪'
+              };
+            }
+          } else if (b.type === 'library') {
+            const doorX = b.x;
+            const doorY = b.y + b.h / 2;
+            const d = Math.hypot(px - doorX, py - doorY);
+            if (d < minDist) {
+              minDist = d;
+              closest = {
+                type: 'library_building',
+                x: doorX,
+                y: doorY,
+                label: 'Consulter les Grimoires',
+                actionText: 'CONSULTER LES GRIMOIRES',
+                icon: '📖'
+              };
+            }
+          }
+        }
+      }
+    }
+
+    // B. PNJ Archimage Kaelen
+    const dKaelen = Math.hypot(px - 3260, py - 3490);
+    if (dKaelen < minDist) {
+      minDist = dKaelen;
+      closest = {
+        type: 'library_npc',
+        x: 3260,
+        y: 3490,
+        label: 'Parler à l\'Archimage Kaelen',
+        actionText: 'PARLER À KAELEN (GRIMOIRES)',
+        icon: '🧙‍♂️'
+      };
+    }
+
+    // C. Coffres au trésor extérieurs
+    if (this.chests) {
+      for (const ch of this.chests) {
+        if (!ch.opened) {
+          const d = Math.hypot(px - ch.x, py - ch.y);
+          if (d < minDist) {
+            minDist = d;
+            closest = {
+              type: 'chest',
+              chest: ch,
+              x: ch.x,
+              y: ch.y,
+              label: `Ouvrir : ${ch.title}`,
+              actionText: `OUVRIR : ${ch.title.toUpperCase()}`,
+              icon: '💰'
+            };
+          }
+        }
+      }
+    }
+
+    // D. Sanctuaires et stèles runiques
+    if (this.shrines) {
+      for (const sh of this.shrines) {
+        if (!sh.activeTimer || sh.activeTimer <= 0) {
+          const d = Math.hypot(px - sh.x, py - sh.y);
+          if (d < minDist) {
+            minDist = d;
+            closest = {
+              type: 'shrine',
+              shrine: sh,
+              x: sh.x,
+              y: sh.y,
+              label: `Prier : ${sh.name}`,
+              actionText: `PRIER AU SANCTUAIRE`,
+              icon: '✨'
+            };
+          }
+        }
+      }
+    }
+
+    // E. Fontaines sacrées de soin
+    const fountain = this.getNearbyFountain(px, py);
+    if (fountain) {
+      const d = Math.hypot(px - fountain.x, py - fountain.y);
+      if (d <= 55 && d < minDist) {
+        minDist = d;
+        closest = {
+          type: 'fountain',
+          fountain,
+          x: fountain.x,
+          y: fountain.y,
+          label: 'Boire l\'Eau Bénie (Soin continu)',
+          actionText: 'BOIRE L\'EAU BÉNIE',
+          icon: '⛲'
+        };
+      }
+    }
+
+    return closest;
+  }
+
+  // ==========================================
+  // RENDU DE L'INTÉRIEUR D'UNE MAISON (AUBERGE MÉDIÉVALE)
+  // ==========================================
+  renderHouseInterior(ctx, engine, time) {
+    const cx = 3500;
+    const cy = 9200;
+    const w = 480;
+    const h = 340;
+
+    // Fond obscurité totale autour de la pièce
+    ctx.fillStyle = '#08060c';
+    ctx.fillRect(cx - 1000, cy - 800, 2000, 1600);
+
+    // 1. Sol en parquet de chêne massif
+    ctx.fillStyle = '#6b4226';
+    ctx.fillRect(cx - w / 2, cy - h / 2, w, h);
+
+    // Lattes de bois du parquet
+    ctx.strokeStyle = '#4a2c17';
+    ctx.lineWidth = 1.5;
+    for (let y = cy - h / 2; y <= cy + h / 2; y += 22) {
+      ctx.beginPath();
+      ctx.moveTo(cx - w / 2, y);
+      ctx.lineTo(cx + w / 2, y);
+      ctx.stroke();
+    }
+    for (let x = cx - w / 2 + 60; x <= cx + w / 2; x += 90) {
+      for (let y = cy - h / 2; y < cy + h / 2; y += 44) {
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x, y + 22);
+        ctx.stroke();
+      }
+    }
+
+    // 2. Grand Tapis Runique Pourpre & Or au centre
+    ctx.fillStyle = '#4a0e4e';
+    ctx.fillRect(cx - 90, cy - 50, 180, 110);
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 2.5;
+    ctx.strokeRect(cx - 90, cy - 50, 180, 110);
+
+    // Motif intérieur du tapis
+    ctx.strokeStyle = '#e0aaff';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(cx - 75, cy - 38, 150, 86);
+    ctx.beginPath();
+    ctx.arc(cx, cy + 5, 25, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 3. Murs en pierre taillée & Boiserie
+    ctx.fillStyle = '#22202a';
+    // Mur Nord
+    ctx.fillRect(cx - w / 2 - 16, cy - h / 2 - 20, w + 32, 26);
+    // Murs Est et Ouest
+    ctx.fillRect(cx - w / 2 - 16, cy - h / 2 - 20, 20, h + 36);
+    ctx.fillRect(cx + w / 2 - 4, cy - h / 2 - 20, 20, h + 36);
+    // Mur Sud
+    ctx.fillRect(cx - w / 2 - 16, cy + h / 2 - 4, w + 32, 20);
+
+    // Poutres de charpente en bois
+    ctx.fillStyle = '#3a2010';
+    ctx.fillRect(cx - w / 2 - 16, cy - h / 2 - 24, w + 32, 10);
+
+    // 4. Paillasson & Porte de sortie au Sud (3500, 9345)
+    ctx.fillStyle = '#b08968';
+    ctx.fillRect(cx - 32, cy + h / 2 - 22, 64, 22);
+    ctx.strokeStyle = '#7f5539';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(cx - 32, cy + h / 2 - 22, 64, 22);
+
+    // Lueur dorée sous la porte
+    ctx.fillStyle = 'rgba(255, 230, 100, 0.4)';
+    ctx.fillRect(cx - 24, cy + h / 2 - 4, 48, 8);
+
+    // 5. Grande Cheminée avec feu crépitant (3500, 9050)
+    ctx.fillStyle = '#3f3d47';
+    ctx.fillRect(cx - 42, cy - h / 2 - 10, 84, 44);
+    ctx.strokeStyle = '#1f1e24';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(cx - 42, cy - h / 2 - 10, 84, 44);
+
+    // Âtre sombre
+    ctx.fillStyle = '#110c14';
+    ctx.fillRect(cx - 28, cy - h / 2 + 10, 56, 24);
+
+    // Flammes animées dansantes
+    const fireFlicker = Math.sin(time * 12) * 3;
+    const fireFlicker2 = Math.cos(time * 16) * 2;
+    ctx.fillStyle = '#ff4d00';
+    ctx.beginPath();
+    ctx.arc(cx - 8, cy - h / 2 + 24, 9 + fireFlicker, 0, Math.PI * 2);
+    ctx.arc(cx + 8, cy - h / 2 + 24, 10 + fireFlicker2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffd166';
+    ctx.beginPath();
+    ctx.arc(cx, cy - h / 2 + 25, 7 + fireFlicker * 0.6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Halo lumineux chaud de la cheminée
+    ctx.fillStyle = 'rgba(255, 140, 0, 0.18)';
+    ctx.beginPath();
+    ctx.arc(cx, cy - h / 2 + 25, 110, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 6. Lit à baldaquin douillet (3660, 9090)
+    ctx.fillStyle = '#4a2810';
+    ctx.fillRect(3630, 9050, 70, 80);
+    // Couette carmin
+    ctx.fillStyle = '#800f2f';
+    ctx.fillRect(3634, 9070, 62, 56);
+    // Oreillers crème
+    ctx.fillStyle = '#fdf0d5';
+    ctx.fillRect(3640, 9054, 24, 14);
+    ctx.fillRect(3668, 9054, 24, 14);
+    // Poteaux d'angle
+    ctx.fillStyle = '#ffd700';
+    ctx.fillRect(3628, 9046, 6, 6);
+    ctx.fillRect(3696, 9046, 6, 6);
+    ctx.fillRect(3628, 9126, 6, 6);
+    ctx.fillRect(3696, 9126, 6, 6);
+
+    // 7. Grande Table de banquet & victuailles (3430, 9180)
+    ctx.fillStyle = '#533e2d';
+    ctx.fillRect(3390, 9160, 78, 44);
+    ctx.strokeStyle = '#2b1e15';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(3390, 9160, 78, 44);
+
+    // Victuailles sur la table (assiette, pain, chope)
+    ctx.fillStyle = '#e2e8f0';
+    ctx.beginPath();
+    ctx.arc(3425, 9180, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#d4a373';
+    ctx.beginPath();
+    ctx.arc(3425, 9180, 5, 0, Math.PI * 2); // Pain
+    ctx.fill();
+    ctx.fillStyle = '#ffd166';
+    ctx.fillRect(3446, 9174, 7, 10); // Chope d'or/bière
+
+    // Chaises
+    ctx.fillStyle = '#3d2b1f';
+    ctx.fillRect(3410, 9146, 20, 10);
+    ctx.fillRect(3440, 9146, 20, 10);
+    ctx.fillRect(3410, 9208, 20, 10);
+    ctx.fillRect(3440, 9208, 20, 10);
+
+    // 8. Coffre secret intérieur (3320, 9120)
+    this.drawChest(ctx, {
+      x: 3320,
+      y: 9120,
+      opened: this.interiorChestOpened,
+      type: 'gold'
+    }, time);
+
+    // 9. Étagère de potions et livres au mur (3310, 9045)
+    ctx.fillStyle = '#4a2810';
+    ctx.fillRect(3280, 9032, 65, 14);
+    // Fioles
+    ctx.fillStyle = '#ef233c';
+    ctx.beginPath();
+    ctx.arc(3295, 9036, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#00f0ff';
+    ctx.beginPath();
+    ctx.arc(3310, 9036, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#2ec4b6';
+    ctx.beginPath();
+    ctx.arc(3325, 9036, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 10. Chandeliers muraux avec lueurs chaudes
+    const candleGlow = Math.sin(time * 10) * 2;
+    ctx.fillStyle = 'rgba(255, 200, 80, 0.15)';
+    ctx.beginPath();
+    ctx.arc(cx - w / 2 + 15, cy - 20, 45, 0, Math.PI * 2);
+    ctx.arc(cx + w / 2 - 15, cy - 20, 45, 0, Math.PI * 2);
+    ctx.fill();
   }
 }

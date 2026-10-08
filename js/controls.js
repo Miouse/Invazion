@@ -100,6 +100,13 @@ export class ControlsManager {
         }
       }
 
+      // Interaction universelle avec touche F (Entrer dans les maisons, coffres, sanctuaires, lit)
+      if (e.key === 'f' || e.key === 'F') {
+        if (this.engine.state === 'PLAYING') {
+          this.engine.triggerInteraction();
+        }
+      }
+
       // Bibliothèque des Arcanes avec touche B
       if (e.key === 'b' || e.key === 'B') {
         if (this.engine.state === 'PLAYING' || this.engine.state === 'LIBRARY') {

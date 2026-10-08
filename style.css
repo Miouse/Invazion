@@ -322,6 +322,83 @@ html, body {
 
 /* Équipement HUD */
 /* ==========================================================================
+   INVITE D'INTERACTION UNIVERSELLE (TOUCHE F / TAP)
+   ========================================================================== */
+.interaction-hud-container {
+  position: absolute;
+  bottom: 114px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  pointer-events: auto;
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.interaction-hud-container.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(12px) scale(0.92);
+}
+
+.interact-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, rgba(20, 26, 46, 0.96), rgba(30, 41, 72, 0.96));
+  border: 1.5px solid #ffd700;
+  border-radius: 28px;
+  padding: 8px 18px 8px 10px;
+  color: #ffffff;
+  font-family: var(--font-accent);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.7);
+  transition: all 0.15s ease;
+  animation: pulse-interact 1.6s infinite ease-in-out;
+}
+
+@keyframes pulse-interact {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 16px rgba(255, 215, 0, 0.3); }
+  50% { transform: scale(1.04); box-shadow: 0 0 26px rgba(255, 215, 0, 0.6); }
+}
+
+.interact-btn:hover {
+  background: linear-gradient(135deg, rgba(30, 41, 72, 0.98), rgba(45, 62, 110, 0.98));
+  border-color: #ffffff;
+  transform: scale(1.06) translateY(-2px);
+}
+
+.interact-btn:active {
+  transform: scale(0.98) translateY(1px);
+}
+
+.interact-key-pill {
+  background: linear-gradient(135deg, #ffd700, #ff9900);
+  color: #0b0f19;
+  font-family: var(--font-title);
+  font-weight: 900;
+  font-size: 14px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.interact-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.interact-label {
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+}
+
+/* ==========================================================================
    BARRE D'ACTION COMBAT & COMPÉTENCES ACTIVES (ACTION BAR)
    ========================================================================== */
 .combat-action-bar {
