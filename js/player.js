@@ -229,13 +229,16 @@ export class Player {
       }
 
       case 'bow': {
-        // Sylvia : Tir de Flèche Véloce
-        this.mainAttackTimer = 0.28;
+        // Sylvia : Tir de Flèche Véloce Sylvestre (Cadence rapide & haute vélocité)
+        this.mainAttackTimer = 0.22;
         sfx.playBow();
         if (engine && engine.projectiles) {
+          const spawnX = this.x + Math.cos(angle) * 18;
+          const spawnY = this.y + Math.sin(angle) * 18;
           engine.projectiles.push(
-            new Projectile(this.x, this.y, angle, 980, 36 * this.damageMultiplier, 1, 'arrow')
+            new Projectile(spawnX, spawnY, angle, 1050, 38 * this.damageMultiplier, 1, 'arrow')
           );
+          engine.createHitParticles(spawnX, spawnY, '#2ecc71', 3);
         }
         break;
       }
@@ -383,18 +386,33 @@ export class Player {
       }
 
       case 'multishot': {
-        // Sylvia : Volée de 5 Flèches en éventail
-        sfx.playBow();
+        // Sylvia : Volée Sylvestre de 5 Flèches en Éventail & Recul Tactique
+        sfx.playBowVolley();
         const arrowCount = 5;
-        const spread = 0.16; // rad
+        const spread = 0.18; // rad
         for (let i = 0; i < arrowCount; i++) {
           const aOffset = (i - (arrowCount - 1) / 2) * spread;
+          const spawnX = this.x + Math.cos(angle + aOffset) * 20;
+          const spawnY = this.y + Math.sin(angle + aOffset) * 20;
           engine.projectiles.push(
-            new Projectile(this.x, this.y, angle + aOffset, 980, 32 * this.damageMultiplier, 1, 'arrow')
+            new Projectile(spawnX, spawnY, angle + aOffset, 1050, 36 * this.damageMultiplier, 1, 'arrow')
           );
         }
+
+        // Petit recul tactique (saut arrière d'esquive de 26 px)
+        const recoilDist = 26;
+        const recoilX = this.x - Math.cos(angle) * recoilDist;
+        const recoilY = this.y - Math.sin(angle) * recoilDist;
+        if (engine && engine.worldMap) {
+          const res = engine.worldMap.resolveMove(this.x, this.y, recoilX, recoilY, this.radius, true);
+          this.x = res.x;
+          this.y = res.y;
+        }
+
         if (engine) {
-          engine.addFloatingText(this.x, this.y - 45, '🏹 VOLÉE SYLVESTRE', '#2ecc71', 18);
+          engine.createHitParticles(this.x, this.y, '#2ecc71', 14);
+          engine.addShockwave(this.x, this.y, 65, '#2ecc71', 2.5);
+          engine.addFloatingText(this.x, this.y - 45, '🍃 VOLÉE SYLVESTRE !', '#2ecc71', 20);
         }
         break;
       }

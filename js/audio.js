@@ -213,6 +213,27 @@ export class SoundFX {
     } catch(e) {}
   }
 
+  playBowVolley() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      for (let i = 0; i < 3; i++) {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        const start = now + i * 0.03;
+        osc.frequency.setValueAtTime(920 - i * 80, start);
+        osc.frequency.exponentialRampToValueAtTime(300, start + 0.10);
+        gain.gain.setValueAtTime(0.06, start);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.10);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(start);
+        osc.stop(start + 0.10);
+      }
+    } catch(e) {}
+  }
+
   playShield() {
     if (this.muted || !this.ctx) return;
     try {
