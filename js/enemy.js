@@ -5,7 +5,7 @@ import { Projectile } from './entities.js';
 import { MONSTER_SPRITES, spriteLoader, getSpriteRowFromAngle } from './sprites.js';
 
 export class Enemy {
-  constructor(x, y, type, gameTime = 0, wave = 1) {
+  constructor(x, y, type, gameTime = 0, camp = null) {
     this.x = x;
     this.y = y;
     this.type = type;
@@ -14,7 +14,19 @@ export class Enemy {
     this.animTimer = Math.random() * 10;
     this.facingAngle = 0;
 
-    const hpScale = (1 + (gameTime / 150) * 0.6) * (1 + (wave - 1) * 0.15);
+    // Gestion du camp d'origine et de l'IA d'aggro
+    this.camp = camp;
+    this.homeX = x;
+    this.homeY = y;
+    this.campRadius = camp ? (camp.radius || 350) : 350;
+    this.aggroRadius = 420;
+    this.leashRadius = 680;
+    this.state = camp ? 'PATROL' : 'CHASE'; // 'PATROL', 'CHASE', 'RETURN'
+    this.patrolTimer = Math.random() * 3.5;
+    this.patrolTarget = { x: this.homeX, y: this.homeY };
+    this.alertTimer = 0;
+
+    const hpScale = 1 + (gameTime / 240) * 0.5;
 
     switch(type) {
       case 'bat':
@@ -49,10 +61,11 @@ export class Enemy {
         // BOSS TITANESQUE (Radius 108px)
         this.radius = 108;
         this.speed = 85;
-        this.hp = 1400 * hpScale;
+        this.hp = 1600 * hpScale;
         this.maxHp = this.hp;
         this.damage = 40;
         this.color = '#ff0055';
+        this.state = 'CHASE';
         break;
     }
 
@@ -61,19 +74,77 @@ export class Enemy {
   }
 
   update(dt, player, engine) {
+    if (this.alertTimer > 0) this.alertTimer -= dt;
+
+    const playerInSafeZone = engine && engine.worldMap && engine.worldMap.isInsideSafeZone(player.x, player.y);
+    const distToPlayer = Math.hypot(player.x - this.x, player.y - this.y);
+    const distToHome = Math.hypot(this.x - this.homeX, this.y - this.homeY);
+
     let aimX = player.x;
     let aimY = player.y;
+    let moveSpeed = this.baseSpeed;
 
-    // Navigation intelligente de la horde vers les ponts si séparée par la rivière
-    if (engine && engine.worldMap && engine.worldMap.getMonsterNavTarget) {
-      const navTarget = engine.worldMap.getMonsterNavTarget(this.x, this.y, player.x, player.y);
+    // IA contextuelle si attaché à un camp
+    if (this.camp && this.type !== 'boss') {
+      if (this.state === 'PATROL') {
+        moveSpeed = this.baseSpeed * 0.35;
+        this.patrolTimer += dt;
+        if (this.patrolTimer >= 4.0) {
+          this.patrolTimer = 0;
+          const a = Math.random() * Math.PI * 2;
+          const r = Math.random() * (this.campRadius * 0.45);
+          this.patrolTarget = {
+            x: this.homeX + Math.cos(a) * r,
+            y: this.homeY + Math.sin(a) * r
+          };
+        }
+
+        aimX = this.patrolTarget.x;
+        aimY = this.patrolTarget.y;
+
+        // Détection du joueur (aggro)
+        if (!playerInSafeZone && distToPlayer <= this.aggroRadius) {
+          this.state = 'CHASE';
+          this.alertTimer = 1.0;
+        }
+
+        // Si très proche de son point de patrouille, pause paisible
+        if (Math.hypot(this.x - aimX, this.y - aimY) < 18) {
+          moveSpeed = 0;
+        }
+      } else if (this.state === 'CHASE') {
+        moveSpeed = this.baseSpeed;
+        aimX = player.x;
+        aimY = player.y;
+
+        // Abandon si le joueur fuit trop loin ou se réfugie dans une ville sûre
+        if (playerInSafeZone || distToPlayer > this.leashRadius || distToHome > this.leashRadius) {
+          this.state = 'RETURN';
+        }
+      } else if (this.state === 'RETURN') {
+        moveSpeed = this.baseSpeed * 0.70;
+        aimX = this.homeX;
+        aimY = this.homeY;
+
+        // Retour accompli au camp
+        if (distToHome < 35) {
+          this.state = 'PATROL';
+        } else if (!playerInSafeZone && distToPlayer <= this.aggroRadius * 0.7) {
+          this.state = 'CHASE';
+        }
+      }
+    }
+
+    // Si franchissement de rivière nécessaire
+    if (this.state === 'CHASE' && engine && engine.worldMap && engine.worldMap.getMonsterNavTarget) {
+      const navTarget = engine.worldMap.getMonsterNavTarget(this.x, this.y, aimX, aimY);
       aimX = navTarget.x;
       aimY = navTarget.y;
     }
 
     const angle = Math.atan2(aimY - this.y, aimX - this.x);
-    let vx = Math.cos(angle) * this.speed;
-    let vy = Math.sin(angle) * this.speed;
+    let vx = moveSpeed > 0 ? Math.cos(angle) * moveSpeed : 0;
+    let vy = moveSpeed > 0 ? Math.sin(angle) * moveSpeed : 0;
 
     // Répulsion légère pour fluidifier la horde sans collision lourde
     if (this.type !== 'boss' && engine && engine.enemies) {
@@ -296,6 +367,13 @@ export class Enemy {
       const hpRatio = Math.max(0, this.hp / this.maxHp);
       ctx.fillStyle = '#00ff88';
       ctx.fillRect(-barWidth / 2, yOffset, barWidth * hpRatio, barHeight);
+    }
+    // Indicateur d'alerte / aggro ("!")
+    if (this.alertTimer > 0) {
+      ctx.fillStyle = '#ff2a55';
+      ctx.font = 'bold 16px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('!', 0, -this.radius - 14);
     }
 
     ctx.restore();

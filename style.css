@@ -139,15 +139,13 @@ html, body {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
-.wave-pill {
-  color: #00f0ff;
-  border-color: rgba(0, 240, 255, 0.45);
-  background: rgba(10, 25, 45, 0.85);
-  box-shadow: 0 0 16px rgba(0, 240, 255, 0.25);
-}
-.monsters-left-pill {
-  color: #ff6b8b;
-  border-color: rgba(255, 42, 85, 0.4);
+.location-pill {
+  color: #2ec4b6;
+  border-color: rgba(46, 196, 182, 0.5);
+  background: rgba(10, 30, 40, 0.88);
+  box-shadow: 0 0 16px rgba(46, 196, 182, 0.25);
+  letter-spacing: 0.8px;
+  font-size: 15px;
 }
 .timer-pill { color: #f0f4fc; }
 .kills-pill { color: #ff6b8b; }

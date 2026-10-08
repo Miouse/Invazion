@@ -316,8 +316,8 @@ export class GameEngine {
     this.shockwaves = [];
     this.floatingTexts = [];
 
-    // Création Joueur au centre de la vaste arène avec la classe sélectionnée
-    this.player = new Player(this.worldSize / 2, this.worldSize / 2, this.selectedCharacterId);
+    // Création Joueur sur la place de la Cité d'Oakhaven (Safe Zone de départ)
+    this.player = new Player(3160, 3540, this.selectedCharacterId);
     this.camera.x = this.player.x;
     this.camera.y = this.player.y;
     if (this.controls) {
@@ -335,15 +335,20 @@ export class GameEngine {
 
     this.state = 'PLAYING';
     this.pendingUpgrades = 0;
-    this.waveStartLevel = 1;
-    this.levelsGainedThisWave = 0;
     this.updatePendingUpgradeButton();
     if (this.btnSkipIntermission) {
       this.btnSkipIntermission.classList.add('hidden');
     }
     
-    // Démarrage de la Vague 1
-    this.startWave(1);
+    // Peuplement du monde ouvert (camps de monstres et forêts)
+    this.populateWorldCamps();
+    this.showWaveBanner(
+      "ROYAUME D'INVAZION",
+      "BIENVENUE À OAKHAVEN",
+      "Explorez les forêts, trouvez les coffres et défiez les 3 donjons !",
+      false,
+      5000
+    );
     this.updateHUD();
   }
 
@@ -726,6 +731,158 @@ export class GameEngine {
   }
 
   // ==========================================
+  // ÉCOLOGIE DU MONDE OUVERT & EXPLORATION RPG
+  // ==========================================
+  populateWorldCamps() {
+    this.enemies = [];
+    if (!this.worldMap || !this.worldMap.monsterCamps) return;
+
+    for (const camp of this.worldMap.monsterCamps) {
+      for (let i = 0; i < camp.count; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const r = Math.random() * (camp.radius * 0.45);
+        const x = camp.x + Math.cos(a) * r;
+        const y = camp.y + Math.sin(a) * r;
+        this.enemies.push(new Enemy(x, y, camp.monsterType, this.gameTime, camp));
+      }
+    }
+  }
+
+  updateCampRespawns(dt) {
+    if (!this.worldMap || !this.worldMap.monsterCamps) return;
+
+    for (const camp of this.worldMap.monsterCamps) {
+      // Compter combien d'ennemis vivants appartiennent à ce camp
+      let aliveCount = 0;
+      for (const e of this.enemies) {
+        if (e.camp && e.camp.id === camp.id) {
+          aliveCount++;
+        }
+      }
+
+      // Si le camp a subi des pertes et que le joueur n'est pas en combat au cœur du camp
+      if (aliveCount < camp.count) {
+        if (!camp._currentTimer) camp._currentTimer = 0;
+        camp._currentTimer += dt;
+
+        const distToPlayer = Math.hypot(this.player.x - camp.x, this.player.y - camp.y);
+        if (camp._currentTimer >= (camp.respawnTimer || 25) && distToPlayer > 320) {
+          camp._currentTimer = 0;
+          const a = Math.random() * Math.PI * 2;
+          const r = Math.random() * (camp.radius * 0.4);
+          const x = camp.x + Math.cos(a) * r;
+          const y = camp.y + Math.sin(a) * r;
+          this.enemies.push(new Enemy(x, y, camp.monsterType, this.gameTime, camp));
+          this.createHitParticles(x, y, '#e056fd', 4);
+        }
+      }
+    }
+  }
+
+  updateExplorationFeatures(dt) {
+    if (!this.worldMap || !this.player) return;
+
+    // 1. Fontaine sacrée des cités (soin continu passif)
+    const fountain = this.worldMap.getNearbyFountain(this.player.x, this.player.y);
+    if (fountain) {
+      if (this.player.hp < this.player.maxHp) {
+        this.player.heal(fountain.healPerSec * dt);
+        if (Math.random() < 0.22) {
+          this.createHitParticles(this.player.x, this.player.y, '#2ec4b6', 1);
+        }
+      }
+    }
+
+    // 2. Coffres au trésor dissimulés
+    if (this.worldMap.chests) {
+      for (const ch of this.worldMap.chests) {
+        if (!ch.opened) {
+          const d = Math.hypot(this.player.x - ch.x, this.player.y - ch.y);
+          if (d <= 36) {
+            ch.opened = true;
+            sfx.playLevelUp();
+            this.triggerScreenShake(4);
+            this.createHitParticles(ch.x, ch.y, '#ffd700', 16);
+            this.createHitParticles(ch.x, ch.y, '#2ec4b6', 10);
+            this.addFloatingText(ch.x, ch.y - 25, `💰 ${ch.title} DÉVERROUILLÉ !`, '#ffd700', 22);
+
+            // Apparition des gemmes d'XP et cœur
+            for (let i = 0; i < ch.xpGems; i++) {
+              const a = (i / ch.xpGems) * Math.PI * 2;
+              this.gems.push(new Gem(ch.x + Math.cos(a) * 35, ch.y + Math.sin(a) * 35, 6, 'green'));
+            }
+            this.gems.push(new Gem(ch.x, ch.y, 0, 'heart'));
+          }
+        }
+      }
+    }
+
+    // 3. Sanctuaires et stèles runiques
+    if (this.worldMap.shrines) {
+      for (const sh of this.worldMap.shrines) {
+        const d = Math.hypot(this.player.x - sh.x, this.player.y - sh.y);
+        if (d <= 42 && (!sh.activeTimer || sh.activeTimer <= 0)) {
+          sh.activeTimer = 25;
+          sfx.playLevelUp();
+          this.addShockwave(sh.x, sh.y, 160, sh.color, 6);
+          this.createHitParticles(sh.x, sh.y, sh.color, 20);
+          this.addFloatingText(this.player.x, this.player.y - 35, `✨ ${sh.name} !`, sh.color, 22);
+          this.applyShrineBuff(sh.buff, 25);
+        }
+        if (sh.activeTimer > 0) sh.activeTimer -= dt;
+      }
+    }
+
+    // 4. Détection de proximité des entrées de Donjons
+    for (const v of this.worldMap.villages) {
+      if (v.dungeonEntrance) {
+        const d = v.dungeonEntrance;
+        const dist = Math.hypot(this.player.x - d.x, this.player.y - d.y);
+        if (dist <= 50 && (!d._announced || this.gameTime - d._announced > 8)) {
+          d._announced = this.gameTime;
+          this.addFloatingText(d.x, d.y - 45, `🚪 ${d.name} (${d.sub})`, d.color || '#2ec4b6', 20);
+        }
+      }
+    }
+  }
+
+  applyShrineBuff(buffType, duration) {
+    if (!this.player) return;
+    this.shrineBuff = {
+      type: buffType,
+      timer: duration
+    };
+
+    if (buffType === 'speed') {
+      this.player.speedMultiplier = 1.40;
+    } else if (buffType === 'might') {
+      this.player.damageMultiplier = 1.45;
+    } else if (buffType === 'magnet') {
+      this.player.magnetMultiplier = 2.2;
+    }
+  }
+
+  updateShrineBuff(dt) {
+    if (this.shrineBuff && this.shrineBuff.timer > 0) {
+      this.shrineBuff.timer -= dt;
+      if (this.shrineBuff.type === 'regen') {
+        this.player.heal(8 * dt);
+        if (Math.random() < 0.22) {
+          this.createHitParticles(this.player.x, this.player.y, '#2ecc71', 1);
+        }
+      }
+
+      if (this.shrineBuff.timer <= 0) {
+        this.player.speedMultiplier = 1.0;
+        this.player.damageMultiplier = 1.0;
+        this.player.magnetMultiplier = 1.0;
+        this.shrineBuff = null;
+        this.addFloatingText(this.player.x, this.player.y - 20, "Effet de stèle dissipé", '#aaaaaa', 15);
+      }
+    }
+  }
+
+  // ==========================================
   // BOUCLE DE JEU (UPDATE & RENDER)
   // ==========================================
   loop(timestamp) {
@@ -778,8 +935,10 @@ export class GameEngine {
     // Gestion des armes & pouvoirs de zone du joueur
     this.player.updateWeapons(dt, this);
 
-    // Gestion de la progression des vagues & apparition par portails
-    this.handleWaveProgression(dt);
+    // Gestion de l'écologie du monde ouvert (respawn des camps, fontaines sacrées, coffres, sanctuaires)
+    this.updateCampRespawns(dt);
+    this.updateExplorationFeatures(dt);
+    this.updateShrineBuff(dt);
 
     // Mise à jour du Boss actif
     if (this.activeBoss) {
@@ -988,16 +1147,31 @@ export class GameEngine {
     this.killsDisplay.textContent = this.kills;
     this.gemsDisplay.textContent = this.totalGemsCollected;
 
-    // Vagues & Ennemis restants
-    if (this.waveDisplay) {
-      this.waveDisplay.textContent = `VAGUE ${this.wave}`;
-    }
-    if (this.monstersLeftDisplay) {
-      if (this.waveState === 'INTERMISSION') {
-        this.monstersLeftDisplay.textContent = `RÉPIT (${Math.ceil(this.intermissionTimer)}s)`;
+    // Localisation & Territoire actuel
+    const locationDisplay = document.getElementById('location-display');
+    const locationIcon = document.getElementById('location-icon');
+    if (locationDisplay && locationIcon && this.worldMap && this.player) {
+      const v = this.worldMap.getCurrentVillage(this.player.x, this.player.y);
+      if (v) {
+        locationIcon.textContent = v.dungeonEntrance ? v.dungeonEntrance.icon : '🏛️';
+        locationDisplay.textContent = `${v.name.toUpperCase()} • ZONE SÛRE`;
       } else {
-        const remaining = this.waveQueue.length + this.enemies.length;
-        this.monstersLeftDisplay.textContent = `${remaining} restants`;
+        if (this.player.y < 2500) {
+          locationIcon.textContent = '🌲';
+          locationDisplay.textContent = "FORÊT DES CIMES DU NORD";
+        } else if (this.player.y > 4800) {
+          locationIcon.textContent = '🌿';
+          locationDisplay.textContent = "TERRES FLUVIOLES DU SUD";
+        } else if (this.player.x < 2400) {
+          locationIcon.textContent = '🐺';
+          locationDisplay.textContent = "BOIS SAUVAGE DE L'OUEST";
+        } else if (this.player.x > 4800) {
+          locationIcon.textContent = '⚔️';
+          locationDisplay.textContent = "PLAINES DES BERSERKERS";
+        } else {
+          locationIcon.textContent = '🌳';
+          locationDisplay.textContent = "FORÊT ROYALE D'OAKHAVEN";
+        }
       }
     }
 
@@ -1142,123 +1316,100 @@ export class GameEngine {
     const minY = marginTop;
     const maxY = this.height - marginBottom;
 
-    // 1. Indicateurs des Portails Actifs Hors-Champ
-    for (const portal of this.portals) {
-      if (!portal.active) continue;
+    // 1. Indicateurs des 3 Cités Médiévales & Donjons Hors-Champ
+    if (this.worldMap && this.worldMap.villages) {
+      for (const v of this.worldMap.villages) {
+        const targetX = v.x;
+        const targetY = v.y;
 
-      // Position projetée sur l'écran
-      const screenX = centerX + (portal.x - this.camera.x) * this.zoom;
-      const screenY = centerY + (portal.y - this.camera.y) * this.zoom;
+        // Position projetée sur l'écran
+        const screenX = centerX + (targetX - this.camera.x) * this.zoom;
+        const screenY = centerY + (targetY - this.camera.y) * this.zoom;
 
-      // Vérifier si le portail est déjà visible dans l'écran
-      const isVisible = (
-        screenX >= minX && screenX <= maxX &&
-        screenY >= minY && screenY <= maxY
-      );
+        // Vérifier si la cité est déjà visible dans l'écran
+        const isVisible = (
+          screenX >= minX && screenX <= maxX &&
+          screenY >= minY && screenY <= maxY
+        );
 
-      // Si le portail est hors de l'écran, on trace la flèche rouge de menace !
-      if (!isVisible) {
-        const angle = Math.atan2(screenY - centerY, screenX - centerX);
-        const dist = Math.hypot(portal.x - this.player.x, portal.y - this.player.y);
-        const cos = Math.cos(angle);
-        const sin = Math.sin(angle);
+        if (!isVisible) {
+          const angle = Math.atan2(screenY - centerY, screenX - centerX);
+          const dist = Math.hypot(targetX - this.player.x, targetY - this.player.y);
+          const cos = Math.cos(angle);
+          const sin = Math.sin(angle);
 
-        // Intersection rayon-rectangle pour un clamping parfait hors du HUD
-        let tX = Infinity;
-        if (cos > 0.0001) tX = (maxX - centerX) / cos;
-        else if (cos < -0.0001) tX = (minX - centerX) / cos;
+          let tX = Infinity;
+          if (cos > 0.0001) tX = (maxX - centerX) / cos;
+          else if (cos < -0.0001) tX = (minX - centerX) / cos;
 
-        let tY = Infinity;
-        if (sin > 0.0001) tY = (maxY - centerY) / sin;
-        else if (sin < -0.0001) tY = (minY - centerY) / sin;
+          let tY = Infinity;
+          if (sin > 0.0001) tY = (maxY - centerY) / sin;
+          else if (sin < -0.0001) tY = (minY - centerY) / sin;
 
-        const t = Math.min(tX, tY);
-        const edgeX = Math.max(minX, Math.min(maxX, centerX + cos * t));
-        const edgeY = Math.max(minY, Math.min(maxY, centerY + sin * t));
+          const t = Math.min(tX, tY);
+          const edgeX = Math.max(minX, Math.min(maxX, centerX + cos * t));
+          const edgeY = Math.max(minY, Math.min(maxY, centerY + sin * t));
 
-        // Rendu de la pastille et de la flèche
-        this.ctx.save();
-        this.ctx.translate(edgeX, edgeY);
+          const cityColor = v.dungeonEntrance ? v.dungeonEntrance.color : '#2ec4b6';
+          const icon = v.dungeonEntrance ? v.dungeonEntrance.icon : '🏛️';
 
-        const pulse = Math.sin(this.gameTime * 8) * 5;
-        const waveProgress = (this.gameTime * 2) % 1;
+          this.ctx.save();
+          this.ctx.translate(edgeX, edgeY);
 
-        // Onde radar d'alerte
-        this.ctx.strokeStyle = `rgba(255, 0, 85, ${(1 - waveProgress) * 0.45})`;
-        this.ctx.lineWidth = 2;
-        this.ctx.beginPath();
-        this.ctx.arc(0, 0, 24 + waveProgress * 18, 0, Math.PI * 2);
-        this.ctx.stroke();
+          const pulse = Math.sin(this.gameTime * 4) * 3;
 
-        // Disque sombre d'arrière-plan haute lisibilité
-        this.ctx.fillStyle = 'rgba(10, 15, 30, 0.9)';
-        this.ctx.strokeStyle = '#ff0055';
-        this.ctx.lineWidth = 2.5;
-        this.ctx.beginPath();
-        this.ctx.arc(0, 0, 24, 0, Math.PI * 2);
-        this.ctx.fill();
-        this.ctx.stroke();
+          // Disque sombre d'arrière-plan
+          this.ctx.fillStyle = 'rgba(10, 16, 28, 0.92)';
+          this.ctx.strokeStyle = cityColor;
+          this.ctx.lineWidth = 2.5;
+          this.ctx.beginPath();
+          this.ctx.arc(0, 0, 22, 0, Math.PI * 2);
+          this.ctx.fill();
+          this.ctx.stroke();
 
-        // Halo interne
-        this.ctx.fillStyle = 'rgba(255, 0, 85, 0.25)';
-        this.ctx.beginPath();
-        this.ctx.arc(0, 0, 20, 0, Math.PI * 2);
-        this.ctx.fill();
+          // Flèche orientée vers la cité
+          this.ctx.rotate(angle);
+          this.ctx.fillStyle = cityColor;
+          this.ctx.beginPath();
+          this.ctx.moveTo(15 + pulse, 0);
+          this.ctx.lineTo(-9, -10);
+          this.ctx.lineTo(-4, 0);
+          this.ctx.lineTo(-9, 10);
+          this.ctx.closePath();
+          this.ctx.fill();
 
-        // Flèche / Chevron rouge néon orienté vers la cible
-        this.ctx.rotate(angle);
-        this.ctx.fillStyle = '#ff0055';
-        this.ctx.strokeStyle = '#ffffff';
-        this.ctx.lineWidth = 2.5;
-        this.ctx.beginPath();
-        this.ctx.moveTo(17 + pulse, 0);       // Pointe
-        this.ctx.lineTo(-11, -13);           // Aile gauche
-        this.ctx.lineTo(-5, 0);              // Creux
-        this.ctx.lineTo(-11, 13);            // Aile droite
-        this.ctx.closePath();
-        this.ctx.fill();
-        this.ctx.stroke();
+          this.ctx.restore();
 
-        // Ligne de cœur lumineuse
-        this.ctx.strokeStyle = '#ffb3c6';
-        this.ctx.lineWidth = 2;
-        this.ctx.lineCap = 'round';
-        this.ctx.beginPath();
-        this.ctx.moveTo(-3, 0);
-        this.ctx.lineTo(11 + pulse, 0);
-        this.ctx.stroke();
+          // Badge texte avec nom de la cité et distance
+          const distM = Math.round(dist / 40) + 'm';
+          const label = `${icon} ${v.name} • ${distM}`;
+          
+          this.ctx.save();
+          this.ctx.font = "bold 12px sans-serif";
+          const metrics = this.ctx.measureText(label);
+          const pillW = metrics.width + 16;
+          const pillH = 22;
+          const pillX = edgeX - pillW / 2;
+          const pillY = (edgeY < centerY ? edgeY + 26 : edgeY - 26 - pillH);
 
-        this.ctx.restore();
+          this.ctx.fillStyle = 'rgba(8, 12, 24, 0.94)';
+          this.ctx.strokeStyle = cityColor;
+          this.ctx.lineWidth = 1.5;
+          this.ctx.beginPath();
+          if (this.ctx.roundRect) {
+            this.ctx.roundRect(pillX, pillY, pillW, pillH, 11);
+          } else {
+            this.ctx.rect(pillX, pillY, pillW, pillH);
+          }
+          this.ctx.fill();
+          this.ctx.stroke();
 
-        // Badge texte d'orientation stylisé (en dessous si flèche en haut, au dessus si flèche en bas)
-        const distM = Math.round(dist / 40) + 'm';
-        const label = `⚡ ${portal.name.replace('PORTAIL ', '')} • ${distM}`;
-        
-        this.ctx.save();
-        this.ctx.font = "bold 13px 'Rajdhani', sans-serif";
-        const metrics = this.ctx.measureText(label);
-        const pillW = metrics.width + 18;
-        const pillH = 22;
-        const pillX = edgeX - pillW / 2;
-        const pillY = (edgeY < centerY ? edgeY + 28 : edgeY - 28 - pillH);
-
-        this.ctx.fillStyle = 'rgba(8, 12, 24, 0.92)';
-        this.ctx.strokeStyle = 'rgba(255, 0, 85, 0.6)';
-        this.ctx.lineWidth = 1.5;
-        this.ctx.beginPath();
-        if (this.ctx.roundRect) {
-          this.ctx.roundRect(pillX, pillY, pillW, pillH, 11);
-        } else {
-          this.ctx.rect(pillX, pillY, pillW, pillH);
+          this.ctx.textAlign = 'center';
+          this.ctx.textBaseline = 'middle';
+          this.ctx.fillStyle = '#ffffff';
+          this.ctx.fillText(label, edgeX, pillY + pillH / 2);
+          this.ctx.restore();
         }
-        this.ctx.fill();
-        this.ctx.stroke();
-
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
-        this.ctx.fillStyle = '#ffffff';
-        this.ctx.fillText(label, edgeX, pillY + pillH / 2);
-        this.ctx.restore();
       }
     }
 

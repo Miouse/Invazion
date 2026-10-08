@@ -77,27 +77,32 @@ Invazion/
     - `Ligne 6` : Ouest (gauche)
     - `Ligne 7` : Sud-Ouest
 
-### 2. `js/engine.js` — Moteur de Jeu Principal
-- **Dimensions de l'arène** : `7 000 × 7 000 px` (centre en `3 500, 3 500`).
+### 2. `js/engine.js` — Moteur de Jeu Principal & Monde Ouvert
+- **Dimensions de l'arène** : `7 000 × 7 000 px` (Départ au centre d'Oakhaven en `3 160, 3 540`).
 - **Caméra & Zoom** : Zoom par défaut `0.60` pour une vue immersive rapprochée et lisible (ajustable de 0.30 à 1.15 à la molette).
-- **Système de Vagues (Option A)** :
-  - Vague active : un contingent défini de monstres émerge en continu des 4 portails cardinaux (`North`, `South`, `East`, `West`).
-  - Tous monstres éliminés ➔ Passage en état `INTERMISSION` de **20 secondes de répit** avec apparition de gemmes et bouton pour passer immédiatement.
-  - Boss Titanesque : Émerge toutes les 5 vagues au portail Nord.
-- **Indicateurs de Menace Hors-Champ (`renderScreenEdgeIndicators`)** :
-  - Calcul d'intersection rayon-rectangle avec marges asymétriques (`marginTop = 125px`, `165px` lors des boss) pour **ne jamais être masqué par le HUD supérieur** (stats et barre d'XP).
-  - Rendu haute visibilité : disque sombre contrasté, cerclage néon, onde radar pulsée, chevron agrandi et capsule de texte d'orientation.
+- **Structure Monde Ouvert Médiéval (Remplacement des Vagues Forcées)** :
+  - Disparition des vagues oppressantes avec spawn aléatoire. Le joueur explore librement le monde.
+  - 6 camps de monstres thématiques peuplés dès le départ (avec respawn intelligent temporisé de 25-30s si le joueur n'est pas en combat au camp).
+  - Gestion des Safe Zones des cités : les fontaines sacrées soignent continuellement le joueur (+16 PV/s).
+  - Gestion des 8 coffres au trésor dissimulés et 4 sanctuaires de bénédiction runiques.
+- **Boussole & Repères Hors-Champ (`renderScreenEdgeIndicators`)** :
+  - Pointeurs directionnels dynamiques avec distance en mètres indiquant les 3 Cités médiévales (*Oakhaven*, *Val-des-Ombres*, *Riverbend*) et leurs donjons.
 - **Système d'Amélioration Asynchrone** :
   - L'expérience et les niveaux s'accumulent dans `pendingUpgrades`. Le combat **ne s'interrompt pas** brutalement. Le joueur clique sur le bouton ⭐ ou appuie sur `U` pour ouvrir la modale à volonté.
 
-### 3. `js/world.js` — Générateur de Monde RPG & Pathfinding A*
-- **Monde ouvert 7 000 × 7 000 px** : Plaines verdoyantes, rivière sinueuse (140 px de large), 2 ponts de bois stratégiques, 3 villages (Oakhaven, Camp des Éclaireurs, Riverbend), forêts et falaises.
+### 3. `js/world.js` — Générateur de Monde RPG Médiéval & Pathfinding A*
+- **Monde ouvert 7 000 × 7 000 px** :
+  - **3 Cités Médiévales & Donjons** :
+    1. **Oakhaven** (Centre/Sud) : Bâtiments à pans de bois, place fortifiée, fontaine sacrée et entrée du *Donjon I : Crypte d'Oakhaven*.
+    2. **Val-des-Ombres** (Nord-Ouest) : Citadelle gothique sur falaises sombres, braseros et entrée du *Donjon III : Bastion Démoniaque*.
+    3. **Riverbend** (Sud-Est) : Cité lacustre sur pilotis, grands pontons, barques et entrée du *Donjon II : Antre des Eaux Sombres*.
+  - **Forêts Denses Médiévales** : 14 massifs forestiers majeurs abritant plus de 1 350 arbres pixel-art, clairières, souches et ruines en pierre.
+  - **Points d'Intérêt & Secrets** : 8 coffres au trésor médiévaux en bois et or, 4 stèles runiques de bénédiction (+vitesse, +dégâts, +régén, +aimant).
 - **Collisions physiques (Sliding Collision)** : Grille spatiale (buckets de 250 px), glissement d'axe séparé X/Y sur les obstacles solides et l'eau.
 - **Système de Pathfinding A* avec franchissement de ponts** :
   - Grille de navigation `navGrid` (cellules de 50 px) précalculée au démarrage.
   - Test de ligne de vue instantané (`hasLineOfSight`) : si aucun obstacle ne barre la route, déplacement direct sans coût A* (60 FPS constants).
-  - Si un obstacle (rivière, falaise, maison) bloque la trajectoire directe, l'algorithme A* trouve le chemin optimal via le pont le plus proche.
-  - Lissage de trajectoire (*String-Pulling*) : supprime les marches d'escalier et fournit 3 à 4 waypoints purs.
+  - Franchissement fluide des 2 grands ponts de bois reliant les rives.
 
 ### 4. `js/controls.js` — Gestionnaire des Contrôles (`ControlsManager`)
 - **3 modes commutables** :

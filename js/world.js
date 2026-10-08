@@ -23,29 +23,36 @@ export class WorldMap {
       tree:   this.loadImg('personnage/Puny-Characters/Environment/Tree.png')
     };
 
-    // 1. Initialisation des villages et points d'intérêt
+    // 1. Initialisation des 3 cités médiévales, donjons et fontaines
     this.initVillages();
 
     // 2. Tracé de la rivière sinueuse et des ponts
     this.initRiverAndBridges();
 
-    // 3. Réseau de chemins et routes de terre
+    // 3. Réseau de chemins et routes de terre médiévales
     this.initRoads();
 
     // 4. Falaises et plateaux rocheux
     this.initCliffs();
 
-    // 5. Génération des forêts et arbres
+    // 5. Camps de monstres avec zones d'aggro
+    this.initMonsterCamps();
+
+    // 6. Coffres au trésor dissimulés & Sanctuaires runiques
+    this.initChests();
+    this.initShrines();
+
+    // 7. Génération de vastes forêts médiévales très denses
     this.initTreesAndFoliage();
 
-    // 6. Accessoires, panneaux et feux de camp
+    // 8. Accessoires, panneaux, ruines et feux de camp
     this.initPropsAndDecor();
 
-    // 7. Initialisation du moteur de collisions physiques (bâtiments, eau, ponts, falaises, arbres)
+    // 9. Initialisation du moteur de collisions physiques
     this.initColliders();
     this.buildSpatialGrid();
 
-    // 8. Grille de navigation pour Pathfinding A* (franchissement automatique des ponts)
+    // 10. Grille de navigation pour Pathfinding A* (franchissement automatique des ponts)
     this.initNavGrid();
   }
 
@@ -58,72 +65,110 @@ export class WorldMap {
   // ==========================================
   // 1. LES 3 VILLAGES DISTINCTS
   // ==========================================
+  // 1. LES 3 CÍTÉS MÉDIÉVALES DISTINCTES AVEC DONJONS & SAFE ZONES
+  // ==========================================
   initVillages() {
     this.villages = [
       {
         id: 'oakhaven',
-        name: "Hameau d'Oakhaven",
-        subtitle: "Cité centrale aux toits d'émeraude",
+        name: "Cité d'Oakhaven",
+        subtitle: "Cité centrale aux toits d'émeraude • Zone Sûre",
         x: 3200,
         y: 3500,
-        radius: 480,
+        radius: 540,
+        safeZone: true,
+        fountain: { x: 3160, y: 3510, radius: 150, healPerSec: 16 },
+        dungeonEntrance: {
+          x: 3160,
+          y: 3260,
+          id: 'dungeon_oakhaven',
+          name: "Crypte d'Oakhaven",
+          sub: "Donjon I • Catacombes Oubliées",
+          icon: "🏛️",
+          color: "#2ec4b6"
+        },
         buildings: [
-          // Grand Manoir / Château central
+          // Grand Manoir / Château central fortifié
           { type: 'castle', x: 3150, y: 3380, w: 140, h: 105, roofColor: '#1b7a6f', trim: '#2ec4b6' },
-          // Maisons avec toits turquoise / bleu-vert
+          // Maisons médiévales avec toits turquoise / émeraude
           { type: 'house', x: 2980, y: 3450, w: 76, h: 64, roofColor: '#2a9d8f' },
           { type: 'house', x: 2990, y: 3560, w: 82, h: 68, roofColor: '#264653' },
           { type: 'house', x: 3340, y: 3450, w: 78, h: 65, roofColor: '#2a9d8f' },
           { type: 'house', x: 3330, y: 3570, w: 84, h: 68, roofColor: '#1f6e65' },
-          { type: 'house', x: 3160, y: 3620, w: 75, h: 62, roofColor: '#2a9d8f' },
-          // Puits de pierre sur la place centrale
-          { type: 'well', x: 3160, y: 3510, radius: 18 },
-          // Étalages de marché
+          { type: 'house', x: 3160, y: 3640, w: 75, h: 62, roofColor: '#2a9d8f' },
+          // Fontaine sacrée de soin sur la place centrale
+          { type: 'fountain', x: 3160, y: 3510, radius: 24 },
+          // Étalages de marché médiéval
           { type: 'stall', x: 3080, y: 3510, w: 38, h: 26, color: '#e76f51' },
           { type: 'stall', x: 3240, y: 3510, w: 38, h: 26, color: '#f4a261' }
         ]
       },
       {
-        id: 'scout_camp',
-        name: "Campement des Éclaireurs",
-        subtitle: "Avant-poste des chasseurs et sentinelles",
-        x: 4300,
-        y: 2000,
-        radius: 400,
+        id: 'val_des_ombres',
+        name: "Forteresse de Val-des-Ombres",
+        subtitle: "Citadelle de pierre et ruines du Nord • Zone Sûre",
+        x: 2100,
+        y: 1700,
+        radius: 520,
+        safeZone: true,
+        fountain: { x: 2100, y: 1700, radius: 140, healPerSec: 16 },
+        dungeonEntrance: {
+          x: 2100,
+          y: 1480,
+          id: 'dungeon_val',
+          name: "Bastion Démoniaque",
+          sub: "Donjon III • Citadelle Infernale",
+          icon: "🏰",
+          color: "#e74c3c"
+        },
         buildings: [
-          // Tentes de toile ocre/jaune (comme sur la photo de référence)
-          { type: 'tent', x: 4220, y: 1940, w: 54, h: 48, color: '#e9c46a', accent: '#f4a261' },
-          { type: 'tent', x: 4320, y: 1920, w: 54, h: 48, color: '#e9c46a', accent: '#f4a261' },
-          { type: 'tent', x: 4390, y: 1970, w: 54, h: 48, color: '#e9c46a', accent: '#f4a261' },
-          { type: 'tent', x: 4210, y: 2060, w: 50, h: 46, color: '#e9c46a', accent: '#d4a373' },
-          { type: 'tent', x: 4380, y: 2070, w: 52, h: 46, color: '#e9c46a', accent: '#d4a373' },
-          // Grand feu de camp central
-          { type: 'campfire', x: 4300, y: 2010, radius: 20 },
-          // Caisses et rondins
-          { type: 'crates', x: 4260, y: 1960 },
-          { type: 'crates', x: 4340, y: 2050 }
+          // Tour de guet et manoir de pierre sombre
+          { type: 'castle', x: 2100, y: 1580, w: 130, h: 100, roofColor: '#3a3a4a', trim: '#e74c3c' },
+          // Bâtiments de pierre fortifiée
+          { type: 'house', x: 1960, y: 1680, w: 80, h: 66, roofColor: '#2c2c38' },
+          { type: 'house', x: 2240, y: 1680, w: 80, h: 66, roofColor: '#2c2c38' },
+          { type: 'house', x: 2000, y: 1800, w: 76, h: 62, roofColor: '#434354' },
+          { type: 'house', x: 2200, y: 1800, w: 76, h: 62, roofColor: '#434354' },
+          // Fontaine d'obsidienne consacrée
+          { type: 'fountain', x: 2100, y: 1700, radius: 24, dark: true },
+          // Braseros et tentes de garnison
+          { type: 'tent', x: 1900, y: 1780, w: 52, h: 46, color: '#8d0801', accent: '#370617' },
+          { type: 'campfire', x: 2020, y: 1730, radius: 18 },
+          { type: 'campfire', x: 2180, y: 1730, radius: 18 }
         ]
       },
       {
         id: 'riverbend',
         name: "Bourgade de Riverbend",
-        subtitle: "Village de pêcheurs au bord de l'eau",
-        x: 4600,
+        subtitle: "Cité lacustre au bord de l'eau • Zone Sûre",
+        x: 4650,
         y: 4900,
-        radius: 450,
+        radius: 500,
+        safeZone: true,
+        fountain: { x: 4650, y: 4900, radius: 140, healPerSec: 16 },
+        dungeonEntrance: {
+          x: 4800,
+          y: 4720,
+          id: 'dungeon_riverbend',
+          name: "Antre des Eaux Sombres",
+          sub: "Donjon II • Cavernes Inondées",
+          icon: "🌊",
+          color: "#00b4d8"
+        },
         buildings: [
-          // Huttes et maisons de pêcheurs
-          { type: 'house', x: 4500, y: 4820, w: 72, h: 60, roofColor: '#2a9d8f' },
-          { type: 'house', x: 4620, y: 4800, w: 78, h: 64, roofColor: '#264653' },
-          { type: 'house', x: 4740, y: 4830, w: 70, h: 58, roofColor: '#1b7a6f' },
-          // Tentes de campement vertes
-          { type: 'tent', x: 4520, y: 4960, w: 48, h: 44, color: '#52b788', accent: '#2d6a4f' },
-          { type: 'tent', x: 4600, y: 4980, w: 48, h: 44, color: '#52b788', accent: '#2d6a4f' },
+          // Huttes et maisons de pêcheurs sur pilotis
+          { type: 'house', x: 4500, y: 4820, w: 74, h: 62, roofColor: '#2a9d8f' },
+          { type: 'house', x: 4620, y: 4800, w: 80, h: 66, roofColor: '#264653' },
+          { type: 'house', x: 4740, y: 4830, w: 72, h: 60, roofColor: '#1b7a6f' },
+          // Tentes de marins et pêcheurs
+          { type: 'tent', x: 4520, y: 4980, w: 48, h: 44, color: '#52b788', accent: '#2d6a4f' },
+          { type: 'tent', x: 4750, y: 4980, w: 48, h: 44, color: '#52b788', accent: '#2d6a4f' },
+          // Fontaine d'eau bénie
+          { type: 'fountain', x: 4650, y: 4900, radius: 22, water: true },
           // Pontons de bois avançant vers la rivière
           { type: 'pier', x: 4410, y: 4870, w: 60, h: 22 },
           { type: 'pier', x: 4430, y: 4960, w: 55, h: 22 },
-          // Feu de camp convivial
-          { type: 'campfire', x: 4660, y: 4920, radius: 18 }
+          { type: 'campfire', x: 4570, y: 4930, radius: 18 }
         ]
       }
     ];
@@ -190,27 +235,52 @@ export class WorldMap {
   }
 
   // ==========================================
-  // 3. RÉSEAU DE ROUTES ET CHEMINS DE TERRE
+  // 3. RÉSEAU DE ROUTES ET CHEMINS DE TERRE MÉDIÉVALES
   // ==========================================
   initRoads() {
     this.roadPaths = [
-      // Route 1 : Portail Nord ➔ Camp des Éclaireurs
-      [ { x: 3500, y: 500 }, { x: 3700, y: 1100 }, { x: 4200, y: 1700 }, { x: 4300, y: 1950 } ],
-      // Route 2 : Camp des Éclaireurs ➔ Pont d'Oakhaven (entrée Nord)
-      [ { x: 4300, y: 2050 }, { x: 4100, y: 2600 }, { x: 3750, y: 3045 } ],
-      // Route 3 : Pont d'Oakhaven (sortie Sud) ➔ Village Oakhaven
-      [ { x: 3750, y: 3255 }, { x: 3500, y: 3350 }, { x: 3200, y: 3500 } ],
-      // Route 4 : Oakhaven ➔ Portail Ouest
-      [ { x: 2950, y: 3520 }, { x: 2100, y: 3520 }, { x: 1200, y: 3500 }, { x: 500, y: 3500 } ],
-      // Route 5 : Oakhaven ➔ Village Riverbend
-      [ { x: 3300, y: 3650 }, { x: 3700, y: 4100 }, { x: 4100, y: 4500 }, { x: 4550, y: 4850 } ],
-      // Route 6 : Riverbend ➔ Portail Sud & Est
-      [ { x: 4600, y: 5000 }, { x: 4300, y: 5600 }, { x: 3600, y: 6400 } ],
-      [ { x: 4750, y: 4850 }, { x: 5400, y: 4500 }, { x: 6400, y: 3600 } ],
-      // Route 7 : Oakhaven ➔ Passage des Saules (entrée Nord)
-      [ { x: 3000, y: 3550 }, { x: 2450, y: 3700 }, { x: 1880, y: 3890 } ],
-      // Route 8 : Passage des Saules (sortie Sud) ➔ Plaines Sud-Ouest
-      [ { x: 2020, y: 4010 }, { x: 2150, y: 4400 }, { x: 1800, y: 5000 } ]
+      // Route 1 : Oakhaven (3200, 3500) ➔ Forteresse de Val-des-Ombres (2100, 1700)
+      [
+        { x: 3160, y: 3400 },
+        { x: 3050, y: 3000 },
+        { x: 2800, y: 2500 },
+        { x: 2450, y: 2100 },
+        { x: 2100, y: 1780 }
+      ],
+      // Route 2 : Oakhaven (3200, 3500) ➔ Pont d'Oakhaven ➔ Rives du Nord
+      [
+        { x: 3250, y: 3450 },
+        { x: 3500, y: 3320 },
+        { x: 3750, y: 3255 }, // Entrée Sud du Pont
+        { x: 3750, y: 3045 }, // Sortie Nord du Pont
+        { x: 4000, y: 2600 },
+        { x: 4400, y: 2000 }
+      ],
+      // Route 3 : Oakhaven (3200, 3500) ➔ Bourgade de Riverbend (4650, 4900)
+      [
+        { x: 3300, y: 3600 },
+        { x: 3700, y: 4050 },
+        { x: 4150, y: 4450 },
+        { x: 4600, y: 4850 }
+      ],
+      // Route 4 : Oakhaven ➔ Passage des Saules (Pont 2)
+      [
+        { x: 3000, y: 3550 },
+        { x: 2500, y: 3700 },
+        { x: 1880, y: 3890 }
+      ],
+      // Route 5 : Passage des Saules ➔ Plaines et Ruines du Sud-Ouest
+      [
+        { x: 2020, y: 4010 },
+        { x: 2150, y: 4450 },
+        { x: 1800, y: 5100 }
+      ],
+      // Route 6 : Riverbend ➔ Vers le Camp des Orcs à l'Est
+      [
+        { x: 4750, y: 4850 },
+        { x: 5350, y: 4600 },
+        { x: 6050, y: 4100 }
+      ]
     ];
   }
 
@@ -219,12 +289,12 @@ export class WorldMap {
   // ==========================================
   initCliffs() {
     this.cliffs = [
-      // Falaise 1 : Plateau rocheux du Nord-Ouest
+      // Falaise 1 : Plateau rocheux de Val-des-Ombres (Nord-Ouest)
       {
         points: [
-          { x: 1200, y: 1400 }, { x: 1700, y: 1350 }, { x: 2200, y: 1500 },
-          { x: 2300, y: 1900 }, { x: 2000, y: 2300 }, { x: 1400, y: 2250 },
-          { x: 1100, y: 1800 }
+          { x: 1400, y: 1300 }, { x: 1900, y: 1250 }, { x: 2450, y: 1400 },
+          { x: 2550, y: 1850 }, { x: 2300, y: 2200 }, { x: 1600, y: 2150 },
+          { x: 1300, y: 1700 }
         ],
         h: 55
       },
@@ -248,7 +318,127 @@ export class WorldMap {
   }
 
   // ==========================================
-  // 5. FORÊTS DENSES & ARBRES PIXEL-ART
+  // 5. CAMPS DE MONSTRES & POINTS D'INTÉRÊT (MONDE VIVANT)
+  // ==========================================
+  initMonsterCamps() {
+    this.monsterCamps = [
+      {
+        id: 'wolves_west',
+        name: "Tanière des Loups d'Ombre",
+        x: 1400,
+        y: 3500,
+        radius: 380,
+        monsterType: 'skeleton',
+        count: 7,
+        respawnTimer: 25,
+        decors: [
+          { type: 'bones', x: 1400, y: 3500 },
+          { type: 'rock', x: 1370, y: 3480, r: 24 },
+          { type: 'rock', x: 1440, y: 3520, r: 20 }
+        ]
+      },
+      {
+        id: 'spiders_north',
+        name: "Nid des Araignées Spectres",
+        x: 4200,
+        y: 1100,
+        radius: 380,
+        monsterType: 'bat',
+        count: 8,
+        respawnTimer: 25,
+        decors: [
+          { type: 'web', x: 4200, y: 1100 },
+          { type: 'rock', x: 4160, y: 1080, r: 20 }
+        ]
+      },
+      {
+        id: 'orcs_east',
+        name: "Bastion des Orcs Berserkers",
+        x: 6200,
+        y: 4000,
+        radius: 400,
+        monsterType: 'demon',
+        count: 6,
+        respawnTimer: 30,
+        decors: [
+          { type: 'campfire', x: 6200, y: 4000, radius: 22 },
+          { type: 'tent', x: 6130, y: 3950, w: 56, h: 48, color: '#8d0801', accent: '#370617' },
+          { type: 'tent', x: 6260, y: 4050, w: 56, h: 48, color: '#8d0801', accent: '#370617' }
+        ]
+      },
+      {
+        id: 'slimes_south',
+        name: "Marais des Slimes Corrompus",
+        x: 3600,
+        y: 6200,
+        radius: 380,
+        monsterType: 'zombie',
+        count: 9,
+        respawnTimer: 25,
+        decors: [
+          { type: 'slime_pool', x: 3600, y: 6200, radius: 45 },
+          { type: 'logs', x: 3560, y: 6170 }
+        ]
+      },
+      {
+        id: 'ruins_northeast',
+        name: "Ruines des Âmes Maudites",
+        x: 5800,
+        y: 2000,
+        radius: 380,
+        monsterType: 'skeleton',
+        count: 7,
+        respawnTimer: 25,
+        decors: [
+          { type: 'ruins_pillar', x: 5780, y: 1980 },
+          { type: 'ruins_pillar', x: 5840, y: 2020 },
+          { type: 'rock', x: 5800, y: 2010, r: 22 }
+        ]
+      },
+      {
+        id: 'woods_southwest',
+        name: "Clairière Obscure du Sud-Ouest",
+        x: 1800,
+        y: 5500,
+        radius: 360,
+        monsterType: 'bat',
+        count: 7,
+        respawnTimer: 25,
+        decors: [
+          { type: 'web', x: 1800, y: 5500 },
+          { type: 'rock', x: 1830, y: 5480, r: 22 }
+        ]
+      }
+    ];
+  }
+
+  // ==========================================
+  // 6. COFFRES AU TRÉSOR DISSIMULÉS & SANCTUAIRES
+  // ==========================================
+  initChests() {
+    this.chests = [
+      { id: 1, x: 1600, y: 2800, opened: false, type: 'gold', xpGems: 7, hp: 35, title: "Coffre d'Or des Bois" },
+      { id: 2, x: 2600, y: 4400, opened: false, type: 'wood', xpGems: 4, hp: 25, title: "Coffre en Chêne" },
+      { id: 3, x: 4200, y: 3800, opened: false, type: 'wood', xpGems: 4, hp: 25, title: "Coffre de Patrouille" },
+      { id: 4, x: 5400, y: 1600, opened: false, type: 'gold', xpGems: 8, hp: 40, title: "Trésor des Ruines Nord" },
+      { id: 5, x: 6450, y: 4400, opened: false, type: 'gold', xpGems: 9, hp: 45, title: "Butin des Berserkers" },
+      { id: 6, x: 4200, y: 6000, opened: false, type: 'wood', xpGems: 5, hp: 30, title: "Coffre des Marais" },
+      { id: 7, x: 1300, y: 1800, opened: false, type: 'gold', xpGems: 7, hp: 35, title: "Coffre de la Falaise" },
+      { id: 8, x: 2800, y: 2200, opened: false, type: 'wood', xpGems: 4, hp: 25, title: "Coffre Rustique" }
+    ];
+  }
+
+  initShrines() {
+    this.shrines = [
+      { id: 1, x: 2700, y: 3200, buff: 'speed', name: "Stèle des Vents Vifs", desc: "+40% Vitesse (25s)", color: '#00f0ff', activeTimer: 0 },
+      { id: 2, x: 4000, y: 4400, buff: 'regen', name: "Stèle de Vitalité Solaire", desc: "+8 PV/s Régénération (25s)", color: '#2ecc71', activeTimer: 0 },
+      { id: 3, x: 5200, y: 1900, buff: 'might', name: "Stèle de Fureur Titanesque", desc: "+40% Dégâts (25s)", color: '#ff2a55', activeTimer: 0 },
+      { id: 4, x: 2500, y: 5200, buff: 'magnet', name: "Stèle d'Aimant Stellaire", desc: "+120% Aimant (25s)", color: '#ffd700', activeTimer: 0 }
+    ];
+  }
+
+  // ==========================================
+  // 7. FORÊTS MÉDIÉVALES TRÈS DENSES (1400+ ARBRES)
   // ==========================================
   initTreesAndFoliage() {
     this.trees = [];
@@ -258,17 +448,22 @@ export class WorldMap {
     };
 
     let seed = 42;
-    // On génère 650 arbres répartis en bosquets et bordures naturelles
+    // 14 massifs forestiers médiévaux majeurs recouvrant la carte de façon dense
     const clusters = [
-      { cx: 1600, cy: 2600, count: 90, radius: 700 }, // Forêt Ouest
-      { cx: 2200, cy: 1100, count: 70, radius: 600 }, // Forêt Nord-Ouest
-      { cx: 4800, cy: 1100, count: 65, radius: 550 }, // Forêt Nord-Est
-      { cx: 5800, cy: 2200, count: 80, radius: 650 }, // Forêt Est
-      { cx: 5600, cy: 5200, count: 85, radius: 700 }, // Forêt Sud-Est
-      { cx: 1800, cy: 5600, count: 90, radius: 700 }, // Forêt Sud-Ouest
-      { cx: 3500, cy: 4500, count: 60, radius: 500 }, // Bois des Plaines
-      { cx: 2800, cy: 2800, count: 50, radius: 450 }, // Verger Oakhaven
-      { cx: 4600, cy: 3700, count: 60, radius: 500 }  // Bosquets de la rivière
+      { cx: 1600, cy: 2700, count: 120, radius: 750 }, // Forêt Ouest Sauvage
+      { cx: 2400, cy: 1100, count: 100, radius: 650 }, // Forêt Nord-Ouest des Cimes
+      { cx: 4800, cy: 1100, count: 95,  radius: 650 }, // Forêt Nord-Est des Brumes
+      { cx: 5900, cy: 2200, count: 110, radius: 700 }, // Forêt Est Ancienne
+      { cx: 5800, cy: 5200, count: 120, radius: 750 }, // Forêt Sud-Est des Ténèbres
+      { cx: 1800, cy: 5700, count: 120, radius: 750 }, // Forêt Sud-Ouest
+      { cx: 3500, cy: 4500, count: 90,  radius: 550 }, // Bois des Plaines Royales
+      { cx: 2800, cy: 2800, count: 75,  radius: 500 }, // Verger et Bois d'Oakhaven
+      { cx: 4700, cy: 3700, count: 90,  radius: 550 }, // Bosquets de la Rivière
+      { cx: 1000, cy: 4200, count: 85,  radius: 600 }, // Bois Profond Ouest
+      { cx: 6200, cy: 3000, count: 90,  radius: 600 }, // Bois des Murmures Est
+      { cx: 4500, cy: 5800, count: 95,  radius: 650 }, // Massif Fluvial Sud
+      { cx: 2600, cy: 6200, count: 90,  radius: 600 }, // Sous-Bois du Midi
+      { cx: 3600, cy: 1700, count: 80,  radius: 550 }  // Bosquets de la Clairière Nord
     ];
 
     for (const cl of clusters) {
@@ -278,20 +473,20 @@ export class WorldMap {
         const x = cl.cx + Math.cos(ang) * dist;
         const y = cl.cy + Math.sin(ang) * dist;
 
-        // Éviter de planter un arbre directement dans la rivière, villages, routes, ponts, falaises, spawn et portails
+        // Éviter de planter un arbre directement dans la rivière, cités, routes, ponts, donjons ou camps
         if (this.isNearRiver(x, y, 110) || 
-            this.isInsideVillage(x, y, 160) ||
+            this.isInsideVillage(x, y, 180) ||
             this.isNearRoad(x, y, 55) ||
             this.isNearBridge(x, y, 90) ||
             this.isNearSpawn(x, y, 220) ||
-            this.isNearPortal(x, y, 280) ||
+            this.isNearCampOrPOI(x, y, 90) ||
             this.isInsideCliff(x, y)) {
           continue;
         }
 
-        const isApple = rnd(seed++) < 0.22;
+        const isApple = rnd(seed++) < 0.20;
         const isStump = !isApple && rnd(seed++) < 0.08;
-        const size = isStump ? 26 : 42 + Math.floor(rnd(seed++) * 16);
+        const size = isStump ? 26 : 44 + Math.floor(rnd(seed++) * 18);
 
         this.trees.push({
           x, y,
@@ -302,6 +497,41 @@ export class WorldMap {
         });
       }
     }
+  }
+
+  isNearCampOrPOI(x, y, margin = 90) {
+    const marginSq = margin * margin;
+    // Camps de monstres
+    if (this.monsterCamps) {
+      for (const c of this.monsterCamps) {
+        const dx = x - c.x, dy = y - c.y;
+        if (dx * dx + dy * dy < marginSq) return true;
+      }
+    }
+    // Donjons
+    if (this.villages) {
+      for (const v of this.villages) {
+        if (v.dungeonEntrance) {
+          const dx = x - v.dungeonEntrance.x, dy = y - v.dungeonEntrance.y;
+          if (dx * dx + dy * dy < marginSq) return true;
+        }
+      }
+    }
+    // Coffres
+    if (this.chests) {
+      for (const ch of this.chests) {
+        const dx = x - ch.x, dy = y - ch.y;
+        if (dx * dx + dy * dy < 50 * 50) return true;
+      }
+    }
+    // Sanctuaires
+    if (this.shrines) {
+      for (const sh of this.shrines) {
+        const dx = x - sh.x, dy = y - sh.y;
+        if (dx * dx + dy * dy < 50 * 50) return true;
+      }
+    }
+    return false;
   }
 
   isNearRiver(x, y, margin = 100) {
@@ -374,23 +604,79 @@ export class WorldMap {
   }
 
   // ==========================================
-  // 6. ACCESSOIRES & DÉCORS
+  // 8. ACCESSOIRES, RUINES & DÉCORS MÉDIÉVAUX
   // ==========================================
   initPropsAndDecor() {
     this.props = [
-      // Panneaux indicateurs
-      { type: 'signpost', x: 3550, y: 3260, text: "OAKHAVEN ⬅ | CAMP NORD ⬆" },
-      { type: 'signpost', x: 4250, y: 2130, text: "SENTIER DE LA RIVIÈRE ⬇" },
-      { type: 'signpost', x: 4500, y: 4740, text: "RIVERBEND • BOURG FLUVIOLE" },
+      // Panneaux indicateurs du Royaume
+      { type: 'signpost', x: 3160, y: 3680, text: "OAKHAVEN 🏛️ | VAL-DES-OMBRES ↖ | RIVERBEND ↘" },
+      { type: 'signpost', x: 2100, y: 1870, text: "VAL-DES-OMBRES 🏰 | OAKHAVEN ↘" },
+      { type: 'signpost', x: 4650, y: 5040, text: "RIVERBEND 🌊 | OAKHAVEN ↖" },
+      { type: 'signpost', x: 3800, y: 3280, text: "PONT D'OAKHAVEN 🌉" },
+      { type: 'signpost', x: 2500, y: 2000, text: "ROUTE DU NORD ⬆ VAL-DES-OMBRES" },
+
+      // Ruines médiévales en pierre
+      { type: 'ruins_pillar', x: 2800, y: 2200 },
+      { type: 'ruins_pillar', x: 2860, y: 2250 },
+      { type: 'ruins_pillar', x: 5750, y: 2050 },
+      { type: 'ruins_pillar', x: 5820, y: 2100 },
+      { type: 'ruins_pillar', x: 1950, y: 4800 },
+
       // Tas de bois et bûches
-      { type: 'logs', x: 4240, y: 1980 },
-      { type: 'logs', x: 3040, y: 3620 },
+      { type: 'logs', x: 3280, y: 3620 },
+      { type: 'logs', x: 4580, y: 4860 },
+      { type: 'logs', x: 2180, y: 1750 },
+
       // Rochers naturels disséminés
-      { type: 'rock', x: 3820, y: 2850, r: 16 },
+      { type: 'rock', x: 3820, y: 2850, r: 18 },
       { type: 'rock', x: 2600, y: 3750, r: 20 },
       { type: 'rock', x: 4850, y: 4650, r: 18 },
-      { type: 'rock', x: 3450, y: 4300, r: 22 }
+      { type: 'rock', x: 3450, y: 4300, r: 22 },
+      { type: 'rock', x: 1700, y: 2400, r: 24 },
+      { type: 'rock', x: 5300, y: 3500, r: 20 }
     ];
+  }
+
+  // Détermine si une position se trouve dans une Safe Zone (ville protégée)
+  isInsideSafeZone(x, y) {
+    if (!this.villages) return false;
+    for (const v of this.villages) {
+      if (!v.safeZone) continue;
+      const dx = x - v.x;
+      const dy = y - v.y;
+      if (dx * dx + dy * dy < v.radius * v.radius) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Retourne la ville dans laquelle se trouve le joueur
+  getCurrentVillage(x, y) {
+    if (!this.villages) return null;
+    for (const v of this.villages) {
+      const dx = x - v.x;
+      const dy = y - v.y;
+      if (dx * dx + dy * dy < v.radius * v.radius) {
+        return v;
+      }
+    }
+    return null;
+  }
+
+  // Retourne la fontaine de soin si le joueur est dans son périmètre actif
+  getNearbyFountain(x, y) {
+    if (!this.villages) return null;
+    for (const v of this.villages) {
+      if (v.fountain) {
+        const dx = x - v.fountain.x;
+        const dy = y - v.fountain.y;
+        if (dx * dx + dy * dy < v.fountain.radius * v.fountain.radius) {
+          return v.fountain;
+        }
+      }
+    }
+    return null;
   }
 
   // ==========================================
@@ -625,6 +911,46 @@ export class WorldMap {
         drawList.push({ kind: 'prop', data: p, y: p.y });
       }
     }
+    // Ajouter les entrées de donjons visibles
+    for (const v of this.villages) {
+      if (v.dungeonEntrance) {
+        const d = v.dungeonEntrance;
+        if (d.x >= left - 150 && d.x <= right + 150 && d.y >= top - 150 && d.y <= bottom + 150) {
+          drawList.push({ kind: 'dungeon', data: d, y: d.y + 40 });
+        }
+      }
+    }
+
+    // Ajouter les coffres au trésor visibles
+    if (this.chests) {
+      for (const ch of this.chests) {
+        if (ch.x >= left - 60 && ch.x <= right + 60 && ch.y >= top - 60 && ch.y <= bottom + 60) {
+          drawList.push({ kind: 'chest', data: ch, y: ch.y });
+        }
+      }
+    }
+
+    // Ajouter les sanctuaires runiques visibles
+    if (this.shrines) {
+      for (const sh of this.shrines) {
+        if (sh.x >= left - 80 && sh.x <= right + 80 && sh.y >= top - 80 && sh.y <= bottom + 80) {
+          drawList.push({ kind: 'shrine', data: sh, y: sh.y + 20 });
+        }
+      }
+    }
+
+    // Ajouter les décors des camps de monstres visibles
+    if (this.monsterCamps) {
+      for (const c of this.monsterCamps) {
+        if (c.decors) {
+          for (const d of c.decors) {
+            if (d.x >= left - 80 && d.x <= right + 80 && d.y >= top - 80 && d.y <= bottom + 80) {
+              drawList.push({ kind: 'campDecor', data: d, y: d.y });
+            }
+          }
+        }
+      }
+    }
 
     // Tri par coordonnée Y pour le rendu isométrique (les objets au premier plan recouvrent l'arrière)
     drawList.sort((a, b) => a.y - b.y);
@@ -636,6 +962,14 @@ export class WorldMap {
         this.drawTree(ctx, item.data);
       } else if (item.kind === 'prop') {
         this.drawProp(ctx, item.data);
+      } else if (item.kind === 'dungeon') {
+        this.drawDungeonEntrance(ctx, item.data, time);
+      } else if (item.kind === 'chest') {
+        this.drawChest(ctx, item.data, time);
+      } else if (item.kind === 'shrine') {
+        this.drawShrine(ctx, item.data, time);
+      } else if (item.kind === 'campDecor') {
+        this.drawCampDecor(ctx, item.data, time);
       }
     }
   }
@@ -824,6 +1158,294 @@ export class WorldMap {
       for (let px = -b.w / 2 + 4; px < b.w / 2 - 4; px += 10) {
         ctx.fillRect(px, -b.h / 2 + 2, 8, b.h - 4);
       }
+    } else if (b.type === 'fountain') {
+      // Fontaine sacrée médiévale avec eau étincelante et zone bénie
+      const pulse = Math.sin(time * 3) * 0.15 + 0.85;
+
+      // Halo de bénédiction au sol (zone de soin)
+      ctx.save();
+      const auraColor = b.dark ? 'rgba(231, 76, 60, 0.15)' : (b.water ? 'rgba(0, 180, 216, 0.18)' : 'rgba(46, 196, 182, 0.18)');
+      ctx.fillStyle = auraColor;
+      ctx.beginPath();
+      ctx.arc(0, 0, (b.radius + 110) * pulse, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Anneau runique
+      ctx.strokeStyle = b.dark ? 'rgba(231, 76, 60, 0.35)' : (b.water ? 'rgba(0, 180, 216, 0.4)' : 'rgba(46, 196, 182, 0.4)');
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([6, 6]);
+      ctx.stroke();
+      ctx.restore();
+
+      // Ombre du bassin
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.beginPath();
+      ctx.ellipse(0, 10, b.radius + 6, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Bassin en pierre de taille
+      ctx.fillStyle = b.dark ? '#3a3a48' : '#7d8597';
+      ctx.beginPath();
+      ctx.arc(0, 0, b.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = b.dark ? '#22222a' : '#495057';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Eau limpide animée
+      ctx.fillStyle = b.dark ? '#c0392b' : (b.water ? '#0077b6' : '#2ec4b6');
+      ctx.beginPath();
+      ctx.arc(0, 0, b.radius - 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Colonne centrale de la fontaine
+      ctx.fillStyle = b.dark ? '#2c2c38' : '#5c677d';
+      ctx.fillRect(-6, -18, 12, 18);
+      ctx.beginPath();
+      ctx.arc(0, -18, 9, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Jet d'eau scintillant
+      ctx.fillStyle = '#ffffff';
+      const sparkY = Math.sin(time * 8) * 3;
+      ctx.beginPath();
+      ctx.arc(0, -26 + sparkY, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  // Rendu majestueux de l'entrée d'un Donjon
+  drawDungeonEntrance(ctx, d, time) {
+    ctx.save();
+    ctx.translate(d.x, d.y);
+
+    const pulse = Math.sin(time * 2.5) * 0.2 + 0.8;
+
+    // Lueur mystique au sol émergeant des profondeurs
+    ctx.fillStyle = d.color ? `${d.color}22` : 'rgba(46, 196, 182, 0.15)';
+    ctx.beginPath();
+    ctx.ellipse(0, 15, 65 * pulse, 28 * pulse, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Dalle d'escalier en pierre médiévale
+    ctx.fillStyle = '#3a3a44';
+    ctx.fillRect(-45, -10, 90, 40);
+    ctx.strokeStyle = '#22222c';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(-45, -10, 90, 40);
+
+    // Marches descendantes dans l'abysse
+    ctx.fillStyle = '#22222a';
+    ctx.fillRect(-36, -2, 72, 8);
+    ctx.fillStyle = '#15151c';
+    ctx.fillRect(-32, 6, 64, 8);
+    ctx.fillStyle = '#08080c';
+    ctx.fillRect(-28, 14, 56, 12);
+
+    // Arche gothique en pierre taillée au-dessus de l'entrée
+    ctx.fillStyle = '#555566';
+    ctx.fillRect(-48, -48, 14, 42); // Pilier gauche
+    ctx.fillRect(34, -48, 14, 42);  // Pilier droit
+    ctx.fillRect(-50, -56, 100, 12); // Fronton
+
+    // Ornementation & Icône du Donjon
+    ctx.font = '22px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(d.icon || '🏛️', 0, -68);
+
+    // Bannière avec le nom du Donjon
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+    ctx.fillRect(-85, -96, 170, 22);
+    ctx.strokeStyle = d.color || '#2ec4b6';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(-85, -96, 170, 22);
+
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(d.name.toUpperCase(), 0, -85);
+
+    ctx.restore();
+  }
+
+  // Rendu d'un Coffre Médiéval aux trésors
+  drawChest(ctx, ch, time) {
+    ctx.save();
+    ctx.translate(ch.x, ch.y);
+
+    const isGold = ch.type === 'gold';
+
+    // Ombre au sol
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.beginPath();
+    ctx.ellipse(0, 10, 20, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (ch.opened) {
+      // Coffre grand ouvert vidé
+      ctx.fillStyle = isGold ? '#b8860b' : '#6f4518';
+      ctx.fillRect(-16, -2, 32, 14);
+
+      // Couvercle basculé en arrière
+      ctx.fillStyle = isGold ? '#d4af37' : '#8b5a2b';
+      ctx.beginPath();
+      ctx.arc(0, -5, 16, Math.PI, 0);
+      ctx.fill();
+
+      // Intérieur sombre
+      ctx.fillStyle = '#221105';
+      ctx.fillRect(-12, -4, 24, 8);
+    } else {
+      // Lueur scintillante qui attire l'aventurier
+      const sparkle = Math.sin(time * 4) * 0.25 + 0.75;
+      ctx.fillStyle = isGold ? 'rgba(255, 215, 0, 0.25)' : 'rgba(255, 255, 255, 0.15)';
+      ctx.beginPath();
+      ctx.arc(0, 2, 22 * sparkle, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Cuve du coffre en bois
+      ctx.fillStyle = isGold ? '#b8860b' : '#6f4518';
+      ctx.fillRect(-16, -2, 32, 14);
+
+      // Couvercle bombé
+      ctx.fillStyle = isGold ? '#ffd700' : '#8b5a2b';
+      ctx.beginPath();
+      ctx.arc(0, -2, 16, Math.PI, 0);
+      ctx.fill();
+
+      // Ferrures / Cerclages métalliques
+      ctx.fillStyle = isGold ? '#fff3b0' : '#3a3a44';
+      ctx.fillRect(-12, -10, 3, 22);
+      ctx.fillRect(9, -10, 3, 22);
+
+      // Serrure en laiton
+      ctx.fillStyle = '#ffd700';
+      ctx.fillRect(-3, 0, 6, 6);
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(-1, 2, 2, 3);
+    }
+
+    ctx.restore();
+  }
+
+  // Rendu d'une Stèle / Sanctuaire Runique de bénédiction
+  drawShrine(ctx, sh, time) {
+    ctx.save();
+    ctx.translate(sh.x, sh.y);
+
+    const pulse = Math.sin(time * 3) * 0.2 + 0.8;
+
+    // Halo d'énergie mystique
+    ctx.fillStyle = `${sh.color}25`;
+    ctx.beginPath();
+    ctx.ellipse(0, 15, 36 * pulse, 16 * pulse, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Base en pierre ancienne
+    ctx.fillStyle = '#4a4e59';
+    ctx.fillRect(-22, 5, 44, 12);
+    ctx.strokeStyle = '#2d313a';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(-22, 5, 44, 12);
+
+    // Menhir / Obélisque runique taillé
+    ctx.fillStyle = '#6c757d';
+    ctx.beginPath();
+    ctx.moveTo(-16, 5);
+    ctx.lineTo(-10, -42);
+    ctx.lineTo(0, -52);
+    ctx.lineTo(10, -42);
+    ctx.lineTo(16, 5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Runes lumineuses sculptées dans la roche
+    ctx.fillStyle = sh.color;
+    ctx.shadowColor = sh.color;
+    ctx.shadowBlur = 8;
+    ctx.fillRect(-3, -32, 6, 4);
+    ctx.fillRect(-4, -22, 8, 3);
+    ctx.fillRect(-2, -12, 4, 8);
+    ctx.shadowBlur = 0;
+
+    // Orbe magique pulsant au sommet
+    const floatY = Math.sin(time * 4) * 4;
+    ctx.fillStyle = sh.color;
+    ctx.beginPath();
+    ctx.arc(0, -62 + floatY, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  // Rendu des accessoires de camps de monstres (totems, toiles, ossements, etc.)
+  drawCampDecor(ctx, d, time) {
+    ctx.save();
+    ctx.translate(d.x, d.y);
+
+    if (d.type === 'web') {
+      // Toile d'araignée géante
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.lineWidth = 1.5;
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(Math.cos(a) * 32, Math.sin(a) * 32);
+        ctx.stroke();
+      }
+      for (let r = 10; r <= 30; r += 10) {
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    } else if (d.type === 'bones') {
+      // Ossements et crâne de bête
+      ctx.fillStyle = '#ded9cf';
+      ctx.beginPath();
+      ctx.ellipse(-6, 0, 10, 4, 0.4, 0, Math.PI * 2);
+      ctx.ellipse(8, -2, 8, 3, -0.3, 0, Math.PI * 2);
+      ctx.fill();
+      // Crâne
+      ctx.beginPath();
+      ctx.arc(0, -4, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#222222';
+      ctx.fillRect(-2, -5, 2, 2);
+      ctx.fillRect(1, -5, 2, 2);
+    } else if (d.type === 'slime_pool') {
+      // Flaque de mucus toxique
+      ctx.fillStyle = 'rgba(46, 204, 113, 0.45)';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, d.radius || 35, (d.radius || 35) * 0.55, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Bulles de poison
+      const bubble = Math.sin(time * 5) * 2;
+      ctx.fillStyle = '#a8e6cf';
+      ctx.beginPath();
+      ctx.arc(8, -4 + bubble, 3, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (d.type === 'ruins_pillar') {
+      // Pilier médiéval brisé
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.beginPath();
+      ctx.ellipse(0, 8, 16, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#7a7d84';
+      ctx.fillRect(-10, -28, 20, 34);
+      ctx.strokeStyle = '#4a4d54';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(-10, -28, 20, 34);
+      // Fissure
+      ctx.strokeStyle = '#2d2f34';
+      ctx.beginPath();
+      ctx.moveTo(-4, -20);
+      ctx.lineTo(2, -10);
+      ctx.lineTo(-2, 0);
+      ctx.stroke();
     }
 
     ctx.restore();
