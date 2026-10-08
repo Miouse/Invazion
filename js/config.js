@@ -30,19 +30,6 @@ export const UPGRADE_CATALOG = [
     }
   },
   {
-    id: 'frost',
-    type: 'weapon',
-    name: 'Nova Glaciale',
-    icon: '❄️',
-    tag: 'ZONE GEL & DÉGÂTS',
-    desc: 'Déchaîne une vague de givre circulaire gelant et broyant les monstres à 360°.',
-    maxLevel: 5,
-    getDescription(lvl) {
-      if (lvl === 0) return 'Libère une déflagration de glace périodique à 360° autour de vous.';
-      return `Rayon de gel +30%, ralentissement renforcé et dégâts glacials accrus.`;
-    }
-  },
-  {
     id: 'orbit',
     type: 'weapon',
     name: 'Lames d\'Orbes Orbitaux',

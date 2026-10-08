@@ -31,6 +31,7 @@ Affrontez des vagues de monstres incessantes, récoltez des gemmes d'âme, monte
 | **Dash / Esquive** | `Espace` ou `Clic Droit` | Bouton / geste de dash |
 | **Attaques** | Automatiques | Automatiques |
 | **Pause** | Touche `Échap` ou bouton ⏸️ | Bouton ⏸️ |
+| **Zoom / Dézoom caméra** | Molette de la souris (Scroll) | — |
 | **Son (Mute/Unmute)** | Bouton 🔊 | Bouton 🔊 |
 
 ---
@@ -43,7 +44,6 @@ Affrontez des vagues de monstres incessantes, récoltez des gemmes d'âme, monte
 | :---: | :--- | :--- | :--- |
 | 🪄 | **Baguette Éthérée** | Tir rapide | Mitraille les cibles les plus proches en rafales continues. Chaque niveau ajoute des projectiles en éventail. |
 | ☄️ | **Pluie de Météores** | Explosion de zone | Fait pleuvoir d'immenses météores avec ondes de choc dévastatrices. |
-| ❄️ | **Nova Glaciale** | Zone à 360° | Déclenche périodiquement une déflagration de glace qui gèle et broie les monstres autour de vous. |
 | 🔮 | **Orbes Orbitaux** | Zone continue | Invoque des orbes mystiques tourbillonnant à grande vitesse autour du héros. |
 | 🩸 | **Vortex Écarlate** | Aura rapprochée | Rune de sang infligeant des dégâts ultra-haute fréquence à tous les ennemis au corps-à-corps. |
 

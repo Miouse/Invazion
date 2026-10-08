@@ -35,7 +35,6 @@ export class Player {
     // Cadences d'armes & Pouvoirs
     this.wandTimer = 0;
     this.meteorTimer = 0;
-    this.frostTimer = 0;
     this.auraTimer = 0;
     this.orbitAngle = 0;
   }
@@ -166,39 +165,7 @@ export class Player {
       }
     }
 
-    // 3. NOVA GLACIALE (ZONE CIRCULAIRE DE GEL 360°)
-    if (this.upgrades['frost'] > 0) {
-      const lvl = this.upgrades['frost'];
-      const cooldown = Math.max(1.1, 2.2 - (lvl - 1) * 0.25);
-      this.frostTimer += dt;
-
-      if (this.frostTimer >= cooldown) {
-        this.frostTimer = 0;
-        sfx.playFrost();
-        const radius = 160 + lvl * 30;
-        const dmg = (28 + lvl * 10) * this.damageMultiplier;
-
-        engine.addShockwave(this.x, this.y, radius, '#00f0ff', 4);
-        engine.createHitParticles(this.x, this.y, '#ffffff', 14);
-
-        for (const enemy of engine.enemies) {
-          const d = Math.hypot(enemy.x - this.x, enemy.y - this.y);
-          if (d <= radius + enemy.radius) {
-            enemy.hp -= dmg;
-            enemy.hitFlash = 0.2;
-            enemy.speed = Math.max(25, enemy.speed * 0.45);
-            setTimeout(() => {
-              enemy.speed = enemy.baseSpeed || enemy.speed;
-            }, 1500);
-
-            engine.createHitParticles(enemy.x, enemy.y, '#00f0ff', 4);
-            engine.addFloatingText(enemy.x, enemy.y - 12, `❄️${Math.round(dmg)}`, '#00f0ff', 18);
-          }
-        }
-      }
-    }
-
-    // 4. ORBES GARDIENS (Zone orbitale de contact)
+    // 3. ORBES GARDIENS (Zone orbitale de contact)
     if (this.upgrades['orbit'] > 0) {
       const lvl = this.upgrades['orbit'];
       const count = 1 + lvl;
@@ -223,7 +190,7 @@ export class Player {
       }
     }
 
-    // 5. VORTEX DE SANG ARCANE (Zone de proximité continue)
+    // 4. VORTEX DE SANG ARCANE (Zone de proximité continue)
     if (this.upgrades['aura'] > 0) {
       const lvl = this.upgrades['aura'];
       this.auraTimer += dt;
@@ -248,7 +215,7 @@ export class Player {
 
   findNearestEnemy(enemies) {
     let nearest = null;
-    let minDist = 750;
+    let minDist = 880;
     for (const e of enemies) {
       const d = Math.hypot(e.x - this.x, e.y - this.y);
       if (d < minDist) {

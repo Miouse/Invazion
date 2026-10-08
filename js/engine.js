@@ -45,8 +45,9 @@ export class GameEngine {
     this.endLevel = document.getElementById('end-level');
     this.endGems = document.getElementById('end-gems');
 
-    // Dimensions arène
+    // Dimensions arène & Caméra dézoomée
     this.worldSize = 3400;
+    this.zoom = 0.72; // Dézoom par défaut pour une meilleure visibilité de l'arène
     this.camera = { x: 0, y: 0 };
     this.screenShake = 0;
 
@@ -129,6 +130,17 @@ export class GameEngine {
         e.preventDefault();
       }
     });
+
+    // Molette souris pour ajuster le zoom en jeu (entre 0.5 et 1.1)
+    window.addEventListener('wheel', (e) => {
+      if (this.state === 'PLAYING') {
+        if (e.deltaY > 0) {
+          this.zoom = Math.max(0.5, +(this.zoom - 0.05).toFixed(2));
+        } else {
+          this.zoom = Math.min(1.1, +(this.zoom + 0.05).toFixed(2));
+        }
+      }
+    }, { passive: true });
 
     // Joystick Tactile pour support mobile
     const joystick = document.getElementById('virtual-joystick');
@@ -224,8 +236,10 @@ export class GameEngine {
     this.shockwaves = [];
     this.floatingTexts = [];
 
-    // Création Joueur
+    // Création Joueur et centrage immédiat de la caméra
     this.player = new Player(this.worldSize / 2, this.worldSize / 2);
+    this.camera.x = this.player.x;
+    this.camera.y = this.player.y;
     
     // Débloque l'arme de départ (Baguette magique niveau 1)
     this.player.upgrades['wand'] = 1;
@@ -350,7 +364,8 @@ export class GameEngine {
 
   spawnEnemy() {
     const angle = Math.random() * Math.PI * 2;
-    const dist = Math.max(this.width, this.height) * 0.65 + Math.random() * 150;
+    const viewRadius = (Math.max(this.width, this.height) / this.zoom) * 0.55;
+    const dist = viewRadius + 60 + Math.random() * 120;
     const x = this.player.x + Math.cos(angle) * dist;
     const y = this.player.y + Math.sin(angle) * dist;
 
@@ -371,7 +386,8 @@ export class GameEngine {
 
   spawnColossalBoss() {
     const angle = Math.random() * Math.PI * 2;
-    const dist = 550;
+    const viewRadius = (Math.max(this.width, this.height) / this.zoom) * 0.55;
+    const dist = viewRadius + 80;
     const x = this.player.x + Math.cos(angle) * dist;
     const y = this.player.y + Math.sin(angle) * dist;
     
@@ -489,9 +505,9 @@ export class GameEngine {
     // Mise à jour Joueur
     this.player.update(dt, moveX, moveY, this.worldSize);
 
-    // Caméra lisse centrée sur le joueur
-    this.camera.x += (this.player.x - this.width / 2 - this.camera.x) * 0.12;
-    this.camera.y += (this.player.y - this.height / 2 - this.camera.y) * 0.12;
+    // Caméra lisse centrée sur le joueur (dézoomée)
+    this.camera.x += (this.player.x - this.camera.x) * 0.12;
+    this.camera.y += (this.player.y - this.camera.y) * 0.12;
 
     // Screen Shake
     if (this.screenShake > 0) {
@@ -721,7 +737,9 @@ export class GameEngine {
     }
 
     this.ctx.save();
-    this.ctx.translate(-this.camera.x + shakeX, -this.camera.y + shakeY);
+    this.ctx.translate(this.width / 2 + shakeX, this.height / 2 + shakeY);
+    this.ctx.scale(this.zoom, this.zoom);
+    this.ctx.translate(-this.camera.x, -this.camera.y);
 
     // 1. Dalles de donjon gothique & runes anciennes
     this.renderDungeonFloor();
@@ -797,10 +815,12 @@ export class GameEngine {
 
   renderDungeonFloor() {
     const tileSize = 120;
-    const startX = Math.floor(this.camera.x / tileSize) * tileSize;
-    const endX = startX + this.width + tileSize * 2;
-    const startY = Math.floor(this.camera.y / tileSize) * tileSize;
-    const endY = startY + this.height + tileSize * 2;
+    const viewW = this.width / this.zoom;
+    const viewH = this.height / this.zoom;
+    const startX = Math.floor((this.camera.x - viewW / 2) / tileSize) * tileSize - tileSize;
+    const endX = this.camera.x + viewW / 2 + tileSize;
+    const startY = Math.floor((this.camera.y - viewH / 2) / tileSize) * tileSize - tileSize;
+    const endY = this.camera.y + viewH / 2 + tileSize;
 
     for (let x = startX; x <= endX; x += tileSize) {
       for (let y = startY; y <= endY; y += tileSize) {
@@ -863,17 +883,21 @@ export class GameEngine {
   renderDynamicLighting() {
     this.ctx.save();
     const light = this.ctx.createRadialGradient(
-      this.player.x, this.player.y, 40,
-      this.player.x, this.player.y, 750
+      this.player.x, this.player.y, 50,
+      this.player.x, this.player.y, 950
     );
     light.addColorStop(0, 'rgba(0, 0, 0, 0)');
     light.addColorStop(0.5, 'rgba(4, 6, 12, 0.25)');
     light.addColorStop(1, 'rgba(2, 3, 6, 0.7)');
 
     this.ctx.fillStyle = light;
+    const viewW = this.width / this.zoom;
+    const viewH = this.height / this.zoom;
     this.ctx.fillRect(
-      this.camera.x, this.camera.y,
-      this.width, this.height
+      this.camera.x - viewW / 2 - 120,
+      this.camera.y - viewH / 2 - 120,
+      viewW + 240,
+      viewH + 240
     );
     this.ctx.restore();
   }
