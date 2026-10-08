@@ -24,7 +24,12 @@ const server = http.createServer((req, res) => {
       res.end('Not Found');
       return;
     }
-    res.writeHead(200, { 'Content-Type': MIME[ext] || 'text/plain' });
+    res.writeHead(200, {
+      'Content-Type': MIME[ext] || 'text/plain',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
     res.end(data);
   });
 });
