@@ -83,6 +83,19 @@
         <!-- Rempli dynamiquement en JS -->
       </div>
 
+      <!-- Bouton d'Amélioration Disponible (sans couper le combat) -->
+      <button id="btn-upgrade-pending" class="upgrade-pending-btn hidden" title="Ouvrir le choix des améliorations">
+        <span class="star-icon">⭐</span>
+        <span class="upgrade-btn-text">AMÉLIORATION DISPONIBLE</span>
+        <span id="pending-upgrade-count" class="badge-count">1</span>
+      </button>
+
+      <!-- Bouton Passer le Répit / Lancer la vague suivante -->
+      <button id="btn-skip-intermission" class="skip-intermission-btn hidden" title="Lancer la vague suivante immédiatement">
+        <span>⚔️ DÉMARRER LA VAGUE SUIVANTE</span>
+        <span id="skip-timer-badge" class="timer-countdown">(20s)</span>
+      </button>
+
       <!-- Joystick virtuel pour mobile/tactile -->
       <div id="virtual-joystick" class="touch-only">
         <div id="joystick-knob"></div>

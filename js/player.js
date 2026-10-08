@@ -29,7 +29,7 @@ export class Player {
     // Progression
     this.level = 1;
     this.xp = 0;
-    this.xpToNext = 8;
+    this.xpToNext = 35;
     this.upgrades = {};
 
     // Cadences d'armes & Pouvoirs
@@ -215,7 +215,7 @@ export class Player {
 
   findNearestEnemy(enemies) {
     let nearest = null;
-    let minDist = 1500;
+    let minDist = 580; // Détecte seulement les ennemis clairement visibles à l'écran
     for (const e of enemies) {
       const d = Math.hypot(e.x - this.x, e.y - this.y);
       if (d < minDist) {
@@ -240,7 +240,7 @@ export class Player {
     if (this.xp >= this.xpToNext) {
       this.level++;
       this.xp -= this.xpToNext;
-      this.xpToNext = Math.floor(8 * Math.pow(1.24, this.level - 1));
+      this.xpToNext = Math.floor(35 * Math.pow(1.35, this.level - 1));
       return true;
     }
     return false;

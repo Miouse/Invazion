@@ -55,6 +55,13 @@ export class GameEngine {
     this.waveBannerInfo = document.getElementById('wave-banner-info');
     this.bannerTimeout = null;
 
+    // Boutons d'Amélioration en attente & Répit
+    this.btnUpgradePending = document.getElementById('btn-upgrade-pending');
+    this.pendingUpgradeCount = document.getElementById('pending-upgrade-count');
+    this.btnSkipIntermission = document.getElementById('btn-skip-intermission');
+    this.skipTimerBadge = document.getElementById('skip-timer-badge');
+    this.pendingUpgrades = 0;
+
     // Dimensions arène agrandie (7000 px) & Caméra très dézoomée (0.45)
     this.worldSize = 7000;
     this.zoom = 0.45; // Dézoom très large pour une vue panoramique stratégique de l'arène
@@ -167,6 +174,13 @@ export class GameEngine {
       if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
         this.togglePause();
       }
+
+      // Raccourci 'U' pour ouvrir les améliorations disponibles
+      if (e.key === 'u' || e.key === 'U') {
+        if (this.pendingUpgrades > 0 && this.state === 'PLAYING') {
+          this.openUpgradeModal();
+        }
+      }
     });
 
     window.addEventListener('keyup', (e) => {
@@ -263,6 +277,24 @@ export class GameEngine {
       this.togglePause();
     });
 
+    // Bouton Amélioration Disponible
+    if (this.btnUpgradePending) {
+      this.btnUpgradePending.addEventListener('click', () => {
+        if (this.pendingUpgrades > 0 && (this.state === 'PLAYING' || this.state === 'PAUSED')) {
+          this.openUpgradeModal();
+        }
+      });
+    }
+
+    // Bouton Passer le Répit (20s)
+    if (this.btnSkipIntermission) {
+      this.btnSkipIntermission.addEventListener('click', () => {
+        if (this.waveState === 'INTERMISSION') {
+          this.intermissionTimer = 0;
+        }
+      });
+    }
+
     this.btnSound.addEventListener('click', () => {
       sfx.init();
       const muted = sfx.toggleMute();
@@ -304,6 +336,11 @@ export class GameEngine {
     this.updateEquipmentHud();
 
     this.state = 'PLAYING';
+    this.pendingUpgrades = 0;
+    this.updatePendingUpgradeButton();
+    if (this.btnSkipIntermission) {
+      this.btnSkipIntermission.classList.add('hidden');
+    }
     
     // Démarrage de la Vague 1
     this.startWave(1);
@@ -321,9 +358,10 @@ export class GameEngine {
   }
 
   // ==========================================
-  // MONTÉE DE NIVEAU & AMÉLIORATIONS
+  // MONTÉE DE NIVEAU & AMÉLIORATIONS (À LA DEMANDE)
   // ==========================================
-  triggerLevelUp() {
+  openUpgradeModal() {
+    if (this.pendingUpgrades <= 0) return;
     this.state = 'LEVELUP';
     sfx.playLevelUp();
 
@@ -334,6 +372,8 @@ export class GameEngine {
 
     if (available.length === 0) {
       this.player.heal(this.player.maxHp);
+      this.pendingUpgrades = Math.max(0, this.pendingUpgrades - 1);
+      this.updatePendingUpgradeButton();
       this.state = 'PLAYING';
       return;
     }
@@ -374,11 +414,31 @@ export class GameEngine {
   selectUpgrade(upgradeId) {
     this.player.upgrades[upgradeId] = (this.player.upgrades[upgradeId] || 0) + 1;
     this.player.applyUpgrade(upgradeId);
+    this.pendingUpgrades = Math.max(0, this.pendingUpgrades - 1);
 
-    this.levelupScreen.classList.remove('active');
     this.updateEquipmentHud();
     this.updateHUD();
-    this.state = 'PLAYING';
+    this.updatePendingUpgradeButton();
+
+    if (this.pendingUpgrades > 0) {
+      // D'autres améliorations en attente
+      this.openUpgradeModal();
+    } else {
+      this.levelupScreen.classList.remove('active');
+      this.state = 'PLAYING';
+    }
+  }
+
+  updatePendingUpgradeButton() {
+    if (!this.btnUpgradePending) return;
+    if (this.pendingUpgrades > 0) {
+      this.btnUpgradePending.classList.remove('hidden');
+      if (this.pendingUpgradeCount) {
+        this.pendingUpgradeCount.textContent = this.pendingUpgrades;
+      }
+    } else {
+      this.btnUpgradePending.classList.add('hidden');
+    }
   }
 
   updateEquipmentHud() {
@@ -479,10 +539,17 @@ export class GameEngine {
       if (p.pulse > 0) p.pulse = Math.max(0, p.pulse - dt * 2);
     }
 
-    // Phase d'intermission entre 2 vagues
+    // Phase d'intermission entre 2 vagues (20 secondes de répit)
     if (this.waveState === 'INTERMISSION') {
       this.intermissionTimer -= dt;
+      if (this.skipTimerBadge) {
+        this.skipTimerBadge.textContent = `(${Math.ceil(Math.max(0, this.intermissionTimer))}s)`;
+      }
+
       if (this.intermissionTimer <= 0) {
+        if (this.btnSkipIntermission) {
+          this.btnSkipIntermission.classList.add('hidden');
+        }
         this.startWave(this.wave + 1);
       }
       return;
@@ -507,7 +574,7 @@ export class GameEngine {
     // Vérification de la purification de la vague
     if (this.waveQueue.length === 0 && this.enemies.length === 0) {
       this.waveState = 'INTERMISSION';
-      this.intermissionTimer = 4.0; // 4 secondes de répit pour souffler et ramasser les gemmes
+      this.intermissionTimer = 20.0; // 20 secondes de répit comme demandé !
 
       for (const p of this.portals) {
         p.active = false;
@@ -515,19 +582,23 @@ export class GameEngine {
 
       sfx.playWaveClear();
 
-      // Pluie de récompense : gemmes bonus au sol
-      for (let g = 0; g < 7; g++) {
-        const a = (g / 7) * Math.PI * 2;
-        this.gems.push(new Gem(this.player.x + Math.cos(a) * 55, this.player.y + Math.sin(a) * 55, 10, 'green'));
+      // Pluie de récompense équilibrée (3 gemmes vertes + 1 cœur)
+      for (let g = 0; g < 3; g++) {
+        const a = (g / 3) * Math.PI * 2;
+        this.gems.push(new Gem(this.player.x + Math.cos(a) * 45, this.player.y + Math.sin(a) * 45, 4, 'green'));
       }
       this.gems.push(new Gem(this.player.x, this.player.y, 0, 'heart'));
 
+      if (this.btnSkipIntermission) {
+        this.btnSkipIntermission.classList.remove('hidden');
+      }
+
       this.showWaveBanner(
-        'ACCALMIE DANS L\'ARÈNE',
+        'ACCALMIE DANS L\'ARÈNE (20s)',
         `VAGUE ${this.wave} PURIFIÉE !`,
-        `Préparez-vous pour la Vague ${this.wave + 1}...`,
+        `Prenez le temps d'activer vos améliorations !`,
         false,
-        3400
+        4000
       );
     }
   }
@@ -751,16 +822,21 @@ export class GameEngine {
           this.addShockwave(enemy.x, enemy.y, 350, '#ff0055', 6);
           this.addFloatingText(enemy.x, enemy.y - 50, "👑 BOSS ÉLIMINÉ !", '#ffd23f', 32);
 
-          for (let g = 0; g < 10; g++) {
-            const angle = (g / 10) * Math.PI * 2;
-            const distG = 40 + Math.random() * 80;
-            this.gems.push(new Gem(enemy.x + Math.cos(angle) * distG, enemy.y + Math.sin(angle) * distG, 50, 'red'));
+          for (let g = 0; g < 5; g++) {
+            const angle = (g / 5) * Math.PI * 2;
+            const distG = 40 + Math.random() * 60;
+            this.gems.push(new Gem(enemy.x + Math.cos(angle) * distG, enemy.y + Math.sin(angle) * distG, 12, 'red'));
           }
           this.gems.push(new Gem(enemy.x, enemy.y, 0, 'heart'));
         } else {
           let gemType = 'blue';
           let gemValue = 1;
-          if (enemy.type === 'zombie' || enemy.type === 'demon') {
+          if (enemy.type === 'skeleton') {
+            gemValue = 2;
+          } else if (enemy.type === 'zombie') {
+            gemType = 'green';
+            gemValue = 3;
+          } else if (enemy.type === 'demon') {
             gemType = 'green';
             gemValue = 5;
           }
@@ -851,7 +927,10 @@ export class GameEngine {
           const leveledUp = this.player.addXp(gem.value);
           sfx.playGem();
           if (leveledUp) {
-            this.triggerLevelUp();
+            this.pendingUpgrades++;
+            sfx.playLevelUp();
+            this.addFloatingText(this.player.x, this.player.y - 40, `⭐ NIVEAU ${this.player.level} !`, '#ffd700', 26);
+            this.updatePendingUpgradeButton();
           }
         }
         this.gems.splice(i, 1);
@@ -1037,43 +1116,43 @@ export class GameEngine {
         const mossHash = Math.abs(Math.sin(x * 37.112 + y * 19.823) * 29421.631) % 1;
         const detailHash = Math.abs(Math.sin(x * 91.12 + y * 43.87) * 85321.12) % 1;
 
-        // 1. Sol en dalles de pierre sombre
-        this.ctx.fillStyle = tileHash > 0.5 ? '#0a0d1a' : '#0c1022';
+        // 1. Sol en dalles de pierre médiévale BIEN ÉCLAIRÉ & VIF
+        this.ctx.fillStyle = tileHash > 0.5 ? '#1c2438' : '#222d46';
         this.ctx.fillRect(x, y, tileSize, tileSize);
 
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.025)';
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)';
         this.ctx.lineWidth = 1;
         this.ctx.strokeRect(x, y, tileSize, tileSize);
 
         // 2. DÉCORATION DE MOISISSURE, MOUSSE ET LICHEN VERT SUR LE SOL
-        if (mossHash > 0.52) {
-          // Tache de mousse vert sombre / marécageuse
+        if (mossHash > 0.48) {
+          // Tache de mousse vert émeraude / jade vibrante
           const mx = x + 20 + detailHash * 60;
           const my = y + 20 + tileHash * 60;
-          const mr = 18 + mossHash * 26;
+          const mr = 20 + mossHash * 28;
 
-          this.ctx.fillStyle = mossHash > 0.78 ? 'rgba(38, 92, 65, 0.42)' : 'rgba(20, 56, 38, 0.32)';
+          this.ctx.fillStyle = mossHash > 0.75 ? 'rgba(45, 106, 79, 0.65)' : 'rgba(27, 67, 50, 0.50)';
           this.ctx.beginPath();
           this.ctx.arc(mx, my, mr, 0, Math.PI * 2);
           this.ctx.fill();
 
-          // Cœur de moisissure vert mousse plus intense
-          this.ctx.fillStyle = 'rgba(64, 145, 108, 0.55)';
+          // Cœur de moisissure vert clair vif
+          this.ctx.fillStyle = 'rgba(82, 183, 136, 0.85)';
           this.ctx.beginPath();
-          this.ctx.arc(mx + 3, my - 2, mr * 0.48, 0, Math.PI * 2);
+          this.ctx.arc(mx + 3, my - 2, mr * 0.5, 0, Math.PI * 2);
           this.ctx.fill();
 
-          // Champignon ou spore luminescente toxique verte
-          if (mossHash > 0.86) {
-            this.ctx.fillStyle = 'rgba(116, 198, 157, 0.85)';
+          // Champignon ou spore luminescente fluorescente
+          if (mossHash > 0.80) {
+            this.ctx.fillStyle = '#95d5b2';
             this.ctx.beginPath();
-            this.ctx.arc(mx - 4, my + 5, 3.5, 0, Math.PI * 2);
+            this.ctx.arc(mx - 4, my + 5, 4.5, 0, Math.PI * 2);
             this.ctx.fill();
 
             // Halo fluorescent
-            this.ctx.fillStyle = 'rgba(82, 183, 136, 0.22)';
+            this.ctx.fillStyle = 'rgba(116, 198, 157, 0.35)';
             this.ctx.beginPath();
-            this.ctx.arc(mx - 4, my + 5, 14, 0, Math.PI * 2);
+            this.ctx.arc(mx - 4, my + 5, 16, 0, Math.PI * 2);
             this.ctx.fill();
           }
         }
@@ -1305,23 +1384,24 @@ export class GameEngine {
   }
 
   renderDynamicLighting() {
+    // Lumière d'ambiance claire et nette sans obscurcir la salle
     this.ctx.save();
     const light = this.ctx.createRadialGradient(
-      this.player.x, this.player.y, 80,
-      this.player.x, this.player.y, 1750
+      this.player.x, this.player.y, 250,
+      this.player.x, this.player.y, 2500
     );
-    light.addColorStop(0, 'rgba(0, 0, 0, 0)');
-    light.addColorStop(0.4, 'rgba(4, 6, 12, 0.18)');
-    light.addColorStop(1, 'rgba(2, 3, 6, 0.72)');
+    light.addColorStop(0, 'rgba(0, 240, 255, 0.03)');
+    light.addColorStop(0.7, 'rgba(0, 0, 0, 0)');
+    light.addColorStop(1, 'rgba(0, 0, 0, 0.12)'); // Très léger dégradé uniquement aux confins absolus
 
     this.ctx.fillStyle = light;
     const viewW = this.width / this.zoom;
     const viewH = this.height / this.zoom;
     this.ctx.fillRect(
-      this.camera.x - viewW / 2 - 250,
-      this.camera.y - viewH / 2 - 250,
-      viewW + 500,
-      viewH + 500
+      this.camera.x - viewW / 2 - 200,
+      this.camera.y - viewH / 2 - 200,
+      viewW + 400,
+      viewH + 400
     );
     this.ctx.restore();
   }

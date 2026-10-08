@@ -782,3 +782,112 @@ html, body {
   50% { box-shadow: 0 0 60px rgba(0, 240, 255, 0.5); }
 }
 
+/* ==========================================================================
+   BOUTON AMÉLIORATION DISPONIBLE (SANS COUPER LE COMBAT)
+   ========================================================================== */
+.upgrade-pending-btn {
+  position: absolute;
+  bottom: 85px;
+  right: 24px;
+  background: linear-gradient(135deg, rgba(255, 170, 0, 0.9), rgba(255, 215, 0, 0.95));
+  color: #120e00;
+  border: 2px solid #ffffff;
+  border-radius: 40px;
+  padding: 12px 22px;
+  font-family: var(--font-accent);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.7), 0 4px 15px rgba(0,0,0,0.5);
+  animation: pendingPulse 1.6s infinite ease-in-out;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  z-index: 50;
+}
+
+.upgrade-pending-btn:hover {
+  transform: scale(1.06);
+  box-shadow: 0 0 40px rgba(255, 215, 0, 0.9), 0 6px 20px rgba(0,0,0,0.6);
+}
+
+.upgrade-pending-btn:active {
+  transform: scale(0.96);
+}
+
+.upgrade-pending-btn.hidden {
+  display: none !important;
+}
+
+.badge-count {
+  background: #000;
+  color: #ffd700;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+@keyframes pendingPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 25px rgba(255, 215, 0, 0.6); }
+  50% { transform: scale(1.04); box-shadow: 0 0 45px rgba(255, 215, 0, 0.9); }
+}
+
+/* ==========================================================================
+   BOUTON PASSER LE RÉPIT (INTERMISSION 20s)
+   ========================================================================== */
+.skip-intermission-btn {
+  position: absolute;
+  top: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(0, 240, 255, 0.6);
+  color: #00f0ff;
+  border-radius: 30px;
+  padding: 10px 24px;
+  font-family: var(--font-accent);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.35);
+  transition: all 0.2s ease;
+  z-index: 50;
+  animation: skipBtnGlow 2s infinite ease-in-out;
+}
+
+.skip-intermission-btn:hover {
+  background: rgba(0, 240, 255, 0.2);
+  color: #ffffff;
+  border-color: #00f0ff;
+  transform: translateX(-50%) scale(1.05);
+}
+
+.skip-intermission-btn.hidden {
+  display: none !important;
+}
+
+.timer-countdown {
+  color: #ffd23f;
+  font-weight: 800;
+}
+
+@keyframes skipBtnGlow {
+  0%, 100% { border-color: rgba(0, 240, 255, 0.6); }
+  50% { border-color: rgba(255, 42, 85, 0.8); }
+}
+
+
