@@ -55,19 +55,51 @@ export class GameEngine {
     this.waveBannerInfo = document.getElementById('wave-banner-info');
     this.bannerTimeout = null;
 
-    // Dimensions arène agrandie & Caméra dézoomée
-    this.worldSize = 5000;
-    this.zoom = 0.72;
-    this.camera = { x: 2500, y: 2500 };
+    // Dimensions arène agrandie (7000 px) & Caméra très dézoomée (0.45)
+    this.worldSize = 7000;
+    this.zoom = 0.45; // Dézoom très large pour une vue panoramique stratégique de l'arène
+    this.camera = { x: 3500, y: 3500 };
     this.screenShake = 0;
 
     // 4 Portails Démoniaques Cardinaux
     this.portals = [
-      { id: 'north', name: 'PORTAIL NORD', x: 2500, y: 320, angle: Math.PI / 2, active: false, pulse: 0 },
-      { id: 'south', name: 'PORTAIL SUD', x: 2500, y: 4680, angle: -Math.PI / 2, active: false, pulse: 0 },
-      { id: 'west',  name: 'PORTAIL OUEST', x: 320, y: 2500, angle: 0, active: false, pulse: 0 },
-      { id: 'east',  name: 'PORTAIL EST', x: 4680, y: 2500, angle: Math.PI, active: false, pulse: 0 }
+      { id: 'north', name: 'PORTAIL NORD', x: 3500, y: 400, angle: Math.PI / 2, active: false, pulse: 0 },
+      { id: 'south', name: 'PORTAIL SUD', x: 3500, y: 6600, angle: -Math.PI / 2, active: false, pulse: 0 },
+      { id: 'west',  name: 'PORTAIL OUEST', x: 400, y: 3500, angle: 0, active: false, pulse: 0 },
+      { id: 'east',  name: 'PORTAIL EST', x: 6600, y: 3500, angle: Math.PI, active: false, pulse: 0 }
     ];
+
+    // Piliers de pierre anciens moussus (Décoration d'ambiance)
+    this.pillars = [];
+    const pillarPositions = [
+      { x: 1800, y: 1800 }, { x: 3500, y: 1800 }, { x: 5200, y: 1800 },
+      { x: 1800, y: 3500 },                         { x: 5200, y: 3500 },
+      { x: 1800, y: 5200 }, { x: 3500, y: 5200 }, { x: 5200, y: 5200 },
+      { x: 2600, y: 2600 }, { x: 4400, y: 2600 },
+      { x: 2600, y: 4400 }, { x: 4400, y: 4400 }
+    ];
+    for (const pos of pillarPositions) {
+      this.pillars.push({
+        x: pos.x,
+        y: pos.y,
+        radius: 42,
+        seed: Math.abs(Math.sin(pos.x * 2.3 + pos.y * 5.7))
+      });
+    }
+
+    // Particules de spores vertes ambiantes (Moisissure en lévitation)
+    this.ambientSpores = [];
+    for (let i = 0; i < 50; i++) {
+      this.ambientSpores.push({
+        x: Math.random() * this.worldSize,
+        y: Math.random() * this.worldSize,
+        vx: (Math.random() - 0.5) * 20,
+        vy: -15 - Math.random() * 25,
+        radius: 1.5 + Math.random() * 2.5,
+        alpha: 0.25 + Math.random() * 0.45,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
 
     // Système de Vagues par Élimination (Option A)
     this.wave = 1;
@@ -157,13 +189,13 @@ export class GameEngine {
       }
     });
 
-    // Molette souris pour ajuster le zoom en jeu (entre 0.5 et 1.1)
+    // Molette souris pour ajuster le zoom en jeu (entre 0.25 et 0.85)
     window.addEventListener('wheel', (e) => {
       if (this.state === 'PLAYING') {
         if (e.deltaY > 0) {
-          this.zoom = Math.max(0.5, +(this.zoom - 0.05).toFixed(2));
+          this.zoom = Math.max(0.25, +(this.zoom - 0.04).toFixed(2));
         } else {
-          this.zoom = Math.min(1.1, +(this.zoom + 0.05).toFixed(2));
+          this.zoom = Math.min(0.85, +(this.zoom + 0.04).toFixed(2));
         }
       }
     }, { passive: true });
@@ -650,6 +682,16 @@ export class GameEngine {
     // Mise à jour Joueur
     this.player.update(dt, moveX, moveY, this.worldSize);
 
+    // Mise à jour des spores vertes ambiantes
+    for (const spore of this.ambientSpores) {
+      spore.x += spore.vx * dt;
+      spore.y += spore.vy * dt;
+      spore.phase += dt * 1.5;
+      if (spore.y < 0) spore.y = this.worldSize;
+      if (spore.x < 0) spore.x = this.worldSize;
+      if (spore.x > this.worldSize) spore.x = 0;
+    }
+
     // Caméra lisse centrée sur le joueur (dézoomée)
     this.camera.x += (this.player.x - this.camera.x) * 0.12;
     this.camera.y += (this.player.y - this.camera.y) * 0.12;
@@ -899,11 +941,17 @@ export class GameEngine {
     this.ctx.scale(this.zoom, this.zoom);
     this.ctx.translate(-this.camera.x, -this.camera.y);
 
-    // 1. Dalles de donjon gothique & runes anciennes
+    // 1. Dalles de donjon gothique & runes anciennes avec moisissure verte
     this.renderDungeonFloor();
+
+    // 1.2. Piliers de pierre moussus & végétation sombre
+    this.renderPillarsAndMossDecor();
 
     // 1.5. Portails Démoniaques de chaque côté
     this.renderPortals();
+
+    // 1.8. Spores vertes flottantes d'ambiance
+    this.renderAmbientSpores();
 
     // 2. Ondes de choc (Shockwaves)
     for (const sw of this.shockwaves) {
@@ -975,25 +1023,74 @@ export class GameEngine {
   }
 
   renderDungeonFloor() {
-    const tileSize = 120;
+    const tileSize = 130;
     const viewW = this.width / this.zoom;
     const viewH = this.height / this.zoom;
-    const startX = Math.floor((this.camera.x - viewW / 2) / tileSize) * tileSize - tileSize;
-    const endX = this.camera.x + viewW / 2 + tileSize;
-    const startY = Math.floor((this.camera.y - viewH / 2) / tileSize) * tileSize - tileSize;
-    const endY = this.camera.y + viewH / 2 + tileSize;
+    const startX = Math.max(0, Math.floor((this.camera.x - viewW / 2) / tileSize) * tileSize - tileSize);
+    const endX = Math.min(this.worldSize, this.camera.x + viewW / 2 + tileSize * 2);
+    const startY = Math.max(0, Math.floor((this.camera.y - viewH / 2) / tileSize) * tileSize - tileSize);
+    const endY = Math.min(this.worldSize, this.camera.y + viewH / 2 + tileSize * 2);
 
     for (let x = startX; x <= endX; x += tileSize) {
       for (let y = startY; y <= endY; y += tileSize) {
         const tileHash = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453) % 1;
-        this.ctx.fillStyle = tileHash > 0.5 ? '#0c0f1c' : '#0e1222';
+        const mossHash = Math.abs(Math.sin(x * 37.112 + y * 19.823) * 29421.631) % 1;
+        const detailHash = Math.abs(Math.sin(x * 91.12 + y * 43.87) * 85321.12) % 1;
+
+        // 1. Sol en dalles de pierre sombre
+        this.ctx.fillStyle = tileHash > 0.5 ? '#0a0d1a' : '#0c1022';
         this.ctx.fillRect(x, y, tileSize, tileSize);
 
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.025)';
         this.ctx.lineWidth = 1;
         this.ctx.strokeRect(x, y, tileSize, tileSize);
 
+        // 2. DÉCORATION DE MOISISSURE, MOUSSE ET LICHEN VERT SUR LE SOL
+        if (mossHash > 0.52) {
+          // Tache de mousse vert sombre / marécageuse
+          const mx = x + 20 + detailHash * 60;
+          const my = y + 20 + tileHash * 60;
+          const mr = 18 + mossHash * 26;
+
+          this.ctx.fillStyle = mossHash > 0.78 ? 'rgba(38, 92, 65, 0.42)' : 'rgba(20, 56, 38, 0.32)';
+          this.ctx.beginPath();
+          this.ctx.arc(mx, my, mr, 0, Math.PI * 2);
+          this.ctx.fill();
+
+          // Cœur de moisissure vert mousse plus intense
+          this.ctx.fillStyle = 'rgba(64, 145, 108, 0.55)';
+          this.ctx.beginPath();
+          this.ctx.arc(mx + 3, my - 2, mr * 0.48, 0, Math.PI * 2);
+          this.ctx.fill();
+
+          // Champignon ou spore luminescente toxique verte
+          if (mossHash > 0.86) {
+            this.ctx.fillStyle = 'rgba(116, 198, 157, 0.85)';
+            this.ctx.beginPath();
+            this.ctx.arc(mx - 4, my + 5, 3.5, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            // Halo fluorescent
+            this.ctx.fillStyle = 'rgba(82, 183, 136, 0.22)';
+            this.ctx.beginPath();
+            this.ctx.arc(mx - 4, my + 5, 14, 0, Math.PI * 2);
+            this.ctx.fill();
+          }
+        }
+
+        // 3. Fissures rocheuses avec moisissure infiltrée
         if (tileHash > 0.85) {
+          this.ctx.strokeStyle = 'rgba(45, 106, 79, 0.35)';
+          this.ctx.lineWidth = 1.5;
+          this.ctx.beginPath();
+          this.ctx.moveTo(x + 12, y + 18);
+          this.ctx.lineTo(x + tileSize * 0.5, y + tileSize * 0.6);
+          this.ctx.lineTo(x + tileSize - 16, y + tileSize * 0.4);
+          this.ctx.stroke();
+        }
+
+        // 4. Petits cercles runiques anciens incrustés
+        if (tileHash < 0.10) {
           this.ctx.strokeStyle = 'rgba(255, 42, 85, 0.08)';
           this.ctx.beginPath();
           this.ctx.arc(x + tileSize / 2, y + tileSize / 2, 22, 0, Math.PI * 2);
@@ -1002,29 +1099,30 @@ export class GameEngine {
       }
     }
 
+    // 5. Runes Majeures de l'Arène (adaptées à 7000 px)
     const runeCenters = [
       { x: this.worldSize / 2, y: this.worldSize / 2 },
-      { x: 1400, y: 1400 }, { x: 3600, y: 1400 },
-      { x: 1400, y: 3600 }, { x: 3600, y: 3600 }
+      { x: 2000, y: 2000 }, { x: 5000, y: 2000 },
+      { x: 2000, y: 5000 }, { x: 5000, y: 5000 }
     ];
 
     for (const rc of runeCenters) {
       this.ctx.save();
-      this.ctx.strokeStyle = 'rgba(255, 42, 85, 0.15)';
-      this.ctx.lineWidth = 2;
+      this.ctx.strokeStyle = 'rgba(255, 42, 85, 0.16)';
+      this.ctx.lineWidth = 2.5;
       this.ctx.beginPath();
-      this.ctx.arc(rc.x, rc.y, 140, 0, Math.PI * 2);
+      this.ctx.arc(rc.x, rc.y, 160, 0, Math.PI * 2);
       this.ctx.stroke();
 
       this.ctx.beginPath();
-      this.ctx.arc(rc.x, rc.y, 90, 0, Math.PI * 2);
+      this.ctx.arc(rc.x, rc.y, 100, 0, Math.PI * 2);
       this.ctx.stroke();
 
       this.ctx.beginPath();
       for (let i = 0; i < 5; i++) {
         const a = (i * Math.PI * 2) / 5 - Math.PI / 2;
-        const rx = rc.x + Math.cos(a) * 90;
-        const ry = rc.y + Math.sin(a) * 90;
+        const rx = rc.x + Math.cos(a) * 100;
+        const ry = rc.y + Math.sin(a) * 100;
         if (i === 0) this.ctx.moveTo(rx, ry);
         else this.ctx.lineTo(rx, ry);
       }
@@ -1033,12 +1131,92 @@ export class GameEngine {
       this.ctx.restore();
     }
 
-    this.ctx.strokeStyle = 'rgba(255, 42, 85, 0.8)';
-    this.ctx.lineWidth = 8;
+    // Bordure extérieure de l'immense arène
+    this.ctx.strokeStyle = 'rgba(255, 42, 85, 0.85)';
+    this.ctx.lineWidth = 10;
     this.ctx.shadowColor = '#ff2a55';
-    this.ctx.shadowBlur = 20;
+    this.ctx.shadowBlur = 24;
     this.ctx.strokeRect(0, 0, this.worldSize, this.worldSize);
     this.ctx.shadowBlur = 0;
+  }
+
+  // ==========================================
+  // RENDU DES PILIERS & DÉCOR DE MOUSSE / MOISISSURE
+  // ==========================================
+  renderPillarsAndMossDecor() {
+    for (const pillar of this.pillars) {
+      this.ctx.save();
+      this.ctx.translate(pillar.x, pillar.y);
+
+      // Ombre du pilier
+      this.ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+      this.ctx.beginPath();
+      this.ctx.ellipse(10, 18, pillar.radius * 1.1, pillar.radius * 0.6, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Base du pilier en pierre sculptée
+      this.ctx.fillStyle = '#111522';
+      this.ctx.strokeStyle = '#232a3d';
+      this.ctx.lineWidth = 3;
+      this.ctx.beginPath();
+      this.ctx.arc(0, 0, pillar.radius, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.stroke();
+
+      // Anneau intérieur de pierre usée
+      this.ctx.fillStyle = '#181f33';
+      this.ctx.beginPath();
+      this.ctx.arc(0, -6, pillar.radius * 0.75, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // MOUSSE & MOISISSURE VERTE ENROULÉE SUR LE PILIER
+      this.ctx.fillStyle = 'rgba(45, 106, 79, 0.8)';
+      this.ctx.beginPath();
+      this.ctx.arc(-pillar.radius * 0.35, -pillar.radius * 0.3, 16, 0, Math.PI * 2);
+      this.ctx.arc(-pillar.radius * 0.5, 4, 14, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Feuilles / lichen vert vif
+      this.ctx.fillStyle = 'rgba(82, 183, 136, 0.9)';
+      this.ctx.beginPath();
+      this.ctx.arc(-pillar.radius * 0.35 + 2, -pillar.radius * 0.3 - 2, 7, 0, Math.PI * 2);
+      this.ctx.arc(-pillar.radius * 0.5 + 3, 2, 6, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Fissure de pierre
+      this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
+      this.ctx.lineWidth = 2;
+      this.ctx.beginPath();
+      this.ctx.moveTo(0, -pillar.radius * 0.5);
+      this.ctx.lineTo(8, 0);
+      this.ctx.lineTo(2, pillar.radius * 0.4);
+      this.ctx.stroke();
+
+      this.ctx.restore();
+    }
+  }
+
+  // ==========================================
+  // SPORES VERTES FLOTTANTES DANS L'AIR
+  // ==========================================
+  renderAmbientSpores() {
+    this.ctx.save();
+    for (const spore of this.ambientSpores) {
+      const alphaPulse = Math.sin(spore.phase) * 0.15 + spore.alpha;
+      this.ctx.globalAlpha = Math.max(0.1, alphaPulse);
+
+      this.ctx.fillStyle = '#52b788';
+      this.ctx.beginPath();
+      this.ctx.arc(spore.x, spore.y, spore.radius, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Halo brillant
+      this.ctx.fillStyle = 'rgba(116, 198, 157, 0.25)';
+      this.ctx.beginPath();
+      this.ctx.arc(spore.x, spore.y, spore.radius * 3.5, 0, Math.PI * 2);
+      this.ctx.fill();
+    }
+    this.ctx.restore();
   }
 
   // ==========================================
@@ -1129,21 +1307,21 @@ export class GameEngine {
   renderDynamicLighting() {
     this.ctx.save();
     const light = this.ctx.createRadialGradient(
-      this.player.x, this.player.y, 50,
-      this.player.x, this.player.y, 950
+      this.player.x, this.player.y, 80,
+      this.player.x, this.player.y, 1750
     );
     light.addColorStop(0, 'rgba(0, 0, 0, 0)');
-    light.addColorStop(0.5, 'rgba(4, 6, 12, 0.25)');
-    light.addColorStop(1, 'rgba(2, 3, 6, 0.7)');
+    light.addColorStop(0.4, 'rgba(4, 6, 12, 0.18)');
+    light.addColorStop(1, 'rgba(2, 3, 6, 0.72)');
 
     this.ctx.fillStyle = light;
     const viewW = this.width / this.zoom;
     const viewH = this.height / this.zoom;
     this.ctx.fillRect(
-      this.camera.x - viewW / 2 - 120,
-      this.camera.y - viewH / 2 - 120,
-      viewW + 240,
-      viewH + 240
+      this.camera.x - viewW / 2 - 250,
+      this.camera.y - viewH / 2 - 250,
+      viewW + 500,
+      viewH + 500
     );
     this.ctx.restore();
   }

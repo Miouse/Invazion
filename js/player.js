@@ -215,7 +215,7 @@ export class Player {
 
   findNearestEnemy(enemies) {
     let nearest = null;
-    let minDist = 880;
+    let minDist = 1500;
     for (const e of enemies) {
       const d = Math.hypot(e.x - this.x, e.y - this.y);
       if (d < minDist) {
