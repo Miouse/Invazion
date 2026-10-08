@@ -69,9 +69,9 @@ export class GameEngine {
     this.skipTimerBadge = document.getElementById('skip-timer-badge');
     this.pendingUpgrades = 0;
 
-    // Dimensions arène agrandie (7000 px) & Caméra zoomée confortablement (0.60)
+    // Dimensions arène agrandie (7000 px) & Caméra zoomée de près (0.85)
     this.worldSize = 7000;
-    this.zoom = 0.60; // Zoom équilibré pour apprécier le héros, les monstres et les détails de l'environnement
+    this.zoom = 0.85; // Caméra plus rapprochée pour mettre en valeur les personnages et décors
     this.camera = { x: 3500, y: 3500 };
     this.screenShake = 0;
 

@@ -79,7 +79,7 @@ Invazion/
 
 ### 2. `js/engine.js` — Moteur de Jeu Principal & Monde Ouvert
 - **Dimensions de l'arène** : `7 000 × 7 000 px` (Départ au centre d'Oakhaven en `3 160, 3 540`).
-- **Caméra & Zoom** : Échelle fixe verrouillée à `0.60` pour une vue immersive, stable et lisible (zoom et dézoom à la molette désactivés).
+- **Caméra & Zoom** : Échelle fixe verrouillée à `0.85` pour une vue rapprochée et immersive (zoom et dézoom à la molette désactivés).
 - **Structure Monde Ouvert Médiéval (Remplacement des Vagues Forcées)** :
   - Disparition des vagues oppressantes avec spawn aléatoire. Le joueur explore librement le monde.
   - 6 camps de monstres thématiques peuplés dès le départ (avec respawn intelligent temporisé de 25-30s si le joueur n'est pas en combat au camp).
