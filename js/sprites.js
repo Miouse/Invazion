@@ -103,7 +103,7 @@ export const MONSTER_SPRITES = {
     cols: 12,
     rows: 8,
     isSlime: false,
-    drawSize: 42
+    drawSize: 49
   },
   skeleton: {
     name: 'Loup d\'Ombre',
@@ -111,7 +111,7 @@ export const MONSTER_SPRITES = {
     cols: 12,
     rows: 8,
     isSlime: false,
-    drawSize: 48
+    drawSize: 55
   },
   zombie: {
     name: 'Slime Corrompu',
@@ -119,7 +119,7 @@ export const MONSTER_SPRITES = {
     cols: 15,
     rows: 1,
     isSlime: true,
-    drawSize: 46
+    drawSize: 53
   },
   demon: {
     name: 'Orc Berserker',
@@ -127,7 +127,7 @@ export const MONSTER_SPRITES = {
     cols: 24,
     rows: 8,
     isSlime: false,
-    drawSize: 58
+    drawSize: 67
   }
 };
 

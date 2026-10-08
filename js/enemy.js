@@ -18,36 +18,36 @@ export class Enemy {
 
     switch(type) {
       case 'bat':
-        this.radius = 14;
+        this.radius = 16;
         this.speed = 145 + Math.random() * 30;
         this.hp = 14 * hpScale;
         this.damage = 8;
         this.color = '#bf55ec';
         break;
       case 'skeleton':
-        this.radius = 18;
+        this.radius = 20;
         this.speed = 100 + Math.random() * 20;
         this.hp = 35 * hpScale;
         this.damage = 14;
         this.color = '#e0e6ed';
         break;
       case 'zombie':
-        this.radius = 22;
+        this.radius = 25;
         this.speed = 70 + Math.random() * 15;
         this.hp = 75 * hpScale;
         this.damage = 20;
         this.color = '#2ecc71';
         break;
       case 'demon':
-        this.radius = 26;
+        this.radius = 30;
         this.speed = 115 + Math.random() * 20;
         this.hp = 130 * hpScale;
         this.damage = 25;
         this.color = '#e74c3c';
         break;
       case 'boss':
-        // BOSS 3 FOIS PLUS GROS (Radius 95px)
-        this.radius = 95;
+        // BOSS TITANESQUE (Radius 108px)
+        this.radius = 108;
         this.speed = 85;
         this.hp = 1400 * hpScale;
         this.maxHp = this.hp;

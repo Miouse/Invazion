@@ -78,7 +78,7 @@ Invazion/
 
 ### 2. `js/engine.js` — Moteur de Jeu Principal
 - **Dimensions de l'arène** : `7 000 × 7 000 px` (centre en `3 500, 3 500`).
-- **Caméra & Zoom** : Zoom par défaut `0.45` pour une vue panoramique grand angle (ajustable à la molette).
+- **Caméra & Zoom** : Zoom par défaut `0.60` pour une vue immersive rapprochée et lisible (ajustable de 0.30 à 1.15 à la molette).
 - **Système de Vagues (Option A)** :
   - Vague active : un contingent défini de monstres émerge en continu des 4 portails cardinaux (`North`, `South`, `East`, `West`).
   - Tous monstres éliminés ➔ Passage en état `INTERMISSION` de **20 secondes de répit** avec apparition de gemmes et bouton pour passer immédiatement.

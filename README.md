@@ -31,7 +31,7 @@ Affrontez des vagues de monstres incessantes, récoltez des gemmes d'âme, monte
 - 👹 **Combats de Boss Épiques** : Titans colossaux émergeant des portails avec barre de vie dédiée style *Dark Souls / Elden Ring*.
 - 🔊 **Moteur Audio Procédural** : Synthèse sonore intégrée via la **Web Audio API** (cors de guerre, harpe de victoire, etc.).
 - 📱 **Compatible Desktop & Mobile** : Détection tactile automatique avec joystick virtuel et interface responsive.
-- 🎥 **Caméra Dézoomée Panoramique** : Champ de vision grand angle (zoom par défaut 0.45x, ajustable de 0.25x à 0.85x à la molette).
+- 🎥 **Caméra Équilibrée & Confortable** : Vue immersive et détaillée (zoom par défaut 0.60x, ajustable de 0.30x à 1.15x à la molette).
 
 ---
 

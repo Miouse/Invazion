@@ -68,9 +68,9 @@ export class GameEngine {
     this.skipTimerBadge = document.getElementById('skip-timer-badge');
     this.pendingUpgrades = 0;
 
-    // Dimensions arène agrandie (7000 px) & Caméra très dézoomée (0.45)
+    // Dimensions arène agrandie (7000 px) & Caméra zoomée confortablement (0.60)
     this.worldSize = 7000;
-    this.zoom = 0.45; // Dézoom très large pour une vue panoramique stratégique de l'arène
+    this.zoom = 0.60; // Zoom équilibré pour apprécier le héros, les monstres et les détails de l'environnement
     this.camera = { x: 3500, y: 3500 };
     this.screenShake = 0;
 
@@ -281,13 +281,13 @@ export class GameEngine {
       }
     });
 
-    // Molette souris pour ajuster le zoom en jeu (entre 0.25 et 0.85)
+    // Molette souris pour ajuster le zoom en jeu (entre 0.30 et 1.15)
     window.addEventListener('wheel', (e) => {
       if (this.state === 'PLAYING') {
         if (e.deltaY > 0) {
-          this.zoom = Math.max(0.25, +(this.zoom - 0.04).toFixed(2));
+          this.zoom = Math.max(0.30, +(this.zoom - 0.04).toFixed(2));
         } else {
-          this.zoom = Math.min(0.85, +(this.zoom + 0.04).toFixed(2));
+          this.zoom = Math.min(1.15, +(this.zoom + 0.04).toFixed(2));
         }
       }
     }, { passive: true });

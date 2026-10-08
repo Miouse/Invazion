@@ -9,7 +9,7 @@ export class Player {
   constructor(x, y, characterId = 'warrior') {
     this.x = x;
     this.y = y;
-    this.radius = 20;
+    this.radius = 23;
 
     // Configuration de la classe / skin
     const char = CHARACTERS[characterId] || CHARACTERS.warrior;
@@ -306,7 +306,7 @@ export class Player {
     // Ombre sous le héros
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
     ctx.beginPath();
-    ctx.ellipse(0, 16, this.radius, 8, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 18, this.radius, 9, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // Traînée lumineuse si en Dash
@@ -331,7 +331,7 @@ export class Player {
       const col = this.isMoving ? (Math.floor(this.walkTimer) % 4) : 0;
 
       ctx.imageSmoothingEnabled = false;
-      const drawSize = 54;
+      const drawSize = 62;
       ctx.drawImage(
         img,
         col * 32, row * 32, 32, 32,
