@@ -44,12 +44,38 @@ export class GameEngine {
     this.endKills = document.getElementById('end-kills');
     this.endLevel = document.getElementById('end-level');
     this.endGems = document.getElementById('end-gems');
+    this.endWave = document.getElementById('end-wave');
 
-    // Dimensions arène & Caméra dézoomée
-    this.worldSize = 3400;
-    this.zoom = 0.72; // Dézoom par défaut pour une meilleure visibilité de l'arène
-    this.camera = { x: 0, y: 0 };
+    // Éléments HUD de Vagues & Bannière
+    this.waveDisplay = document.getElementById('wave-display');
+    this.monstersLeftDisplay = document.getElementById('monsters-left-display');
+    this.waveBanner = document.getElementById('wave-banner');
+    this.waveBannerSub = document.getElementById('wave-banner-sub');
+    this.waveBannerTitle = document.getElementById('wave-banner-title');
+    this.waveBannerInfo = document.getElementById('wave-banner-info');
+    this.bannerTimeout = null;
+
+    // Dimensions arène agrandie & Caméra dézoomée
+    this.worldSize = 5000;
+    this.zoom = 0.72;
+    this.camera = { x: 2500, y: 2500 };
     this.screenShake = 0;
+
+    // 4 Portails Démoniaques Cardinaux
+    this.portals = [
+      { id: 'north', name: 'PORTAIL NORD', x: 2500, y: 320, angle: Math.PI / 2, active: false, pulse: 0 },
+      { id: 'south', name: 'PORTAIL SUD', x: 2500, y: 4680, angle: -Math.PI / 2, active: false, pulse: 0 },
+      { id: 'west',  name: 'PORTAIL OUEST', x: 320, y: 2500, angle: 0, active: false, pulse: 0 },
+      { id: 'east',  name: 'PORTAIL EST', x: 4680, y: 2500, angle: Math.PI, active: false, pulse: 0 }
+    ];
+
+    // Système de Vagues par Élimination (Option A)
+    this.wave = 1;
+    this.waveState = 'INTERMISSION';
+    this.intermissionTimer = 3.0;
+    this.waveQueue = [];
+    this.totalWaveEnemies = 0;
+    this.portalSpawnTimer = 0;
 
     // État du jeu
     this.state = 'START';
@@ -236,7 +262,7 @@ export class GameEngine {
     this.shockwaves = [];
     this.floatingTexts = [];
 
-    // Création Joueur et centrage immédiat de la caméra
+    // Création Joueur au centre de la vaste arène et centrage caméra
     this.player = new Player(this.worldSize / 2, this.worldSize / 2);
     this.camera.x = this.player.x;
     this.camera.y = this.player.y;
@@ -246,6 +272,9 @@ export class GameEngine {
     this.updateEquipmentHud();
 
     this.state = 'PLAYING';
+    
+    // Démarrage de la Vague 1
+    this.startWave(1);
     this.updateHUD();
   }
 
@@ -340,65 +369,180 @@ export class GameEngine {
   }
 
   // ==========================================
-  // SPAWNER D'ENNEMIS & BOSS COLOSSAL (3X)
+  // SYSTÈME DE VAGUES PAR ÉLIMINATION & PORTAILS
   // ==========================================
-  handleSpawning(dt) {
-    const minutes = this.gameTime / 60;
-    const spawnRate = 1.6 + minutes * 2.2; 
-    const maxEnemies = Math.min(360, Math.floor(50 + minutes * 65));
+  startWave(waveNum) {
+    this.wave = waveNum;
+    this.waveState = 'ACTIVE';
+    this.portalSpawnTimer = 0;
 
-    if (this.enemies.length < maxEnemies) {
-      if (Math.random() < spawnRate * dt) {
-        this.spawnEnemy();
+    const isBossWave = (waveNum % 5 === 0);
+
+    // Déterminer les portails actifs selon la vague
+    let activeIds = [];
+    if (waveNum === 1) {
+      activeIds = ['north'];
+    } else if (waveNum === 2) {
+      activeIds = ['east', 'west'];
+    } else if (waveNum === 3) {
+      activeIds = ['north', 'south'];
+    } else if (waveNum === 4) {
+      activeIds = ['north', 'east', 'west'];
+    } else {
+      activeIds = ['north', 'south', 'east', 'west'];
+    }
+
+    for (const p of this.portals) {
+      p.active = activeIds.includes(p.id);
+    }
+
+    // Composition de la vague
+    let enemyCount = 14 + waveNum * 6;
+    if (isBossWave) enemyCount = Math.floor(enemyCount * 0.7);
+
+    this.waveQueue = [];
+    for (let i = 0; i < enemyCount; i++) {
+      let type = 'bat';
+      const r = Math.random();
+      if (waveNum >= 4 && r < 0.28) {
+        type = 'demon';
+      } else if (waveNum >= 3 && r < 0.45) {
+        type = 'zombie';
+      } else if (waveNum >= 2 && r < 0.6) {
+        type = 'skeleton';
+      }
+      this.waveQueue.push(type);
+    }
+
+    this.totalWaveEnemies = this.waveQueue.length + (isBossWave ? 1 : 0);
+
+    // Annonce bannière
+    const activePortalNames = this.portals
+      .filter(p => p.active)
+      .map(p => p.name.replace('PORTAIL ', ''))
+      .join(' • ');
+
+    this.showWaveBanner(
+      isBossWave ? '⚠️ TITAN ANCESTRAL RÉVEILLÉ' : 'DÉFERLANTE DE MONSTRES',
+      `VAGUE ${waveNum}`,
+      `Brèches actives : ${activePortalNames}`,
+      isBossWave,
+      2800
+    );
+
+    sfx.playWaveStart(isBossWave);
+
+    // Si vague de boss, le colosse émerge d'un portail actif
+    if (isBossWave) {
+      const bossPortal = this.portals.find(p => p.id === 'north') || this.portals[0];
+      this.spawnColossalBoss(bossPortal.x, bossPortal.y);
+    }
+
+    this.updateHUD();
+  }
+
+  handleWaveProgression(dt) {
+    // Animation du pulse des portails
+    for (const p of this.portals) {
+      if (p.pulse > 0) p.pulse = Math.max(0, p.pulse - dt * 2);
+    }
+
+    // Phase d'intermission entre 2 vagues
+    if (this.waveState === 'INTERMISSION') {
+      this.intermissionTimer -= dt;
+      if (this.intermissionTimer <= 0) {
+        this.startWave(this.wave + 1);
+      }
+      return;
+    }
+
+    // Phase ACTIVE : flux continu de monstres émergeant des portails actifs
+    const activePortals = this.portals.filter(p => p.active);
+    if (activePortals.length === 0) return;
+
+    this.portalSpawnTimer += dt;
+    const spawnCadence = Math.max(0.18, 0.45 - (this.wave - 1) * 0.02);
+
+    if (this.portalSpawnTimer >= spawnCadence && this.waveQueue.length > 0) {
+      this.portalSpawnTimer = 0;
+      for (const portal of activePortals) {
+        if (this.waveQueue.length === 0) break;
+        const enemyType = this.waveQueue.shift();
+        this.spawnEnemyAtPortal(portal, enemyType);
       }
     }
 
-    // Apparition du BOSS Titan colossal toutes les 75 secondes
-    if (Math.floor(this.gameTime) > 0 && Math.floor(this.gameTime) % 75 === 0 && !this.bossSpawnedThisInterval) {
-      this.spawnColossalBoss();
-      this.bossSpawnedThisInterval = true;
-    } else if (Math.floor(this.gameTime) % 75 !== 0) {
-      this.bossSpawnedThisInterval = false;
+    // Vérification de la purification de la vague
+    if (this.waveQueue.length === 0 && this.enemies.length === 0) {
+      this.waveState = 'INTERMISSION';
+      this.intermissionTimer = 4.0; // 4 secondes de répit pour souffler et ramasser les gemmes
+
+      for (const p of this.portals) {
+        p.active = false;
+      }
+
+      sfx.playWaveClear();
+
+      // Pluie de récompense : gemmes bonus au sol
+      for (let g = 0; g < 7; g++) {
+        const a = (g / 7) * Math.PI * 2;
+        this.gems.push(new Gem(this.player.x + Math.cos(a) * 55, this.player.y + Math.sin(a) * 55, 10, 'green'));
+      }
+      this.gems.push(new Gem(this.player.x, this.player.y, 0, 'heart'));
+
+      this.showWaveBanner(
+        'ACCALMIE DANS L\'ARÈNE',
+        `VAGUE ${this.wave} PURIFIÉE !`,
+        `Préparez-vous pour la Vague ${this.wave + 1}...`,
+        false,
+        3400
+      );
     }
   }
 
-  spawnEnemy() {
-    const angle = Math.random() * Math.PI * 2;
-    const viewRadius = (Math.max(this.width, this.height) / this.zoom) * 0.55;
-    const dist = viewRadius + 60 + Math.random() * 120;
-    const x = this.player.x + Math.cos(angle) * dist;
-    const y = this.player.y + Math.sin(angle) * dist;
+  showWaveBanner(sub, title, info, isBoss = false, duration = 2800) {
+    if (!this.waveBanner) return;
+    this.waveBannerSub.textContent = sub;
+    this.waveBannerTitle.textContent = title;
+    this.waveBannerInfo.textContent = info;
 
-    const r = Math.random();
-    const t = this.gameTime;
-
-    let type = 'bat';
-    if (t > 120 && r < 0.3) {
-      type = 'demon';
-    } else if (t > 60 && r < 0.5) {
-      type = 'zombie';
-    } else if (t > 20 && r < 0.7) {
-      type = 'skeleton';
+    if (isBoss) {
+      this.waveBanner.classList.add('boss-banner');
+    } else {
+      this.waveBanner.classList.remove('boss-banner');
     }
 
-    this.enemies.push(new Enemy(x, y, type, this.gameTime));
+    this.waveBanner.classList.remove('hidden');
+
+    if (this.bannerTimeout) clearTimeout(this.bannerTimeout);
+    this.bannerTimeout = setTimeout(() => {
+      this.waveBanner.classList.add('hidden');
+    }, duration);
   }
 
-  spawnColossalBoss() {
+  spawnEnemyAtPortal(portal, type) {
     const angle = Math.random() * Math.PI * 2;
-    const viewRadius = (Math.max(this.width, this.height) / this.zoom) * 0.55;
-    const dist = viewRadius + 80;
-    const x = this.player.x + Math.cos(angle) * dist;
-    const y = this.player.y + Math.sin(angle) * dist;
-    
-    const boss = new Enemy(x, y, 'boss', this.gameTime);
+    const offset = 30 + Math.random() * 40;
+    const x = portal.x + Math.cos(angle) * offset;
+    const y = portal.y + Math.sin(angle) * offset;
+
+    this.enemies.push(new Enemy(x, y, type, this.gameTime, this.wave));
+    portal.pulse = 1.0;
+
+    // Effet visuel d'apparition
+    this.createHitParticles(portal.x, portal.y, '#e056fd', 3);
+  }
+
+  spawnColossalBoss(x, y) {
+    const boss = new Enemy(x, y, 'boss', this.gameTime, this.wave);
     this.enemies.push(boss);
     this.activeBoss = boss;
 
     this.bossHud.classList.remove('hidden');
-    this.bossName.textContent = "MALGOK • SEIGNEUR DU CRIMSON";
-    this.triggerScreenShake(12);
-    this.addFloatingText(this.player.x, this.player.y - 70, "⚠️ TITAN DÉMONIAQUE RÉVEILLÉ !", '#ff0055', 28);
+    this.bossName.textContent = `MALGOK • SEIGNEUR DU CRIMSON (VAGUE ${this.wave})`;
+    this.triggerScreenShake(14);
+    this.addShockwave(x, y, 400, '#ff0055', 8);
+    this.addFloatingText(this.player.x, this.player.y - 70, "⚠️ TITAN DÉMONIAQUE ENTRAVE L'ARÈNE !", '#ff0055', 26);
   }
 
   // ==========================================
@@ -461,6 +605,7 @@ export class GameEngine {
     this.endKills.textContent = this.kills;
     this.endLevel.textContent = this.player.level;
     this.endGems.textContent = this.totalGemsCollected;
+    if (this.endWave) this.endWave.textContent = this.wave;
 
     this.gameoverScreen.classList.add('active');
   }
@@ -518,8 +663,8 @@ export class GameEngine {
     // Gestion des armes & pouvoirs de zone du joueur
     this.player.updateWeapons(dt, this);
 
-    // Spawner
-    this.handleSpawning(dt);
+    // Gestion de la progression des vagues & apparition par portails
+    this.handleWaveProgression(dt);
 
     // Mise à jour du Boss actif
     if (this.activeBoss) {
@@ -704,6 +849,19 @@ export class GameEngine {
     this.killsDisplay.textContent = this.kills;
     this.gemsDisplay.textContent = this.totalGemsCollected;
 
+    // Vagues & Ennemis restants
+    if (this.waveDisplay) {
+      this.waveDisplay.textContent = `VAGUE ${this.wave}`;
+    }
+    if (this.monstersLeftDisplay) {
+      if (this.waveState === 'INTERMISSION') {
+        this.monstersLeftDisplay.textContent = `RÉPIT (${Math.ceil(this.intermissionTimer)}s)`;
+      } else {
+        const remaining = this.waveQueue.length + this.enemies.length;
+        this.monstersLeftDisplay.textContent = `${remaining} restants`;
+      }
+    }
+
     // HP
     const hpRatio = Math.max(0, this.player.hp / this.player.maxHp);
     this.hpBarFill.style.width = `${hpRatio * 100}%`;
@@ -743,6 +901,9 @@ export class GameEngine {
 
     // 1. Dalles de donjon gothique & runes anciennes
     this.renderDungeonFloor();
+
+    // 1.5. Portails Démoniaques de chaque côté
+    this.renderPortals();
 
     // 2. Ondes de choc (Shockwaves)
     for (const sw of this.shockwaves) {
@@ -843,8 +1004,8 @@ export class GameEngine {
 
     const runeCenters = [
       { x: this.worldSize / 2, y: this.worldSize / 2 },
-      { x: 800, y: 800 }, { x: 2600, y: 800 },
-      { x: 800, y: 2600 }, { x: 2600, y: 2600 }
+      { x: 1400, y: 1400 }, { x: 3600, y: 1400 },
+      { x: 1400, y: 3600 }, { x: 3600, y: 3600 }
     ];
 
     for (const rc of runeCenters) {
@@ -878,6 +1039,91 @@ export class GameEngine {
     this.ctx.shadowBlur = 20;
     this.ctx.strokeRect(0, 0, this.worldSize, this.worldSize);
     this.ctx.shadowBlur = 0;
+  }
+
+  // ==========================================
+  // RENDU DES 4 PORTAILS DÉMONIAQUES
+  // ==========================================
+  renderPortals() {
+    const time = this.gameTime;
+
+    for (const portal of this.portals) {
+      this.ctx.save();
+      this.ctx.translate(portal.x, portal.y);
+
+      const isActive = portal.active;
+      const swirlSpeed = isActive ? 4.5 : 1.2;
+      const glowColor = isActive ? '#ff0055' : '#8a2be2';
+      const portalRadius = isActive ? 75 : 60;
+      const pulseEffect = Math.sin(time * swirlSpeed) * 6 + (portal.pulse * 20);
+
+      // 1. Pilier gauche et droit (Monolithes d'obsidienne)
+      this.ctx.fillStyle = '#140c1e';
+      this.ctx.strokeStyle = isActive ? 'rgba(255, 0, 85, 0.6)' : 'rgba(138, 43, 226, 0.4)';
+      this.ctx.lineWidth = 3;
+
+      // Piliers orientés selon l'angle
+      const pOffsetX = Math.cos(portal.angle + Math.PI / 2) * 85;
+      const pOffsetY = Math.sin(portal.angle + Math.PI / 2) * 85;
+
+      // Colonne 1
+      this.ctx.beginPath();
+      this.ctx.arc(pOffsetX, pOffsetY, 22, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.stroke();
+
+      // Colonne 2
+      this.ctx.beginPath();
+      this.ctx.arc(-pOffsetX, -pOffsetY, 22, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.stroke();
+
+      // 2. Halo d'énergie mystique
+      this.ctx.fillStyle = isActive ? 'rgba(255, 0, 85, 0.18)' : 'rgba(138, 43, 226, 0.10)';
+      this.ctx.beginPath();
+      this.ctx.arc(0, 0, portalRadius + 30 + pulseEffect, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // 3. Tourbillon dimensionnel central
+      const grad = this.ctx.createRadialGradient(0, 0, 10, 0, 0, portalRadius + pulseEffect);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.3, isActive ? '#ff2a55' : '#a855f7');
+      grad.addColorStop(0.8, isActive ? '#67001f' : '#3b0764');
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+
+      this.ctx.fillStyle = grad;
+      this.ctx.beginPath();
+      this.ctx.arc(0, 0, portalRadius + pulseEffect, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // 4. Anneaux runiques tournoyants
+      this.ctx.save();
+      this.ctx.rotate(time * swirlSpeed * (isActive ? 1.5 : 0.8));
+      this.ctx.strokeStyle = isActive ? '#ff6b8b' : '#c084fc';
+      this.ctx.lineWidth = isActive ? 3 : 2;
+      this.ctx.setLineDash([14, 10]);
+      this.ctx.beginPath();
+      this.ctx.arc(0, 0, portalRadius * 0.8, 0, Math.PI * 2);
+      this.ctx.stroke();
+
+      this.ctx.rotate(-time * swirlSpeed * 2.2);
+      this.ctx.beginPath();
+      this.ctx.arc(0, 0, portalRadius * 0.5, 0, Math.PI * 2);
+      this.ctx.stroke();
+      this.ctx.restore();
+
+      // 5. Texte d'identification au-dessus du portail
+      this.ctx.font = "bold 15px 'Rajdhani', sans-serif";
+      this.ctx.textAlign = 'center';
+      this.ctx.fillStyle = isActive ? '#ff6b8b' : '#a0aec0';
+      this.ctx.fillText(portal.name, 0, -90);
+
+      this.ctx.font = "600 12px 'Rajdhani', sans-serif";
+      this.ctx.fillStyle = isActive ? '#ff0055' : '#64748b';
+      this.ctx.fillText(isActive ? '⚡ BRÈCHE ACTIVE' : '💤 EN SOMMEIL', 0, -74);
+
+      this.ctx.restore();
+    }
   }
 
   renderDynamicLighting() {

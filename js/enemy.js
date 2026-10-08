@@ -4,14 +4,14 @@
 import { Projectile } from './entities.js';
 
 export class Enemy {
-  constructor(x, y, type, gameTime) {
+  constructor(x, y, type, gameTime = 0, wave = 1) {
     this.x = x;
     this.y = y;
     this.type = type;
     this.hitFlash = 0;
     this.attackTimer = 0;
 
-    const hpScale = 1 + (gameTime / 90) * 1.5;
+    const hpScale = (1 + (gameTime / 150) * 0.6) * (1 + (wave - 1) * 0.15);
 
     switch(type) {
       case 'bat':
@@ -59,8 +59,32 @@ export class Enemy {
 
   update(dt, player, engine) {
     const angle = Math.atan2(player.y - this.y, player.x - this.x);
-    this.x += Math.cos(angle) * this.speed * dt;
-    this.y += Math.sin(angle) * this.speed * dt;
+    let vx = Math.cos(angle) * this.speed;
+    let vy = Math.sin(angle) * this.speed;
+
+    // Répulsion légère pour fluidifier la horde sans collision lourde
+    if (this.type !== 'boss' && engine && engine.enemies) {
+      const sampleCount = Math.min(engine.enemies.length, 25);
+      for (let i = 0; i < sampleCount; i++) {
+        const other = engine.enemies[i];
+        if (other !== this) {
+          const dx = this.x - other.x;
+          const dy = this.y - other.y;
+          const distSq = dx * dx + dy * dy;
+          const minDist = this.radius + other.radius;
+          if (distSq < minDist * minDist && distSq > 0.1) {
+            const dist = Math.sqrt(distSq);
+            const push = (minDist - dist) * 1.8;
+            vx += (dx / dist) * push;
+            vy += (dy / dist) * push;
+            break;
+          }
+        }
+      }
+    }
+
+    this.x += vx * dt;
+    this.y += vy * dt;
 
     if (this.hitFlash > 0) {
       this.hitFlash -= dt;

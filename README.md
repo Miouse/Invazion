@@ -13,13 +13,17 @@ Affrontez des vagues de monstres incessantes, récoltez des gemmes d'âme, monte
 
 ## 🎮 Fonctionnalités du Jeu
 
-- ⚡ **Gameplay Roguelite Intense** : Survie contre des hordes d'ennemis dont la difficulté, la vitesse et les points de vie augmentent avec le temps.
+- 🌊 **Système de Vagues par Élimination (Option A)** : Chaque vague vous confronte à un contingent précis de monstres. Éliminez la horde pour déclencher une phase d'accalmie, ramasser les gemmes bonus et vous préparer au prochain assaut !
+- ⛩️ **4 Portails Démoniaques Cardinaux** : Les monstres n'apparaissent plus au hasard mais déferlent depuis d'immenses brèches animées (Nord, Sud, Est, Ouest) avec alertes visuelles.
+- 🗺️ **Vaste Arène Agrandie (5 000 × 5 000 px)** : Un terrain immense avec piliers, dalles gothiques, runes anciennes et barrières d'énergie.
+- ⚡ **Fluidité Optimisée (60-120+ FPS)** : Moteur Canvas 2D ultra-rapide avec répulsion naturelle de horde sans lag, suppression des CPU gaussian blurs et gestion mémoire propre.
 - 🪄 **Attaques & Sorts Automatiques** : Concentrez-vous sur le placement, l'esquive et le dash.
 - 💨 **Dash d'Urgence** : Jauge de dash rechargeable pour vous extirper des encerclements critiques.
 - 🔮 **Système de Montée de Niveau (Level Up)** : Choix parmi 3 cartes d'améliorations tirées aléatoirement à chaque palier.
-- 👹 **Combats de Boss Épiques** : Titans colossaux avec barre de vie dédiée style *Dark Souls / Elden Ring*.
-- 🔊 **Moteur Audio Procédural** : Synthèse sonore intégrée via la **Web Audio API** (aucun fichier audio lourd à charger).
+- 👹 **Combats de Boss Épiques** : Titans colossaux émergeant des portails avec barre de vie dédiée style *Dark Souls / Elden Ring*.
+- 🔊 **Moteur Audio Procédural** : Synthèse sonore intégrée via la **Web Audio API** (sons de cors de guerre pour les vagues, harpe de victoire, etc.).
 - 📱 **Compatible Desktop & Mobile** : Détection tactile automatique avec joystick virtuel et interface responsive.
+- 🎥 **Caméra Dézoomée & Contrôle Molette** : Champ de vision étendu avec zoom ajustable à la molette (0.5x à 1.1x).
 
 ---
 

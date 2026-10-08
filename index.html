@@ -28,6 +28,14 @@
 
       <!-- Informations de survie en haut -->
       <div class="top-stats">
+        <div class="stat-pill wave-pill">
+          <span class="icon">🌊</span>
+          <span id="wave-display">VAGUE 1</span>
+        </div>
+        <div class="stat-pill monsters-left-pill">
+          <span class="icon">👾</span>
+          <span id="monsters-left-display">--</span>
+        </div>
         <div class="stat-pill timer-pill">
           <span class="icon">⏱️</span>
           <span id="time-display">00:00</span>
@@ -80,8 +88,14 @@
         <div id="joystick-knob"></div>
       </div>
     </div>
-
-    <!-- Écran d'accueil / Titre -->
+    
+    <!-- Annonce de Vague Dynamique -->
+    <div id="wave-banner" class="wave-banner hidden">
+      <div class="wave-banner-glow"></div>
+      <span class="wave-banner-sub" id="wave-banner-sub">PRÉPAREZ-VOUS</span>
+      <h2 class="wave-banner-title" id="wave-banner-title">VAGUE 1</h2>
+      <div class="wave-banner-info" id="wave-banner-info">Brèche Nord Activée</div>
+    </div>
     <div id="start-screen" class="overlay-modal active">
       <div class="modal-card">
         <div class="card-glow"></div>
@@ -145,6 +159,10 @@
         <p class="subtitle">Les ombres ont submergé ton âme...</p>
 
         <div class="stats-summary-grid">
+          <div class="summary-box">
+            <span class="summary-label">Vague Atteinte</span>
+            <span id="end-wave" class="summary-value">1</span>
+          </div>
           <div class="summary-box">
             <span class="summary-label">Temps Survécu</span>
             <span id="end-time" class="summary-value">00:00</span>

@@ -38,8 +38,12 @@ export class Projectile {
     ctx.translate(this.x, this.y);
 
     if (this.isEnemy) {
-      ctx.shadowColor = '#ff0055';
-      ctx.shadowBlur = 14;
+      // Halo lumineux rapide sans Gaussian blur
+      ctx.fillStyle = 'rgba(255, 0, 85, 0.35)';
+      ctx.beginPath();
+      ctx.arc(0, 0, this.radius * 1.6, 0, Math.PI * 2);
+      ctx.fill();
+
       ctx.fillStyle = '#ff0055';
       ctx.beginPath();
       ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
@@ -50,8 +54,12 @@ export class Projectile {
       ctx.arc(0, 0, this.radius * 0.45, 0, Math.PI * 2);
       ctx.fill();
     } else {
-      ctx.shadowColor = '#00f0ff';
-      ctx.shadowBlur = 14;
+      // Projectile joueur lumineux
+      ctx.fillStyle = 'rgba(0, 240, 255, 0.35)';
+      ctx.beginPath();
+      ctx.arc(0, 0, this.radius * 1.6, 0, Math.PI * 2);
+      ctx.fill();
+
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
@@ -99,9 +107,12 @@ export class Gem {
     ctx.translate(this.x, this.y + bob);
 
     if (this.type === 'heart') {
+      ctx.fillStyle = 'rgba(255, 42, 85, 0.3)';
+      ctx.beginPath();
+      ctx.arc(0, 0, 13, 0, Math.PI * 2);
+      ctx.fill();
+
       ctx.fillStyle = '#ff2a55';
-      ctx.shadowColor = '#ff2a55';
-      ctx.shadowBlur = 10;
       ctx.beginPath();
       ctx.arc(-4, -3, 5, Math.PI, 0, false);
       ctx.arc(4, -3, 5, Math.PI, 0, false);
@@ -110,14 +121,17 @@ export class Gem {
       ctx.fill();
     } else {
       let color = '#00f0ff';
-      let shadow = '#00f0ff';
-      if (this.type === 'green') { color = '#2ecc71'; shadow = '#2ecc71'; }
-      if (this.type === 'red') { color = '#ff0055'; shadow = '#ff0055'; }
+      let aura = 'rgba(0, 240, 255, 0.35)';
+      if (this.type === 'green') { color = '#2ecc71'; aura = 'rgba(46, 204, 113, 0.35)'; }
+      if (this.type === 'red') { color = '#ff0055'; aura = 'rgba(255, 42, 85, 0.35)'; }
+
+      // Halo néon rapide
+      ctx.fillStyle = aura;
+      ctx.beginPath();
+      ctx.arc(0, 0, this.radius * 1.5, 0, Math.PI * 2);
+      ctx.fill();
 
       ctx.fillStyle = color;
-      ctx.shadowColor = shadow;
-      ctx.shadowBlur = 9;
-      
       // Losange facetté
       ctx.beginPath();
       ctx.moveTo(0, -this.radius);
@@ -128,7 +142,7 @@ export class Gem {
       ctx.fill();
 
       // Facette brillante
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
       ctx.beginPath();
       ctx.moveTo(0, -this.radius);
       ctx.lineTo(this.radius * 0.4, 0);

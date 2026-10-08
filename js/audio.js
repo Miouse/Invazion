@@ -165,8 +165,53 @@ export class SoundFX {
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
+      osc.onended = () => { osc.disconnect(); gain.disconnect(); };
       osc.start(now);
       osc.stop(now + 0.7);
+    } catch(e) {}
+  }
+
+  playWaveStart(isBoss = false) {
+    if (this.muted || !this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      const freqs = isBoss ? [110, 146.8, 164.8] : [220, 277.18, 329.63, 440];
+      freqs.forEach((f, idx) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = isBoss ? 'sawtooth' : 'triangle';
+        const start = now + idx * 0.05;
+        osc.frequency.setValueAtTime(f, start);
+        gain.gain.setValueAtTime(0.12, start);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.55);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+        osc.start(start);
+        osc.stop(start + 0.55);
+      });
+    } catch(e) {}
+  }
+
+  playWaveClear() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      const notes = [440, 554.37, 659.25, 880, 1108.7];
+      notes.forEach((f, idx) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        const start = now + idx * 0.06;
+        osc.frequency.setValueAtTime(f, start);
+        gain.gain.setValueAtTime(0.10, start);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.35);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+        osc.start(start);
+        osc.stop(start + 0.35);
+      });
     } catch(e) {}
   }
 

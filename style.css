@@ -139,6 +139,16 @@ html, body {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
+.wave-pill {
+  color: #00f0ff;
+  border-color: rgba(0, 240, 255, 0.45);
+  background: rgba(10, 25, 45, 0.85);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.25);
+}
+.monsters-left-pill {
+  color: #ff6b8b;
+  border-color: rgba(255, 42, 85, 0.4);
+}
 .timer-pill { color: #f0f4fc; }
 .kills-pill { color: #ff6b8b; }
 .gold-pill { color: #ffd23f; }
@@ -689,3 +699,86 @@ html, body {
     box-shadow: 0 0 15px rgba(255, 42, 85, 0.6);
   }
 }
+
+/* ==========================================================================
+   BANNIÈRE DE VAGUE ANIMÉE (POPUP CENTRE)
+   ========================================================================== */
+.wave-banner {
+  position: absolute;
+  top: 26%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  background: rgba(10, 14, 28, 0.92);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(0, 240, 255, 0.5);
+  box-shadow: 0 0 40px rgba(0, 240, 255, 0.3), inset 0 0 25px rgba(0, 240, 255, 0.15);
+  border-radius: 20px;
+  padding: 24px 48px;
+  text-align: center;
+  z-index: 90;
+  pointer-events: none;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  animation: bannerPulse 2s infinite ease-in-out;
+}
+
+.wave-banner.boss-banner {
+  border-color: rgba(255, 42, 85, 0.7);
+  box-shadow: 0 0 50px rgba(255, 42, 85, 0.4), inset 0 0 30px rgba(255, 42, 85, 0.2);
+}
+
+.wave-banner.hidden {
+  opacity: 0;
+  transform: translate(-50%, -65%) scale(0.85);
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.wave-banner-sub {
+  font-family: var(--font-accent);
+  font-size: 15px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: #00f0ff;
+  font-weight: 700;
+}
+
+.wave-banner.boss-banner .wave-banner-sub {
+  color: #ff2a55;
+}
+
+.wave-banner-title {
+  font-family: var(--font-accent);
+  font-size: 46px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  margin: 0;
+  background: linear-gradient(135deg, #ffffff, #00f0ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 20px rgba(0, 240, 255, 0.6);
+}
+
+.wave-banner.boss-banner .wave-banner-title {
+  background: linear-gradient(135deg, #ffffff, #ff2a55);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 25px rgba(255, 42, 85, 0.8);
+}
+
+.wave-banner-info {
+  font-family: var(--font-main);
+  font-size: 16px;
+  color: #a0aec0;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+@keyframes bannerPulse {
+  0%, 100% { box-shadow: 0 0 40px rgba(0, 240, 255, 0.3); }
+  50% { box-shadow: 0 0 60px rgba(0, 240, 255, 0.5); }
+}
+
