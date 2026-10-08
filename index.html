@@ -22,25 +22,171 @@
       <!-- Informations de survie en haut -->
       <div class="top-stats">
         <div class="stat-pill location-pill" id="location-pill" title="Région & Territoire actuel">
-          <span class="icon" id="location-icon">🏰</span>
+          <span class="icon" id="location-icon"><span class="pixel-icon-wrapper" style="width:20px; height:20px;"><svg class="pixel-icon pixel-icon-castle" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
+      <!-- Contour pierre sombre -->
+      <path d="M2 3h3v2h2V3h2v2h2V3h3v11H2V3z" fill="#0f172a" />
+      <!-- Créneaux et tours -->
+      <rect x="3" y="4" width="2" height="3" fill="#475569" />
+      <rect x="7" y="5" width="2" height="2" fill="#475569" />
+      <rect x="11" y="4" width="2" height="3" fill="#475569" />
+      <!-- Corps de la muraille en pierre -->
+      <rect x="3" y="6" width="10" height="7" fill="#64748b" />
+      <!-- Lignes d'appareil de pierre -->
+      <rect x="3" y="8" width="10" height="1" fill="#334155" />
+      <rect x="3" y="11" width="10" height="1" fill="#334155" />
+      <rect x="6" y="6" width="1" height="2" fill="#334155" />
+      <rect x="9" y="9" width="1" height="2" fill="#334155" />
+      <!-- Porte ogivale cintrée en bois renforcé -->
+      <rect x="6" y="10" width="4" height="3" fill="#78350f" />
+      <rect x="7" y="9" width="2" height="1" fill="#78350f" />
+      <!-- Clou et ferrure de porte -->
+      <rect x="7" y="11" width="1" height="1" fill="#fbbf24" />
+      <!-- Bannière au sommet de la tour gauche -->
+      <rect x="3" y="1" width="1" height="3" fill="#e2e8f0" />
+      <rect x="4" y="1" width="2" height="1" fill="#ef4444" />
+    </svg></span></span>
           <span id="location-display">OAKHAVEN • ZONE SÛRE</span>
         </div>
         <div class="stat-pill timer-pill">
-          <span class="icon">⏱️</span>
+          <span class="icon" id="timer-pill-icon"><span class="pixel-icon-wrapper" style="width:18px; height:18px;"><svg class="pixel-icon pixel-icon-watch" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
+      <!-- Anneau supérieur de fixation -->
+      <rect x="6" y="0" width="4" height="1" fill="#451a03" />
+      <rect x="5" y="1" width="2" height="1" fill="#451a03" />
+      <rect x="9" y="1" width="2" height="1" fill="#451a03" />
+      <rect x="7" y="1" width="2" height="1" fill="#f59e0b" />
+      <rect x="7" y="2" width="2" height="1" fill="#78350f" />
+      <!-- Contour boîtier cuivre -->
+      <path d="M5 3h6v1h2v2h1v4h-1v2h-2v1H5v-1H3v-2H2V6h1V4h2V3z" fill="#381a04" />
+      <path d="M5 4h6v1h1v1h1v4h-1v1h-1v1H5v-1H4v-1H3V6h1V5h1V4z" fill="#b45309" />
+      <!-- Cadran en parchemin clair -->
+      <rect x="5" y="5" width="6" height="6" fill="#fef3c7" />
+      <rect x="4" y="6" width="8" height="4" fill="#fef3c7" />
+      <rect x="6" y="4" width="4" height="8" fill="#fef3c7" />
+      <!-- Graduations 12h, 3h, 6h, 9h -->
+      <rect x="7" y="5" width="2" height="1" fill="#92400e" />
+      <rect x="10" y="7" width="1" height="2" fill="#92400e" />
+      <rect x="7" y="10" width="2" height="1" fill="#92400e" />
+      <rect x="5" y="7" width="1" height="2" fill="#92400e" />
+      <!-- Aiguilles forgées noires (indiquant 10h10) -->
+      <rect x="7" y="7" width="2" height="2" fill="#18181b" />
+      <rect x="8" y="6" width="1" height="2" fill="#18181b" />
+      <rect x="9" y="8" width="2" height="1" fill="#18181b" />
+      <!-- Reflet de verre supérieur -->
+      <rect x="5" y="5" width="2" height="1" fill="#ffffff" />
+    </svg></span></span>
           <span id="time-display">00:00</span>
         </div>
         <div class="stat-pill kills-pill">
-          <span class="icon">💀</span>
+          <span class="icon"><span class="pixel-icon-wrapper" style="width:18px; height:18px;"><svg class="pixel-icon pixel-icon-skull" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
+      <!-- Contour os sombre -->
+      <path d="M4 1h8v1h2v3h1v4h-1v2h-2v2h-1v2h-1v-1H9v1H7v-1H6v1H5v-2H4v-2H2V9h1V5h1V2h2V1z" fill="#18181b" />
+      <!-- Boîte crânienne (Ivoire / Os) -->
+      <rect x="4" y="2" width="8" height="7" fill="#f4f4f5" />
+      <rect x="3" y="4" width="10" height="5" fill="#f4f4f5" />
+      <!-- Ombrage os -->
+      <rect x="3" y="8" width="10" height="1" fill="#cbd5e1" />
+      <!-- Orbites oculaires sombres -->
+      <rect x="4" y="5" width="3" height="3" fill="#09090b" />
+      <rect x="9" y="5" width="3" height="3" fill="#09090b" />
+      <!-- Reflet rougeoyant dans les yeux -->
+      <rect x="5" y="6" width="1" height="1" fill="#ef4444" />
+      <rect x="10" y="6" width="1" height="1" fill="#ef4444" />
+      <!-- Cavité nasale triangulaire -->
+      <rect x="7" y="8" width="2" height="1" fill="#09090b" />
+      <rect x="7" y="7" width="2" height="1" fill="#334155" />
+      <!-- Mâchoire et dents -->
+      <rect x="5" y="10" width="6" height="3" fill="#e2e8f0" />
+      <rect x="6" y="10" width="1" height="3" fill="#09090b" />
+      <rect x="8" y="10" width="1" height="3" fill="#09090b" />
+      <rect x="10" y="10" width="1" height="3" fill="#09090b" />
+    </svg></span></span>
           <span id="kills-display">0</span>
         </div>
         <div class="stat-pill gold-pill">
-          <span class="icon">🪙</span>
+          <span class="icon"><span class="pixel-icon-wrapper" style="width:18px; height:18px;"><svg class="pixel-icon pixel-icon-coin" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
+      <!-- Ombre de contour -->
+      <path d="M5 1h6v1h2v2h1v2h1v4h-1v2h-1v2h-2v1H5v-1H3v-2H2v-2H1V6h1V4h1V2h2V1z" fill="#3b2005" />
+      <!-- Base or foncé -->
+      <path d="M5 2h6v1h2v2h1v6h-1v2h-2v1H5v-1H3v-2H2V5h1V3h2V2z" fill="#b45309" />
+      <!-- Corps de la pièce (Or chaud) -->
+      <path d="M5 3h6v1h1v1h1v6h-1v1h-1v1H5v-1H4v-1H3V5h1V4h1V3z" fill="#f59e0b" />
+      <!-- Face intérieure et éclat supérieur (Or brillant) -->
+      <path d="M5 4h5v1h1v5h-1v1H6v-1H5V5h-1V4h1z" fill="#fbbf24" />
+      <!-- Reflet lumineux blanc -->
+      <rect x="4" y="4" width="2" height="2" fill="#fef08a" />
+      <rect x="4" y="4" width="1" height="1" fill="#ffffff" />
+      <!-- Sceau de couronne royale gravée au centre -->
+      <rect x="6" y="7" width="4" height="2" fill="#78350f" />
+      <rect x="6" y="6" width="1" height="1" fill="#78350f" />
+      <rect x="8" y="5" width="1" height="1" fill="#78350f" />
+      <rect x="9" y="6" width="1" height="1" fill="#78350f" />
+      <rect x="7" y="7" width="2" height="1" fill="#fde047" />
+    </svg></span></span>
           <span id="gems-display">0</span>
         </div>
-        <button id="btn-library" class="icon-btn" title="Bibliothèque des Arcanes (Grimoires d'Eldrin • Touche B)" aria-label="Bibliothèque">📖</button>
-        <button id="btn-sound" class="icon-btn" title="Activer / Couper le son" aria-label="Son">🔊</button>
-        <button id="btn-settings" class="icon-btn" title="Paramètres des contrôles (Souris LoL / Clavier / Manette)" aria-label="Réglages">⚙️</button>
-        <button id="btn-pause" class="icon-btn" title="Mettre en pause (Échap)" aria-label="Pause">⏸️</button>
+        <button id="btn-library" class="icon-btn" title="Bibliothèque des Arcanes (Grimoires d'Eldrin • Touche B)" aria-label="Bibliothèque"><span class="pixel-icon-wrapper" style="width:20px; height:20px;"><svg class="pixel-icon pixel-icon-book" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
+      <!-- Reliure cuir sombre -->
+      <path d="M2 1h12v1h1v12h-1v1H2V1z" fill="#2e1065" />
+      <!-- Couverture pourpre arcanique -->
+      <rect x="3" y="2" width="10" height="12" fill="#6b21a8" />
+      <rect x="3" y="2" width="2" height="12" fill="#3b0764" />
+      <!-- Coins de renfort en laiton doré -->
+      <rect x="11" y="2" width="2" height="2" fill="#f59e0b" />
+      <rect x="11" y="12" width="2" height="2" fill="#f59e0b" />
+      <rect x="12" y="3" width="1" height="1" fill="#fef08a" />
+      <!-- Tranche des pages en parchemin -->
+      <rect x="13" y="3" width="1" height="10" fill="#fef3c7" />
+      <!-- Rune magique / Gemme arcanique au centre -->
+      <rect x="7" y="6" width="3" height="4" fill="#a855f7" />
+      <rect x="8" y="5" width="1" height="6" fill="#c084fc" />
+      <rect x="6" y="7" width="5" height="2" fill="#c084fc" />
+      <rect x="8" y="7" width="1" height="2" fill="#ffffff" />
+    </svg></span></button>
+        <button id="btn-sound" class="icon-btn" title="Activer / Couper le son" aria-label="Son"><span class="pixel-icon-wrapper" style="width:20px; height:20px;"><svg class="pixel-icon pixel-icon-sound" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
+      <!-- Pavillon en cuivre du cor -->
+      <rect x="2" y="6" width="3" height="4" fill="#78350f" />
+      <rect x="5" y="4" width="3" height="8" fill="#b45309" />
+      <rect x="8" y="2" width="3" height="12" fill="#f59e0b" />
+      <rect x="9" y="3" width="2" height="10" fill="#fbbf24" />
+      <!-- Embouchure -->
+      <rect x="1" y="7" width="1" height="2" fill="#fde047" />
+      <!-- Ondes sonores pixelisées -->
+      <rect x="13" y="6" width="1" height="4" fill="#38bdf8" />
+      <rect x="14" y="5" width="1" height="1" fill="#38bdf8" />
+      <rect x="14" y="10" width="1" height="1" fill="#38bdf8" />
+      <rect x="15" y="3" width="1" height="2" fill="#7dd3fc" />
+      <rect x="15" y="11" width="1" height="2" fill="#7dd3fc" />
+    </svg></span></button>
+        <button id="btn-settings" class="icon-btn" title="Paramètres des contrôles (Souris LoL / Clavier / Manette)" aria-label="Réglages"><span class="pixel-icon-wrapper" style="width:20px; height:20px;"><svg class="pixel-icon pixel-icon-gear" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
+      <!-- Dents de l'engrenage -->
+      <rect x="6" y="0" width="4" height="2" fill="#475569" />
+      <rect x="6" y="14" width="4" height="2" fill="#475569" />
+      <rect x="0" y="6" width="2" height="4" fill="#475569" />
+      <rect x="14" y="6" width="2" height="4" fill="#475569" />
+      <rect x="2" y="2" width="2" height="2" fill="#475569" />
+      <rect x="12" y="2" width="2" height="2" fill="#475569" />
+      <rect x="2" y="12" width="2" height="2" fill="#475569" />
+      <rect x="12" y="12" width="2" height="2" fill="#475569" />
+      <!-- Corps de la roue en fer usé -->
+      <rect x="4" y="2" width="8" height="12" fill="#64748b" />
+      <rect x="2" y="4" width="12" height="8" fill="#64748b" />
+      <rect x="3" y="3" width="10" height="10" fill="#94a3b8" />
+      <!-- Axe central évidé -->
+      <rect x="6" y="6" width="4" height="4" fill="#0f172a" />
+      <rect x="7" y="7" width="2" height="2" fill="#1e293b" />
+    </svg></span></button>
+        <button id="btn-pause" class="icon-btn" title="Mettre en pause (Échap)" aria-label="Pause"><span class="pixel-icon-wrapper" style="width:18px; height:18px;"><svg class="pixel-icon pixel-icon-pause" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
+      <!-- Deux piliers de pierre sacrée dressés -->
+      <rect x="3" y="2" width="4" height="12" fill="#0f172a" />
+      <rect x="9" y="2" width="4" height="12" fill="#0f172a" />
+      <rect x="4" y="3" width="2" height="10" fill="#64748b" />
+      <rect x="10" y="3" width="2" height="10" fill="#64748b" />
+      <rect x="4" y="3" width="1" height="10" fill="#94a3b8" />
+      <rect x="10" y="3" width="1" height="10" fill="#94a3b8" />
+      <!-- Gravures runiques au centre des stèles -->
+      <rect x="5" y="6" width="1" height="2" fill="#38bdf8" />
+      <rect x="11" y="6" width="1" height="2" fill="#38bdf8" />
+    </svg></span></button>
       </div>
 
       <!-- Barre de vie du BOSS (Style Dark Souls / Elden Ring) -->
@@ -102,7 +248,34 @@
         <div class="action-slot" id="slot-main" title="Attaque Principale">
           <div class="action-key-badge">CLIC G</div>
           <div class="action-slot-inner">
-            <span class="action-slot-icon" id="slot-main-icon">⚔️</span>
+            <span class="action-slot-icon" id="slot-main-icon"><span class="pixel-icon-wrapper" style="width:26px; height:26px;"><svg class="pixel-icon pixel-icon-sword" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
+      <!-- Pointe de la lame en haut à droite -->
+      <rect x="14" y="0" width="1" height="1" fill="#ffffff" />
+      <rect x="13" y="1" width="2" height="1" fill="#e2e8f0" />
+      <rect x="12" y="2" width="2" height="1" fill="#cbd5e1" />
+      <!-- Lame diagonale en acier trempé -->
+      <rect x="11" y="3" width="2" height="2" fill="#f8fafc" />
+      <rect x="9" y="5" width="2" height="2" fill="#f8fafc" />
+      <rect x="7" y="7" width="2" height="2" fill="#f8fafc" />
+      <rect x="5" y="9" width="2" height="2" fill="#f8fafc" />
+      <!-- Tranchant sombre et fil de lame -->
+      <rect x="10" y="2" width="2" height="1" fill="#94a3b8" />
+      <rect x="8" y="4" width="2" height="1" fill="#64748b" />
+      <rect x="6" y="6" width="2" height="1" fill="#64748b" />
+      <rect x="4" y="8" width="2" height="1" fill="#475569" />
+      <!-- Garde dorée en croix -->
+      <rect x="6" y="10" width="2" height="2" fill="#f59e0b" />
+      <rect x="3" y="7" width="2" height="2" fill="#f59e0b" />
+      <rect x="4" y="8" width="1" height="1" fill="#fbbf24" />
+      <rect x="7" y="11" width="1" height="1" fill="#fbbf24" />
+      <rect x="5" y="9" width="1" height="1" fill="#b45309" />
+      <!-- Poignée / Manche en cuir marron -->
+      <rect x="2" y="12" width="2" height="2" fill="#78350f" />
+      <rect x="3" y="11" width="2" height="2" fill="#92400e" />
+      <!-- Pommeau d'or au bout -->
+      <rect x="0" y="14" width="2" height="2" fill="#f59e0b" />
+      <rect x="1" y="14" width="1" height="1" fill="#fde047" />
+    </svg></span></span>
             <span class="action-slot-name" id="slot-main-name">Épée Royale</span>
           </div>
           <div class="action-cooldown-overlay" id="slot-main-cd"></div>
@@ -112,7 +285,26 @@
         <div class="action-slot" id="slot-special" title="Compétence Spéciale">
           <div class="action-key-badge">E / CLIC D</div>
           <div class="action-slot-inner">
-            <span class="action-slot-icon" id="slot-special-icon">🛡️</span>
+            <span class="action-slot-icon" id="slot-special-icon"><span class="pixel-icon-wrapper" style="width:26px; height:26px;"><svg class="pixel-icon pixel-icon-shield" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
+      <!-- Contour acier forgé -->
+      <path d="M2 2h12v1h1v6h-1v2h-2v2h-2v1h-2v1H7v-1H5v-2H3v-2H1V9H0V3h1V2h1z" fill="#0f172a" />
+      <!-- Cerclage d'acier -->
+      <rect x="2" y="3" width="12" height="6" fill="#475569" />
+      <rect x="3" y="9" width="10" height="2" fill="#475569" />
+      <rect x="5" y="11" width="6" height="2" fill="#475569" />
+      <rect x="7" y="13" width="2" height="1" fill="#475569" />
+      <!-- Corps de l'écu bleu royal / pourpre -->
+      <rect x="3" y="4" width="10" height="4" fill="#1e3a8a" />
+      <rect x="4" y="8" width="8" height="2" fill="#1e3a8a" />
+      <rect x="6" y="10" width="4" height="2" fill="#1e3a8a" />
+      <!-- Croix de chevalier dorée au centre -->
+      <rect x="7" y="4" width="2" height="7" fill="#f59e0b" />
+      <rect x="4" y="6" width="8" height="2" fill="#f59e0b" />
+      <!-- Bossage central en or brillant -->
+      <rect x="7" y="6" width="2" height="2" fill="#fde047" />
+      <!-- Reflet d'acier supérieur -->
+      <rect x="2" y="2" width="6" height="1" fill="#cbd5e1" />
+    </svg></span></span>
             <span class="action-slot-name" id="slot-special-name">Coup de Bouclier</span>
           </div>
           <span class="action-timer-text" id="slot-special-timer"></span>
@@ -123,7 +315,26 @@
         <div class="action-slot" id="slot-dash" title="Dash d'Esquive">
           <div class="action-key-badge">ESPACE</div>
           <div class="action-slot-inner">
-            <span class="action-slot-icon">💨</span>
+            <span class="action-slot-icon"><span class="pixel-icon-wrapper" style="width:26px; height:26px;"><svg class="pixel-icon pixel-icon-dash" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
+      <!-- Traînée de vent et souffle d'esquive -->
+      <rect x="0" y="4" width="4" height="1" fill="#38bdf8" />
+      <rect x="1" y="6" width="3" height="1" fill="#7dd3fc" />
+      <rect x="0" y="9" width="5" height="1" fill="#0ea5e9" />
+      <rect x="2" y="11" width="3" height="1" fill="#38bdf8" />
+      <!-- Ailes de mercure sur la botte -->
+      <rect x="7" y="3" width="3" height="2" fill="#ffffff" />
+      <rect x="8" y="2" width="3" height="2" fill="#f0f9ff" />
+      <rect x="6" y="5" width="2" height="2" fill="#bae6fd" />
+      <!-- Botte de cuir de ranger -->
+      <rect x="9" y="4" width="3" height="5" fill="#78350f" />
+      <rect x="10" y="4" width="2" height="5" fill="#92400e" />
+      <!-- Semelle et pied lancé vers l'avant -->
+      <rect x="8" y="9" width="6" height="3" fill="#78350f" />
+      <rect x="9" y="9" width="6" height="2" fill="#b45309" />
+      <rect x="14" y="10" width="2" height="2" fill="#b45309" />
+      <!-- Semelle d'acier forgé -->
+      <rect x="8" y="12" width="8" height="1" fill="#1e293b" />
+    </svg></span></span>
             <span class="action-slot-name">Esquive</span>
           </div>
           <div class="action-cooldown-overlay" id="slot-dash-cd"></div>
@@ -326,14 +537,49 @@
         <div class="card-glow purple"></div>
         <div class="library-header">
           <div class="library-title-group">
-            <span class="library-main-icon">📖</span>
+            <span class="library-main-icon"><span class="pixel-icon-wrapper" style="width:38px; height:38px;"><svg class="pixel-icon pixel-icon-book" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
+      <!-- Reliure cuir sombre -->
+      <path d="M2 1h12v1h1v12h-1v1H2V1z" fill="#2e1065" />
+      <!-- Couverture pourpre arcanique -->
+      <rect x="3" y="2" width="10" height="12" fill="#6b21a8" />
+      <rect x="3" y="2" width="2" height="12" fill="#3b0764" />
+      <!-- Coins de renfort en laiton doré -->
+      <rect x="11" y="2" width="2" height="2" fill="#f59e0b" />
+      <rect x="11" y="12" width="2" height="2" fill="#f59e0b" />
+      <rect x="12" y="3" width="1" height="1" fill="#fef08a" />
+      <!-- Tranche des pages en parchemin -->
+      <rect x="13" y="3" width="1" height="10" fill="#fef3c7" />
+      <!-- Rune magique / Gemme arcanique au centre -->
+      <rect x="7" y="6" width="3" height="4" fill="#a855f7" />
+      <rect x="8" y="5" width="1" height="6" fill="#c084fc" />
+      <rect x="6" y="7" width="5" height="2" fill="#c084fc" />
+      <rect x="8" y="7" width="1" height="2" fill="#ffffff" />
+    </svg></span></span>
             <div>
               <h2 class="library-title">BIBLIOTHÈQUE DES ARCANES</h2>
               <p class="subtitle">Acquiers des grimoires magiques pour maîtriser chaque élément ancestral</p>
             </div>
           </div>
           <div class="library-gold-badge">
-            <span class="gold-icon">🪙</span>
+            <span class="gold-icon"><span class="pixel-icon-wrapper" style="width:22px; height:22px;"><svg class="pixel-icon pixel-icon-coin" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
+      <!-- Ombre de contour -->
+      <path d="M5 1h6v1h2v2h1v2h1v4h-1v2h-1v2h-2v1H5v-1H3v-2H2v-2H1V6h1V4h1V2h2V1z" fill="#3b2005" />
+      <!-- Base or foncé -->
+      <path d="M5 2h6v1h2v2h1v6h-1v2h-2v1H5v-1H3v-2H2V5h1V3h2V2z" fill="#b45309" />
+      <!-- Corps de la pièce (Or chaud) -->
+      <path d="M5 3h6v1h1v1h1v6h-1v1h-1v1H5v-1H4v-1H3V5h1V4h1V3z" fill="#f59e0b" />
+      <!-- Face intérieure et éclat supérieur (Or brillant) -->
+      <path d="M5 4h5v1h1v5h-1v1H6v-1H5V5h-1V4h1z" fill="#fbbf24" />
+      <!-- Reflet lumineux blanc -->
+      <rect x="4" y="4" width="2" height="2" fill="#fef08a" />
+      <rect x="4" y="4" width="1" height="1" fill="#ffffff" />
+      <!-- Sceau de couronne royale gravée au centre -->
+      <rect x="6" y="7" width="4" height="2" fill="#78350f" />
+      <rect x="6" y="6" width="1" height="1" fill="#78350f" />
+      <rect x="8" y="5" width="1" height="1" fill="#78350f" />
+      <rect x="9" y="6" width="1" height="1" fill="#78350f" />
+      <rect x="7" y="7" width="2" height="1" fill="#fde047" />
+    </svg></span></span>
             <span id="library-gold-amount">0</span>
           </div>
         </div>
@@ -358,14 +604,55 @@
         <div class="card-glow amber"></div>
         <div class="shop-header">
           <div class="shop-title-group">
-            <span class="shop-main-icon">🧭</span>
+            <span class="shop-main-icon"><span class="pixel-icon-wrapper" style="width:38px; height:38px;"><svg class="pixel-icon pixel-icon-map" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
+      <!-- Contour parchemin brûlé -->
+      <path d="M3 2h10v1h1v10h-1v1H3v-1H2V3h1V2z" fill="#451a03" />
+      <!-- Corps parchemin ancien -->
+      <rect x="3" y="3" width="10" height="10" fill="#fde68a" />
+      <!-- Bords usés et ombre -->
+      <rect x="3" y="11" width="10" height="2" fill="#d97706" />
+      <rect x="11" y="3" width="2" height="10" fill="#d97706" />
+      <rect x="3" y="3" width="10" height="1" fill="#fef3c7" />
+      <!-- Tracé de route pointillée sur la carte -->
+      <rect x="4" y="5" width="2" height="1" fill="#78350f" />
+      <rect x="6" y="6" width="2" height="1" fill="#78350f" />
+      <rect x="8" y="7" width="1" height="2" fill="#78350f" />
+      <rect x="10" y="8" width="2" height="1" fill="#78350f" />
+      <!-- Rose des vents / Boussole au centre -->
+      <rect x="6" y="7" width="3" height="3" fill="#1e293b" />
+      <!-- Pointe Nord rouge -->
+      <rect x="7" y="5" width="1" height="2" fill="#ef4444" />
+      <!-- Pointe Sud bleue -->
+      <rect x="7" y="10" width="1" height="2" fill="#3b82f6" />
+      <!-- Pointes Est / Ouest blanches -->
+      <rect x="5" y="8" width="1" height="1" fill="#ffffff" />
+      <rect x="9" y="8" width="1" height="1" fill="#ffffff" />
+    </svg></span></span>
             <div>
               <h2 class="shop-title">ÉCHOPPE D'AVENTURE</h2>
               <p class="subtitle">Barnabé le Marchand — Outils de survie & exploration d'Oakhaven</p>
             </div>
           </div>
           <div class="shop-gold-badge">
-            <span class="gold-icon">🪙</span>
+            <span class="gold-icon"><span class="pixel-icon-wrapper" style="width:22px; height:22px;"><svg class="pixel-icon pixel-icon-coin" viewBox="0 0 16 16" width="100%" height="100%" shape-rendering="crispEdges">
+      <!-- Ombre de contour -->
+      <path d="M5 1h6v1h2v2h1v2h1v4h-1v2h-1v2h-2v1H5v-1H3v-2H2v-2H1V6h1V4h1V2h2V1z" fill="#3b2005" />
+      <!-- Base or foncé -->
+      <path d="M5 2h6v1h2v2h1v6h-1v2h-2v1H5v-1H3v-2H2V5h1V3h2V2z" fill="#b45309" />
+      <!-- Corps de la pièce (Or chaud) -->
+      <path d="M5 3h6v1h1v1h1v6h-1v1h-1v1H5v-1H4v-1H3V5h1V4h1V3z" fill="#f59e0b" />
+      <!-- Face intérieure et éclat supérieur (Or brillant) -->
+      <path d="M5 4h5v1h1v5h-1v1H6v-1H5V5h-1V4h1z" fill="#fbbf24" />
+      <!-- Reflet lumineux blanc -->
+      <rect x="4" y="4" width="2" height="2" fill="#fef08a" />
+      <rect x="4" y="4" width="1" height="1" fill="#ffffff" />
+      <!-- Sceau de couronne royale gravée au centre -->
+      <rect x="6" y="7" width="4" height="2" fill="#78350f" />
+      <rect x="6" y="6" width="1" height="1" fill="#78350f" />
+      <rect x="8" y="5" width="1" height="1" fill="#78350f" />
+      <rect x="9" y="6" width="1" height="1" fill="#78350f" />
+      <rect x="7" y="7" width="2" height="1" fill="#fde047" />
+    </svg></span></span>
             <span id="shop-gold-amount">0</span>
           </div>
         </div>

@@ -1982,3 +1982,57 @@ html, body {
   display: flex;
   justify-content: flex-end;
 }
+
+
+/* ==========================================================================
+   ICÔNES PIXEL-ART RÉTRO (AUTHENTIQUE 16-BIT)
+   ========================================================================== */
+.pixel-icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.pixel-icon {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  shape-rendering: crispEdges;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.65));
+  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.18s ease;
+}
+
+.pixel-icon-coin {
+  filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.55)) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.7));
+}
+
+.pixel-icon-skull {
+  filter: drop-shadow(0 0 5px rgba(239, 68, 68, 0.45)) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.7));
+}
+
+.pixel-icon-potion {
+  filter: drop-shadow(0 0 7px rgba(239, 68, 68, 0.65)) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.7));
+}
+
+.pixel-icon-watch {
+  filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.5)) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.7));
+}
+
+.pixel-icon-map {
+  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.5)) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.7));
+}
+
+.pixel-icon-sword {
+  filter: drop-shadow(0 0 6px rgba(148, 163, 184, 0.6)) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.7));
+}
+
+.pixel-icon-shield {
+  filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.55)) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.7));
+}
+
+.pixel-icon-dash {
+  filter: drop-shadow(0 0 6px rgba(14, 165, 233, 0.65)) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.7));
+}

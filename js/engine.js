@@ -11,6 +11,7 @@ import { Projectile, Gem } from './entities.js';
 import { CHARACTERS, spriteLoader } from './sprites.js';
 import { WorldMap } from './world.js';
 import { ControlsManager } from './controls.js';
+import { PIXEL_ICONS, getPixelIcon } from './icons.js';
 
 export class GameEngine {
   constructor() {
@@ -1579,10 +1580,11 @@ export class GameEngine {
 
     if (this.player && this.player.hasWatch) {
       const isDay = hours >= 6 && hours < 20;
-      const icon = isDay ? '☀️' : '🌙';
-      this.timeDisplay.innerHTML = `${icon} J${currentDay} — ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+      const icon = isDay ? getPixelIcon('sun', 16) : getPixelIcon('moon', 16);
+      this.timeDisplay.innerHTML = `<span style="display:inline-flex; align-items:center; gap:6px;">${icon} <span>J${currentDay} — ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}</span></span>`;
     } else {
-      this.timeDisplay.innerHTML = `Jour ${currentDay} <span style="font-size:10px; color:#ffd700; opacity:0.85;">(🔒 Montre)</span>`;
+      this.timeDisplay.innerHTML = `<span style="display:inline-flex; align-items:center; gap:6px;"><span>Jour ${currentDay}</span> <span style="font-size:10.5px; color:#ffd700; opacity:0.85; display:inline-flex; align-items:center; gap:3px;">(${getPixelIcon('watch', 12)} Requis)</span></span>`;
+    } <span style="font-size:10px; color:#ffd700; opacity:0.85;">(🔒 Montre)</span>`;
     }
     this.killsDisplay.textContent = this.kills;
     if (this.gemsDisplay) {
