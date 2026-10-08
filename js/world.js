@@ -264,17 +264,18 @@ export class WorldMap {
         { x: 4150, y: 4450 },
         { x: 4600, y: 4850 }
       ],
-      // Route 4 : Oakhaven ➔ Passage des Saules (Pont 2)
+      // Route 4 : Oakhaven ➔ Passage des Saules (Pont 2, Entrée Sud)
       [
         { x: 3000, y: 3550 },
-        { x: 2500, y: 3700 },
-        { x: 1880, y: 3890 }
+        { x: 2500, y: 3750 },
+        { x: 2150, y: 3980 },
+        { x: 2020, y: 4010 } // Entrée Sud du Pont 2
       ],
-      // Route 5 : Passage des Saules ➔ Plaines et Ruines du Sud-Ouest
+      // Route 5 : Passage des Saules (Sortie Nord) ➔ Tanière des Loups & Plaines Ouest
       [
-        { x: 2020, y: 4010 },
-        { x: 2150, y: 4450 },
-        { x: 1800, y: 5100 }
+        { x: 1880, y: 3890 }, // Sortie Nord du Pont 2
+        { x: 1650, y: 3700 },
+        { x: 1400, y: 3500 }  // Tanière des Loups d'Ombre
       ],
       // Route 6 : Riverbend ➔ Vers le Camp des Orcs à l'Est
       [
@@ -431,7 +432,7 @@ export class WorldMap {
       { id: 4, x: 5400, y: 1600, opened: false, type: 'gold', xpGems: 8, hp: 40, title: "Trésor des Ruines Nord" },
       { id: 5, x: 6450, y: 4400, opened: false, type: 'gold', xpGems: 9, hp: 45, title: "Butin des Berserkers" },
       { id: 6, x: 4200, y: 6000, opened: false, type: 'wood', xpGems: 5, hp: 30, title: "Coffre des Marais" },
-      { id: 7, x: 1300, y: 1800, opened: false, type: 'gold', xpGems: 7, hp: 35, title: "Coffre de la Falaise" },
+      { id: 7, x: 1680, y: 1800, opened: false, type: 'gold', xpGems: 7, hp: 35, title: "Coffre de la Falaise" },
       { id: 8, x: 2800, y: 2200, opened: false, type: 'wood', xpGems: 4, hp: 25, title: "Coffre Rustique" }
     ];
   }
@@ -441,7 +442,7 @@ export class WorldMap {
       { id: 1, x: 2700, y: 3200, buff: 'speed', name: "Stèle des Vents Vifs", desc: "+40% Vitesse (25s)", color: '#00f0ff', activeTimer: 0 },
       { id: 2, x: 4000, y: 4400, buff: 'regen', name: "Stèle de Vitalité Solaire", desc: "+8 PV/s Régénération (25s)", color: '#2ecc71', activeTimer: 0 },
       { id: 3, x: 5200, y: 1900, buff: 'might', name: "Stèle de Fureur Titanesque", desc: "+40% Dégâts (25s)", color: '#ff2a55', activeTimer: 0 },
-      { id: 4, x: 2500, y: 5200, buff: 'magnet', name: "Stèle d'Aimant Stellaire", desc: "+120% Aimant (25s)", color: '#ffd700', activeTimer: 0 }
+      { id: 4, x: 2050, y: 4950, buff: 'magnet', name: "Stèle d'Aimant Stellaire", desc: "+120% Aimant (25s)", color: '#ffd700', activeTimer: 0 }
     ];
   }
 
