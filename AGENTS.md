@@ -56,7 +56,7 @@ Invazion/
 - **Rôle** : Centralise tous les assets graphiques et fournit les configurations d'armes médiévales des classes.
 - **Roster Héros & Armes Dédiées (`CHARACTERS`) — Option A** :
   - `warrior` (*Valérian*) : ⚔️ Combo d'Épée 3 coups (Entaille D ➔ Entaille G ➔ Estoc puissant perçant) + 🌪️ Tourbillon d'Acier à 360°.
-  - `soldier` (*Marcus*) : 🗡️ Lance de Soldat (estoc perforant) + ⚡ Charge de Lance traversante.
+  - `soldier` (*Marcus*) : 🗡️ Combo de Lance 3 temps (Estoc 1 ➔ Estoc 2 ➔ Balayage d'hast 180°) + ⚡ Charge Transperçante (ruée empalante 230 px).
   - `archer` (*Sylvia*) : 🏹 Arc Sylvestre (flèches véloces) + 🏹 Volée de 5 Flèches en éventail.
   - `mage` (*Eldrin*) : 🔮 Éclair d'Arcane (projectiles énergétiques) + 💫 Nova Stellaire à 360°.
   - `pyro` (*Ignis*) : 🔥 Boule de Feu (projectiles incendiaires explosifs) + 🌊 Vague de Flammes.

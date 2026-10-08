@@ -56,6 +56,10 @@ export class Player {
     this.swordComboStep = 0; // 0: Entaille droite, 1: Entaille gauche, 2: Estoc puissant
     this.swordComboResetTimer = 0;
 
+    // Gestion du Combo de la Lance (Marcus : 2 estocs + 1 balayage d'hast 180°)
+    this.spearComboStep = 0;
+    this.spearComboResetTimer = 0;
+
     // Effets visuels des attaques au corps-à-corps (traînées de coups)
     this.attackVisuals = [];
   }
@@ -158,21 +162,69 @@ export class Player {
       }
 
       case 'spear': {
-        // Marcus : Estoc Perforant de Lance
-        this.mainAttackTimer = 0.38;
-        sfx.playSpear();
-        const length = 150;
-        const width = 36;
-        this.attackVisuals.push({
-          type: 'thrust',
-          angle,
-          length,
-          width,
-          color: '#ffd700',
-          time: 0,
-          duration: 0.15
-        });
-        this.hitLineEnemies(engine, angle, length, width, 48 * this.damageMultiplier, 22);
+        // Marcus : Combo de Lance en 3 temps (2 estocs perforants + 1 balayage d'hast 180°)
+        if (this.spearComboStep === 0) {
+          // Coup 1 : Estoc Perforant Rapide 1
+          this.mainAttackTimer = 0.20;
+          this.spearComboResetTimer = 0.85;
+          sfx.playSpear(1);
+          const length = 160;
+          const width = 36;
+          this.attackVisuals.push({
+            type: 'thrust',
+            angle,
+            length,
+            width,
+            color: '#ffd700',
+            edgeColor: '#ffffff',
+            time: 0,
+            duration: 0.13
+          });
+          this.hitLineEnemies(engine, angle, length, width, 42 * this.damageMultiplier, 22);
+          this.spearComboStep = 1;
+        } else if (this.spearComboStep === 1) {
+          // Coup 2 : Estoc Perforant Rapide 2
+          this.mainAttackTimer = 0.20;
+          this.spearComboResetTimer = 0.85;
+          sfx.playSpear(2);
+          const length = 175;
+          const width = 38;
+          this.attackVisuals.push({
+            type: 'thrust',
+            angle,
+            length,
+            width,
+            color: '#ffea00',
+            edgeColor: '#ffffff',
+            time: 0,
+            duration: 0.13
+          });
+          this.hitLineEnemies(engine, angle, length, width, 48 * this.damageMultiplier, 26);
+          this.spearComboStep = 2;
+        } else {
+          // Coup 3 : Balayage Circulaire d'Hast à 180° (Finish de zone dévastateur)
+          this.mainAttackTimer = 0.38;
+          this.spearComboResetTimer = 0;
+          this.spearComboStep = 0;
+          sfx.playSpear(3);
+          const range = 130;
+          const arc = Math.PI; // 180 degrés
+          this.attackVisuals.push({
+            type: 'slash',
+            angle,
+            radius: range,
+            arc,
+            color: '#ffd700',
+            edgeColor: '#ffffff',
+            time: 0,
+            duration: 0.18
+          });
+          if (engine) {
+            engine.triggerScreenShake(4);
+            engine.addShockwave(this.x + Math.cos(angle) * 45, this.y + Math.sin(angle) * 45, 75, '#ffd700', 3);
+          }
+          this.hitConeEnemies(engine, angle, range, arc, 75 * this.damageMultiplier, 48);
+        }
         break;
       }
 
@@ -292,9 +344,11 @@ export class Player {
       }
 
       case 'spear_charge': {
-        // Marcus : Charge de Lance Traversante
-        sfx.playSpear();
-        const chargeDist = 190;
+        // Marcus : Charge de Lance Transperçante (Ruée fulgurante vers l'avant)
+        sfx.playSpearCharge();
+        const chargeDist = 230;
+        const startX = this.x;
+        const startY = this.y;
         const targetPosX = this.x + Math.cos(angle) * chargeDist;
         const targetPosY = this.y + Math.sin(angle) * chargeDist;
         if (engine && engine.worldMap) {
@@ -305,12 +359,25 @@ export class Player {
           this.x = targetPosX;
           this.y = targetPosY;
         }
-        this.invulnTimer = 0.25;
-        this.hitRadialEnemies(engine, 100, 80 * this.damageMultiplier, 40);
+        this.invulnTimer = 0.28;
+        this.attackVisuals.push({
+          type: 'charge_trail',
+          startX,
+          startY,
+          endX: this.x,
+          endY: this.y,
+          angle,
+          time: 0,
+          duration: 0.26,
+          color: '#ffd700'
+        });
+        this.hitLineEnemies(engine, angle, chargeDist, 55, 95 * this.damageMultiplier, 50);
+        this.hitRadialEnemies(engine, 90, 75 * this.damageMultiplier, 40);
         if (engine) {
-          engine.addShockwave(this.x, this.y, 80, '#ffd700', 4);
-          engine.createHitParticles(this.x, this.y, '#ffd700', 16);
-          engine.addFloatingText(this.x, this.y - 45, '⚡ CHARGE DE LANCE', '#ffd700', 18);
+          engine.triggerScreenShake(6);
+          engine.addShockwave(this.x, this.y, 90, '#ffd700', 4);
+          engine.createHitParticles(this.x, this.y, '#ffd700', 20);
+          engine.addFloatingText(this.x, this.y - 45, '⚡ CHARGE DE LANCE !', '#ffd700', 20);
         }
         break;
       }
@@ -485,6 +552,14 @@ export class Player {
       this.swordComboResetTimer -= dt;
       if (this.swordComboResetTimer <= 0) {
         this.swordComboStep = 0;
+      }
+    }
+
+    // Gestion du reset combo de lance (Marcus)
+    if (this.spearComboResetTimer > 0) {
+      this.spearComboResetTimer -= dt;
+      if (this.spearComboResetTimer <= 0) {
+        this.spearComboStep = 0;
       }
     }
 
@@ -671,6 +746,23 @@ export class Player {
         ctx.arc(0, 0, v.radius, 0, Math.PI * 2);
         ctx.fill();
 
+        ctx.restore();
+      } else if (v.type === 'charge_trail') {
+        ctx.save();
+        ctx.strokeStyle = v.color || '#ffd700';
+        ctx.lineWidth = 14 * alpha;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(v.startX - this.x, v.startY - this.y);
+        ctx.lineTo(0, 0);
+        ctx.stroke();
+
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 6 * alpha;
+        ctx.beginPath();
+        ctx.moveTo(v.startX - this.x, v.startY - this.y);
+        ctx.lineTo(0, 0);
+        ctx.stroke();
         ctx.restore();
       } else if (v.type === 'shield') {
         ctx.save();

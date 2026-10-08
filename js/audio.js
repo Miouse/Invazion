@@ -154,21 +154,44 @@ export class SoundFX {
     } catch(e) {}
   }
 
-  playSpear() {
+  playSpear(step = 1) {
     if (this.muted || !this.ctx) return;
     try {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
-      osc.type = 'triangle';
+      osc.type = step === 3 ? 'sawtooth' : 'triangle';
       const now = this.ctx.currentTime;
-      osc.frequency.setValueAtTime(620, now);
-      osc.frequency.exponentialRampToValueAtTime(220, now + 0.08);
-      gain.gain.setValueAtTime(0.09, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      const startFreq = step === 3 ? 520 : (step === 2 ? 680 : 610);
+      const endFreq = step === 3 ? 140 : 220;
+      const duration = step === 3 ? 0.14 : 0.08;
+      osc.frequency.setValueAtTime(startFreq, now);
+      osc.frequency.exponentialRampToValueAtTime(endFreq, now + duration);
+      gain.gain.setValueAtTime(step === 3 ? 0.12 : 0.09, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
       osc.start(now);
-      osc.stop(now + 0.08);
+      osc.stop(now + duration);
+    } catch(e) {}
+  }
+
+  playSpearCharge() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(320, now);
+      osc.frequency.linearRampToValueAtTime(750, now + 0.10);
+      osc.frequency.exponentialRampToValueAtTime(180, now + 0.28);
+      gain.gain.setValueAtTime(0.04, now);
+      gain.gain.linearRampToValueAtTime(0.14, now + 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.28);
     } catch(e) {}
   }
 
