@@ -1683,16 +1683,6 @@ export class WorldMap {
 
     // 5. Segments de rivière (l'eau bloquante, franchissable uniquement sur les ponts)
     for (const seg of this.riverSegments) {
-      // Ignorer les segments d'eau situés sous le tablier central des ponts (< 90px) pour éviter qu'un cercle d'eau ne déborde sur les berges d'accès
-      let underBridge = false;
-      for (const b of this.bridges) {
-        if (Math.hypot(seg.x - b.x, seg.y - b.y) < 90) {
-          underBridge = true;
-          break;
-        }
-      }
-      if (underBridge) continue;
-
       this.colliders.push({
         type: 'river',
         x: seg.x,
@@ -1780,17 +1770,22 @@ export class WorldMap {
       const localX = dx * cos - dy * sin;
       const localY = dx * sin + dy * cos;
 
-      const halfLen = b.w / 2; // ~95px
-      const halfWidth = b.h / 2; // ~42px
+      const halfLen = b.w / 2;    // ~95px
+      const halfWidth = b.h / 2;  // ~42px (tablier de 84px de large)
 
-      // 1. Tablier central au-dessus de l'eau
-      if (Math.abs(localX) <= halfLen && Math.abs(localY) <= halfWidth + 24) {
-        return true;
-      }
+      // Au-delà de la longueur du pont et de sa rampe
+      if (Math.abs(localX) > halfLen + 30) continue;
 
-      // 2. Rampes d'accès Nord et Sud sur les berges (entonnoir d'accès très large pour un franchissement instantané et sans accroc)
-      if (Math.abs(localX) <= halfLen + 95 && Math.abs(localY) <= halfWidth + 85) {
-        return true;
+      // 1. Au-dessus de l'eau (|localX| < 68px) : STRICTEMENT restreint au tablier en bois (interdit d'aller dans l'eau)
+      if (Math.abs(localX) < 68) {
+        if (Math.abs(localY) <= halfWidth + 2) {
+          return true;
+        }
+      } else {
+        // 2. Sur les berges de terre ferme (|localX| >= 68px) : raccordement fluide avec la route
+        if (Math.abs(localY) <= halfWidth + 26) {
+          return true;
+        }
       }
     }
     return false;
