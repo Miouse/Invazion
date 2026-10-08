@@ -243,7 +243,10 @@ export class Player {
 
   findNearestEnemy(enemies) {
     let nearest = null;
-    let minDist = 580; // Détecte seulement les ennemis clairement visibles à l'écran
+    // Portée de détection limitée à 4 cases / carreaux de la map (1 case = 64px, soit 256px)
+    const TILE_SIZE = 64;
+    const maxDist = 4 * TILE_SIZE; // 256 px
+    let minDist = maxDist;
     for (const e of enemies) {
       const d = Math.hypot(e.x - this.x, e.y - this.y);
       if (d < minDist) {

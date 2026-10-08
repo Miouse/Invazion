@@ -110,7 +110,7 @@ Invazion/
 - Instancié avec `new Player(x, y, characterId)`.
 - Gère la vélocité, l'esquive Dash (invulnérabilité temporaire `invulnTimer`), la régénération passive, et les cooldowns des 4 armes/pouvoirs actifs.
 - **Armes disponibles** :
-  - `wand` : Baguette éthérée (rafales directes sur ennemis visibles, portée max 580 px).
+  - `wand` : Baguette éthérée (rafales directes sur ennemis proches, portée limitée à 4 cases de map soit 256 px).
   - `meteor` : Pluie de météores explosives avec secousse d'écran.
   - `orbit` : Orbes tournoyants protecteurs.
   - `aura` : Vortex de sang arcane de contact continu.
