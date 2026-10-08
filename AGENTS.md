@@ -98,17 +98,20 @@ Invazion/
     3. **Riverbend** (Sud-Est) : Cité lacustre sur pilotis, grands pontons, barques et entrée du *Donjon II : Antre des Eaux Sombres*.
   - **Forêts Denses Médiévales & Traversée Libre** : 14 massifs forestiers majeurs abritant plus de 1 350 arbres pixel-art. **Collisions supprimées sur les arbres** pour une fluidité totale de course/dash, avec **semi-transparence automatique (50% d'opacité)** dès que le joueur passe sous le feuillage d'un arbre.
   - **Points d'Intérêt & Secrets** : 8 coffres au trésor médiévaux en bois et or, 4 stèles runiques de bénédiction (+vitesse, +dégâts, +régén, +aimant).
-- **Collisions physiques (Sliding Collision)** : Grille spatiale (buckets de 250 px), glissement d'axe séparé X/Y sur les obstacles solides et l'eau.
+- **Collisions physiques (Sliding Collision & Tangential Slide)** : Grille spatiale (buckets de 250 px), glissement d'axe séparé X/Y et déviation tangentielle le long des surfaces incurvées.
 - **Système de Pathfinding A* avec franchissement de ponts** :
   - Grille de navigation `navGrid` (cellules de 50 px) précalculée au démarrage.
-  - Test de ligne de vue instantané (`hasLineOfSight`) : si aucun obstacle ne barre la route, déplacement direct sans coût A* (60 FPS constants).
-  - Franchissement fluide des 2 grands ponts de bois reliant les rives.
+  - Test de ligne de vue instantané (`hasLineOfSight`) avec pas de test fin (14 px) pour éviter tout écrêtage accidentel d'obstacles.
+  - Franchissement fluide des 2 grands ponts de bois reliant les rives avec détection élargie des rampes d'accès (entonnoirs de 220 px) et exclusion des colliders d'eau sous les ponts.
 
 ### 4. `js/controls.js` — Gestionnaire des Contrôles (`ControlsManager`)
 - **3 modes commutables** :
   - `keyboard` : ZQSD / Flèches, Espace pour Dash.
   - `mouse_lol` : Clic gauche pour déplacement avec Pathfinding A* + Clic droit ou Espace pour Dash d'esquive vers le curseur.
   - `gamepad` : Stick analogique 360° avec deadzone 0.18, détection automatique.
+- **Watchdog Anti-Blocage & Shortcut Dynamique** :
+  - Surveillance active de progression (si le joueur ne progresse pas pendant > 0.20s contre un obstacle, saut automatique au waypoint suivant ou arrêt propre).
+  - Raccourci en ligne de vue (`hasLineOfSight`) vers le prochain waypoint pour adoucir les virages.
 - Visualisation du chemin LoL : ligne pointillée verte émeraude reliant les waypoints et chevrons animés au point d'impact.
 
 ### 5. `js/player.js` — Entité Joueur

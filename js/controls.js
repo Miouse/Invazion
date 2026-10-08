@@ -34,6 +34,8 @@ export class ControlsManager {
     this.currentWaypointIndex = 0;
     this.lastPathCalcTime = 0;
     this.clickMarkers = [];
+    this.lastPlayerPos = null;
+    this.stuckTimer = 0;
 
     // État manette (Gamepad API)
     this.gamepadConnected = false;
@@ -221,6 +223,8 @@ export class ControlsManager {
         this.pathWaypoints = [];
         this.mouseTarget = { x, y };
       }
+      this.lastPlayerPos = null;
+      this.stuckTimer = 0;
     } else {
       this.pathWaypoints = [];
       this.mouseTarget = { x, y };
@@ -448,6 +452,8 @@ export class ControlsManager {
     this.isRightMouseDown = false;
     this.pathWaypoints = [];
     this.currentWaypointIndex = 0;
+    this.lastPlayerPos = null;
+    this.stuckTimer = 0;
   }
 
   resetMovement() {
@@ -458,6 +464,8 @@ export class ControlsManager {
     this.currentWaypointIndex = 0;
     this.clickMarkers = [];
     this.joystickVector = { x: 0, y: 0 };
+    this.lastPlayerPos = null;
+    this.stuckTimer = 0;
   }
 
   openSettings() {
@@ -541,20 +549,64 @@ export class ControlsManager {
     // 4. Mode Souris (League of Legends avec Pathfinding A* intelligent)
     if (this.mouseTarget && !isKeyboardPressed && (gpMove.moveX === 0 && gpMove.moveY === 0) && (this.joystickVector.x === 0 && this.joystickVector.y === 0)) {
       if (this.engine.player) {
-        let dx = this.mouseTarget.x - this.engine.player.x;
-        let dy = this.mouseTarget.y - this.engine.player.y;
+        const p = this.engine.player;
+
+        // Watchdog anti-blocage (Fail-safe)
+        if (this.lastPlayerPos) {
+          const movedDist = Math.hypot(p.x - this.lastPlayerPos.x, p.y - this.lastPlayerPos.y);
+          if (movedDist < 0.25 * (p.speed || 180) * dt) {
+            this.stuckTimer += dt;
+          } else {
+            this.stuckTimer = 0;
+          }
+        }
+        this.lastPlayerPos = { x: p.x, y: p.y };
+
+        let dx = this.mouseTarget.x - p.x;
+        let dy = this.mouseTarget.y - p.y;
         let dist = Math.hypot(dx, dy);
 
-        // Rayon de transition vers le waypoint suivant
+        // Rayon de transition vers le waypoint suivant (élargi pour un passage fluide)
         const isIntermediate = this.pathWaypoints.length > 0 && this.currentWaypointIndex < this.pathWaypoints.length - 1;
-        const arriveDist = isIntermediate ? 32 : 16;
+        const arriveDist = isIntermediate ? 42 : 18;
+
+        // Déblocage automatique en cas d'obstacle imprévu (> 0.20s sans progression réelle)
+        if (this.stuckTimer > 0.20) {
+          this.stuckTimer = 0;
+          if (isIntermediate) {
+            // Passer immédiatement au point de passage suivant
+            this.currentWaypointIndex++;
+            this.mouseTarget = this.pathWaypoints[this.currentWaypointIndex];
+            dx = this.mouseTarget.x - p.x;
+            dy = this.mouseTarget.y - p.y;
+            dist = Math.hypot(dx, dy);
+          } else {
+            // Fin de trajectoire bloquée : arrêt propre
+            this.mouseTarget = null;
+            this.pathWaypoints = [];
+            this.lastPlayerPos = null;
+            return { moveX: 0, moveY: 0 };
+          }
+        }
+
+        // Raccourci de trajectoire dynamique (Line-of-Sight Shortcut)
+        if (isIntermediate && this.engine.worldMap && this.currentWaypointIndex + 1 < this.pathWaypoints.length) {
+          const nextWp = this.pathWaypoints[this.currentWaypointIndex + 1];
+          if (this.engine.worldMap.hasLineOfSight(p.x, p.y, nextWp.x, nextWp.y, p.radius || 16, 14)) {
+            this.currentWaypointIndex++;
+            this.mouseTarget = nextWp;
+            dx = this.mouseTarget.x - p.x;
+            dy = this.mouseTarget.y - p.y;
+            dist = Math.hypot(dx, dy);
+          }
+        }
 
         if (dist <= arriveDist) {
           if (isIntermediate) {
             this.currentWaypointIndex++;
             this.mouseTarget = this.pathWaypoints[this.currentWaypointIndex];
-            dx = this.mouseTarget.x - this.engine.player.x;
-            dy = this.mouseTarget.y - this.engine.player.y;
+            dx = this.mouseTarget.x - p.x;
+            dy = this.mouseTarget.y - p.y;
             dist = Math.hypot(dx, dy);
             if (dist > 0) {
               moveX = dx / dist;
@@ -563,12 +615,16 @@ export class ControlsManager {
           } else {
             this.mouseTarget = null;
             this.pathWaypoints = [];
+            this.lastPlayerPos = null;
           }
         } else {
           moveX = dx / dist;
           moveY = dy / dist;
         }
       }
+    } else {
+      this.lastPlayerPos = null;
+      this.stuckTimer = 0;
     }
 
     // Mise à jour de la durée des marqueurs LoL

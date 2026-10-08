@@ -1683,6 +1683,16 @@ export class WorldMap {
 
     // 5. Segments de rivière (l'eau bloquante, franchissable uniquement sur les ponts)
     for (const seg of this.riverSegments) {
+      // Ignorer les segments d'eau situés sous le tablier central des ponts (< 90px) pour éviter qu'un cercle d'eau ne déborde sur les berges d'accès
+      let underBridge = false;
+      for (const b of this.bridges) {
+        if (Math.hypot(seg.x - b.x, seg.y - b.y) < 90) {
+          underBridge = true;
+          break;
+        }
+      }
+      if (underBridge) continue;
+
       this.colliders.push({
         type: 'river',
         x: seg.x,
@@ -1760,7 +1770,7 @@ export class WorldMap {
     }
   }
 
-  // Vérifie si une entité est sur un pont en bois praticable
+  // Vérifie si une entité est sur un pont en bois praticable ou sur sa rampe d'accès
   isOnBridge(px, py) {
     for (const b of this.bridges) {
       const dx = px - b.x;
@@ -1769,8 +1779,17 @@ export class WorldMap {
       const sin = Math.sin(-b.angle);
       const localX = dx * cos - dy * sin;
       const localY = dx * sin + dy * cos;
-      // Tolérance supplémentaire de 25px sur les berges d'accès et largeur du tablier
-      if (Math.abs(localX) <= (b.w / 2 + 25) && Math.abs(localY) <= (b.h / 2 + 8)) {
+
+      const halfLen = b.w / 2; // ~95px
+      const halfWidth = b.h / 2; // ~42px
+
+      // 1. Tablier central au-dessus de l'eau
+      if (Math.abs(localX) <= halfLen && Math.abs(localY) <= halfWidth + 24) {
+        return true;
+      }
+
+      // 2. Rampes d'accès Nord et Sud sur les berges (entonnoir d'accès très large pour un franchissement instantané et sans accroc)
+      if (Math.abs(localX) <= halfLen + 95 && Math.abs(localY) <= halfWidth + 85) {
         return true;
       }
     }
@@ -1979,7 +1998,24 @@ export class WorldMap {
       }
     }
 
-    // 4. Si bloqué sur les deux axes et déjà en pénétration, libération automatique
+    // 4. Glissement tangentiel si bloqué en diagonale contre un obstacle courbé
+    if (finalX === currX && finalY === currY && (targetX !== currX || targetY !== currY)) {
+      const dx = targetX - currX;
+      const dy = targetY - currY;
+      const testTangents = [
+        { x: currX + dy * 0.7, y: currY - dx * 0.7 },
+        { x: currX - dy * 0.7, y: currY + dx * 0.7 }
+      ];
+      for (const t of testTangents) {
+        if (!this.isColliding(t.x, t.y, radius, isPlayer)) {
+          finalX = t.x;
+          finalY = t.y;
+          break;
+        }
+      }
+    }
+
+    // 5. Si bloqué sur les deux axes et déjà en pénétration, libération automatique
     if (finalX === currX && finalY === currY && (targetX !== currX || targetY !== currY)) {
       if (this.isColliding(currX, currY, radius, isPlayer)) {
         const unstick = this.findUnstickPosition(currX, currY, radius, isPlayer);
@@ -2080,7 +2116,7 @@ export class WorldMap {
   }
 
   // Vérifie si la ligne de vue directe entre 2 points est exempte de collision
-  hasLineOfSight(x1, y1, x2, y2, radius = 16, step = 25) {
+  hasLineOfSight(x1, y1, x2, y2, radius = 16, step = 14) {
     const dx = x2 - x1;
     const dy = y2 - y1;
     const dist = Math.hypot(dx, dy);
