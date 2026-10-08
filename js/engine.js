@@ -124,24 +124,6 @@ export class GameEngine {
       { id: 'east',  name: 'PORTAIL EST', x: 6600, y: 3500, angle: Math.PI, active: false, pulse: 0 }
     ];
 
-    // Piliers de pierre anciens moussus (Décoration d'ambiance)
-    this.pillars = [];
-    const pillarPositions = [
-      { x: 1800, y: 1800 }, { x: 3500, y: 1800 }, { x: 5200, y: 1800 },
-      { x: 1800, y: 3500 },                         { x: 5200, y: 3500 },
-      { x: 1800, y: 5200 }, { x: 3500, y: 5200 }, { x: 5200, y: 5200 },
-      { x: 2600, y: 2600 }, { x: 4400, y: 2600 },
-      { x: 2600, y: 4400 }, { x: 4400, y: 4400 }
-    ];
-    for (const pos of pillarPositions) {
-      this.pillars.push({
-        x: pos.x,
-        y: pos.y,
-        radius: 42,
-        seed: Math.abs(Math.sin(pos.x * 2.3 + pos.y * 5.7))
-      });
-    }
-
     // Particules de spores vertes ambiantes (Moisissure en lévitation)
     this.ambientSpores = [];
     for (let i = 0; i < 50; i++) {
@@ -2142,61 +2124,6 @@ export class GameEngine {
     this.ctx.strokeRect(0, 0, this.worldSize, this.worldSize);
     this.ctx.shadowBlur = 0;
   }
-
-  // ==========================================
-  // RENDU DES PILIERS & DÉCOR DE MOUSSE / MOISISSURE
-  // ==========================================
-  renderPillarsAndMossDecor() {
-    for (const pillar of this.pillars) {
-      this.ctx.save();
-      this.ctx.translate(pillar.x, pillar.y);
-
-      // Ombre du pilier
-      this.ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
-      this.ctx.beginPath();
-      this.ctx.ellipse(10, 18, pillar.radius * 1.1, pillar.radius * 0.6, 0, 0, Math.PI * 2);
-      this.ctx.fill();
-
-      // Base du pilier en pierre sculptée
-      this.ctx.fillStyle = '#111522';
-      this.ctx.strokeStyle = '#232a3d';
-      this.ctx.lineWidth = 3;
-      this.ctx.beginPath();
-      this.ctx.arc(0, 0, pillar.radius, 0, Math.PI * 2);
-      this.ctx.fill();
-      this.ctx.stroke();
-
-      // Anneau intérieur de pierre usée
-      this.ctx.fillStyle = '#181f33';
-      this.ctx.beginPath();
-      this.ctx.arc(0, -6, pillar.radius * 0.75, 0, Math.PI * 2);
-      this.ctx.fill();
-
-      // MOUSSE & MOISISSURE VERTE ENROULÉE SUR LE PILIER
-      this.ctx.fillStyle = 'rgba(45, 106, 79, 0.8)';
-      this.ctx.beginPath();
-      this.ctx.arc(-pillar.radius * 0.35, -pillar.radius * 0.3, 16, 0, Math.PI * 2);
-      this.ctx.arc(-pillar.radius * 0.5, 4, 14, 0, Math.PI * 2);
-      this.ctx.fill();
-
-      // Feuilles / lichen vert vif
-      this.ctx.fillStyle = 'rgba(82, 183, 136, 0.9)';
-      this.ctx.beginPath();
-      this.ctx.arc(-pillar.radius * 0.35 + 2, -pillar.radius * 0.3 - 2, 7, 0, Math.PI * 2);
-      this.ctx.arc(-pillar.radius * 0.5 + 3, 2, 6, 0, Math.PI * 2);
-      this.ctx.fill();
-
-      // Fissure de pierre
-      this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
-      this.ctx.lineWidth = 2;
-      this.ctx.beginPath();
-      this.ctx.moveTo(0, -pillar.radius * 0.5);
-      this.ctx.lineTo(8, 0);
-      this.ctx.lineTo(2, pillar.radius * 0.4);
-      this.ctx.stroke();
-
-      this.ctx.restore();
-    }
   }
 
   // ==========================================
