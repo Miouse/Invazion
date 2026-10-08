@@ -1,0 +1,12 @@
+{
+  "name": "crimson-survivors",
+  "version": "1.0.0",
+  "description": "Mini jeu Roguelite Arena inspiré de Vampire Survivors",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["game", "roguelite", "vampire-survivors", "canvas", "javascript"],
+  "author": "",
+  "license": "MIT"
+}

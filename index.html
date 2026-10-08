@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Crimson Arena - Mini Survivors</title>
+  <meta name="description" content="Jeu de survie en arène roguelite survit aux vagues infinies de monstres, monte en niveau et débloque des pouvoirs dévastateurs !">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Canvas de jeu -->
+  <div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- HUD Overlay -->
+    <div id="hud">
+      <!-- Barre d'XP supérieure -->
+      <div class="xp-bar-container">
+        <div class="xp-bar-track">
+          <div id="xp-bar-fill" class="xp-bar-fill"></div>
+        </div>
+        <div class="level-badge" id="level-badge">LVL <span id="player-level">1</span></div>
+      </div>
+
+      <!-- Informations de survie en haut -->
+      <div class="top-stats">
+        <div class="stat-pill timer-pill">
+          <span class="icon">⏱️</span>
+          <span id="time-display">00:00</span>
+        </div>
+        <div class="stat-pill kills-pill">
+          <span class="icon">💀</span>
+          <span id="kills-display">0</span>
+        </div>
+        <div class="stat-pill gold-pill">
+          <span class="icon">💎</span>
+          <span id="gems-display">0</span>
+        </div>
+        <button id="btn-sound" class="icon-btn" title="Activer / Couper le son" aria-label="Son">🔊</button>
+        <button id="btn-pause" class="icon-btn" title="Mettre en pause (Échap)" aria-label="Pause">⏸️</button>
+      </div>
+
+      <!-- Barre de vie du BOSS (Style Dark Souls / Elden Ring) -->
+      <div id="boss-hud" class="boss-hud-container hidden">
+        <div class="boss-title-row">
+          <span class="boss-skull">🔥</span>
+          <span id="boss-name" class="boss-name">MALGOK • SEIGNEUR DU CRIMSON</span>
+          <span class="boss-skull">🔥</span>
+        </div>
+        <div class="boss-bar-track">
+          <div id="boss-bar-fill" class="boss-bar-fill"></div>
+        </div>
+      </div>
+
+      <!-- Barre de vie du joueur & Jauge de Dash -->
+      <div class="player-vital-hud">
+        <div class="hp-label">HP <span id="hp-numbers">100 / 100</span></div>
+        <div class="hp-bar-track">
+          <div id="hp-bar-fill" class="hp-bar-fill"></div>
+        </div>
+        <div class="dash-row">
+          <span class="dash-label">DASH (Espace / Clic Droit)</span>
+          <div class="dash-bar-track">
+            <div id="dash-bar-fill" class="dash-bar-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Liste des armes & passifs actifs -->
+      <div class="equipment-hud" id="equipment-hud">
+        <!-- Rempli dynamiquement en JS -->
+      </div>
+
+      <!-- Joystick virtuel pour mobile/tactile -->
+      <div id="virtual-joystick" class="touch-only">
+        <div id="joystick-knob"></div>
+      </div>
+    </div>
+
+    <!-- Écran d'accueil / Titre -->
+    <div id="start-screen" class="overlay-modal active">
+      <div class="modal-card">
+        <div class="card-glow"></div>
+        <span class="game-tag">ROGUELITE ARENA • VITE & NERVEUX</span>
+        <h1 class="game-title">CRIMSON<br><span class="accent-text">SURVIVORS</span></h1>
+        <p class="subtitle">Survis aux vagues infernales, terrasse les titans et déchaîne des pouvoirs de zone destructeurs !</p>
+        
+        <div class="instructions-panel">
+          <div class="instruction-item">
+            <span class="key-badge">ZQSD</span> ou <span class="key-badge">Flèches</span>
+            <span><strong>Déplacement du héros</strong></span>
+          </div>
+          <div class="instruction-item">
+            <span class="key-badge">Espace</span>
+            <span><strong>Dash / Esquive rapide</strong></span>
+          </div>
+          <div class="instruction-item">
+            <span class="key-badge">Auto</span>
+            <span>Attaques et sorts de zone automatiques</span>
+          </div>
+          <div class="instruction-item">
+            <span class="key-badge">💎 Gemmes</span>
+            <span>Collecte l'expérience pour monter de niveau</span>
+          </div>
+        </div>
+
+        <button id="btn-start" class="glow-btn">
+          <span>ENTRER DANS L'ARÈNE</span>
+          <span class="btn-arrow">⚔️</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal de Montée de Niveau (Level Up) -->
+    <div id="levelup-screen" class="overlay-modal">
+      <div class="modal-card levelup-card">
+        <div class="card-glow gold"></div>
+        <h2 class="levelup-title">NIVEAU SUPÉRIEUR !</h2>
+        <p class="levelup-subtitle">Choisis une amélioration pour renforcer ton personnage</p>
+
+        <div class="cards-grid" id="upgrade-cards-container">
+          <!-- 3 Cartes générées dynamiquement -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Écran de Pause -->
+    <div id="pause-screen" class="overlay-modal">
+      <div class="modal-card mini-card">
+        <h2>PAUSE</h2>
+        <p>Prends ton souffle, l'arène t'attend.</p>
+        <button id="btn-resume" class="glow-btn">REPRENDRE LA PARTIE</button>
+      </div>
+    </div>
+
+    <!-- Écran de Game Over -->
+    <div id="gameover-screen" class="overlay-modal">
+      <div class="modal-card">
+        <div class="card-glow red"></div>
+        <h2 class="gameover-title">TU AS SUCCOMBÉ</h2>
+        <p class="subtitle">Les ombres ont submergé ton âme...</p>
+
+        <div class="stats-summary-grid">
+          <div class="summary-box">
+            <span class="summary-label">Temps Survécu</span>
+            <span id="end-time" class="summary-value">00:00</span>
+          </div>
+          <div class="summary-box">
+            <span class="summary-label">Ennemis Éliminés</span>
+            <span id="end-kills" class="summary-value">0</span>
+          </div>
+          <div class="summary-box">
+            <span class="summary-label">Niveau Atteint</span>
+            <span id="end-level" class="summary-value">1</span>
+          </div>
+          <div class="summary-box">
+            <span class="summary-label">Gemmes Récoltées</span>
+            <span id="end-gems" class="summary-value">0</span>
+          </div>
+        </div>
+
+        <button id="btn-restart" class="glow-btn">
+          <span>RENAÎTRE ET REJOUER</span>
+          <span class="btn-arrow">🔥</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
