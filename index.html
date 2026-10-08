@@ -37,6 +37,7 @@
           <span class="icon">🪙</span>
           <span id="gems-display">0</span>
         </div>
+        <button id="btn-library" class="icon-btn" title="Bibliothèque des Arcanes (Grimoires d'Eldrin • Touche B)" aria-label="Bibliothèque">📖</button>
         <button id="btn-sound" class="icon-btn" title="Activer / Couper le son" aria-label="Son">🔊</button>
         <button id="btn-settings" class="icon-btn" title="Paramètres des contrôles (Souris LoL / Clavier / Manette)" aria-label="Réglages">⚙️</button>
         <button id="btn-pause" class="icon-btn" title="Mettre en pause (Échap)" aria-label="Pause">⏸️</button>
@@ -286,6 +287,37 @@
         <div class="settings-actions">
           <button id="btn-save-settings" class="glow-btn">
             <span>ENREGISTRER & REPRENDRE</span>
+            <span class="btn-arrow">✓</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Écran de la Bibliothèque des Arcanes (Grimoires d'Eldrin) -->
+    <div id="library-screen" class="overlay-modal">
+      <div class="modal-card library-modal-card">
+        <div class="card-glow purple"></div>
+        <div class="library-header">
+          <div class="library-title-group">
+            <span class="library-main-icon">📖</span>
+            <div>
+              <h2 class="library-title">BIBLIOTHÈQUE DES ARCANES</h2>
+              <p class="subtitle">Acquiers des grimoires magiques pour maîtriser chaque élément ancestral</p>
+            </div>
+          </div>
+          <div class="library-gold-badge">
+            <span class="gold-icon">🪙</span>
+            <span id="library-gold-amount">0</span>
+          </div>
+        </div>
+
+        <div id="grimoires-grid" class="grimoires-grid">
+          <!-- Injecté dynamiquement par le moteur -->
+        </div>
+
+        <div class="library-footer">
+          <button id="btn-close-library" class="glow-btn">
+            <span>FERMER LA BIBLIOTHÈQUE (B / Échap)</span>
             <span class="btn-arrow">✓</span>
           </button>
         </div>

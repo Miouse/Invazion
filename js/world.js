@@ -96,6 +96,9 @@ export class WorldMap {
           { type: 'house', x: 3340, y: 3450, w: 78, h: 65, roofColor: '#2a9d8f' },
           { type: 'house', x: 3330, y: 3570, w: 84, h: 68, roofColor: '#1f6e65' },
           { type: 'house', x: 3160, y: 3640, w: 75, h: 62, roofColor: '#2a9d8f' },
+          // Bibliothèque des Arcanes & PNJ Archimage Kaelen
+          { type: 'library', x: 3260, y: 3430, w: 90, h: 74, roofColor: '#5c3d8d', trim: '#a855f7', name: "Bibliothèque des Arcanes" },
+          { type: 'library_npc', x: 3260, y: 3490, name: "Archimage Kaelen", title: "Maître des Grimoires", radius: 16 },
           // Fontaine sacrée de soin sur la place centrale
           { type: 'fountain', x: 3160, y: 3510, radius: 24 },
           // Étalages de marché médiéval
@@ -1153,6 +1156,104 @@ export class WorldMap {
       // Toit miniature du puits
       ctx.fillStyle = '#8b5a2b';
       ctx.fillRect(-b.radius, -18, b.radius * 2, 7);
+    } else if (b.type === 'library') {
+      // Bibliothèque des Arcanes & Tour des Grimoires
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.beginPath();
+      ctx.ellipse(0, b.h / 2 + 4, b.w / 2 + 8, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Murs en pierre mystique pourpre
+      ctx.fillStyle = '#1e142e';
+      ctx.fillRect(-b.w / 2, -b.h / 2, b.w, b.h);
+      ctx.strokeStyle = '#a855f7';
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(-b.w / 2, -b.h / 2, b.w, b.h);
+
+      // Toit à deux versants violet arcanique
+      ctx.fillStyle = b.roofColor || '#5c3d8d';
+      ctx.beginPath();
+      ctx.moveTo(-b.w / 2 - 10, -b.h / 2);
+      ctx.lineTo(0, -b.h / 2 - 28);
+      ctx.lineTo(b.w / 2 + 10, -b.h / 2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = b.trim || '#c084fc';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Enseigne du Grimoire au-dessus de la porte
+      ctx.font = '22px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('📖', 0, -b.h / 2 - 8);
+
+      // Fenêtres arcaniques illuminées
+      const glow = Math.sin(time * 3) * 0.2 + 0.8;
+      ctx.fillStyle = `rgba(0, 240, 255, ${glow * 0.75})`;
+      ctx.fillRect(-26, -6, 14, 16);
+      ctx.fillRect(12, -6, 14, 16);
+
+      // Porte en bois sombre ornée
+      ctx.fillStyle = '#3a234c';
+      ctx.fillRect(-10, b.h / 2 - 22, 20, 22);
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(-10, b.h / 2 - 22, 20, 22);
+    } else if (b.type === 'library_npc') {
+      // PNJ Archimage Kaelen (Maître des Grimoires)
+      const bobbing = Math.sin(time * 4) * 2;
+      
+      // Ombre
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.beginPath();
+      ctx.ellipse(0, 10, 12, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Robe de mage étoilée
+      ctx.fillStyle = '#311042';
+      ctx.beginPath();
+      ctx.moveTo(-10, 8);
+      ctx.lineTo(0, -14 + bobbing);
+      ctx.lineTo(10, 8);
+      ctx.closePath();
+      ctx.fill();
+
+      // Chapeau de sorcier pointu
+      ctx.fillStyle = '#6b21a8';
+      ctx.beginPath();
+      ctx.moveTo(-12, -14 + bobbing);
+      ctx.lineTo(0, -32 + bobbing);
+      ctx.lineTo(12, -14 + bobbing);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Bâton arcanique avec orbe brillant
+      ctx.strokeStyle = '#b45309';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(14, 8);
+      ctx.lineTo(14, -22 + bobbing);
+      ctx.stroke();
+      ctx.fillStyle = '#00f0ff';
+      ctx.beginPath();
+      ctx.arc(14, -25 + bobbing, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Bulle de dialogue interactive "📖 GRIMOIRES"
+      const bubblePulse = Math.sin(time * 3) * 2;
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+      ctx.fillRect(-48, -52 + bubblePulse, 96, 20);
+      ctx.strokeStyle = '#a855f7';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(-48, -52 + bubblePulse, 96, 20);
+
+      ctx.font = 'bold 11px sans-serif';
+      ctx.fillStyle = '#ffd700';
+      ctx.textAlign = 'center';
+      ctx.fillText('📖 GRIMOIRES (B)', 0, -38 + bubblePulse);
     } else if (b.type === 'stall') {
       // Étalage de marché avec auvent coloré
       ctx.fillStyle = '#8b5a2b';

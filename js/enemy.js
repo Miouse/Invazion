@@ -26,6 +26,8 @@ export class Enemy {
     this.patrolTarget = { x: this.homeX, y: this.homeY };
     this.alertTimer = 0;
     this.stunTimer = 0;
+    this.freezeTimer = 0;
+    this.slowTimer = 0;
 
     const hpScale = 1 + (gameTime / 240) * 0.5;
 
@@ -85,10 +87,16 @@ export class Enemy {
     let aimY = player.y;
     let moveSpeed = this.baseSpeed;
 
-    // Étourdissement actif (Bouclier / Séisme)
-    if (this.stunTimer > 0) {
+    // Étourdissement / Gel / Ralentissement
+    if (this.freezeTimer > 0) {
+      this.freezeTimer -= dt;
+      moveSpeed = 0;
+    } else if (this.stunTimer > 0) {
       this.stunTimer -= dt;
       moveSpeed = 0;
+    } else if (this.slowTimer > 0) {
+      this.slowTimer -= dt;
+      moveSpeed = this.baseSpeed * 0.50;
     }
 
     // IA contextuelle si attaché à un camp
@@ -381,6 +389,33 @@ export class Enemy {
       ctx.font = 'bold 16px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('!', 0, -this.radius - 14);
+    }
+
+    // EFFET VISUEL DE GEL (Blizzard Polaire)
+    if (this.freezeTimer > 0) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.45)';
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2.5;
+      const bSize = this.radius * 2.4;
+      ctx.beginPath();
+      ctx.strokeRect(-bSize / 2, -bSize / 2, bSize, bSize);
+      ctx.fillRect(-bSize / 2, -bSize / 2, bSize, bSize);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 13px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('❄️ GELÉ', 0, -this.radius - 16);
+      ctx.restore();
+    } else if (this.slowTimer > 0) {
+      // Halo de givre / ralentissement
+      ctx.save();
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.arc(0, 0, this.radius + 6, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
     }
 
     ctx.restore();

@@ -13,9 +13,9 @@ export class Projectile {
     this.pierce = pierce;
     this.type = type;
     this.isEnemy = isEnemy;
-    this.radius = type === 'fireball' ? 12 : (isEnemy ? 9 : 6);
-    this.knockback = type === 'fireball' ? 25 : (type === 'arrow' ? 16 : 14);
-    this.life = type === 'arrow' ? 1.8 : (type === 'fireball' ? 1.2 : 1.5);
+    this.radius = (type === 'fireball' || type === 'fire_orb') ? 12 : (type === 'wind_blade' ? 10 : (isEnemy ? 9 : 7));
+    this.knockback = (type === 'fireball' || type === 'fire_orb') ? 26 : (type === 'arrow' ? 16 : 14);
+    this.life = type === 'arrow' ? 1.8 : ((type === 'fireball' || type === 'fire_orb') ? 1.2 : 1.5);
     this.hitList = new Set();
     this.dead = false;
   }
@@ -26,13 +26,25 @@ export class Projectile {
     this.life -= dt;
 
     if (engine) {
-      if (this.type === 'fireball') {
+      if (this.type === 'fireball' || this.type === 'fire_orb') {
         if (Math.random() < 0.6) {
           engine.createHitParticles(this.x, this.y, Math.random() < 0.5 ? '#ff4d00' : '#ffaa00', 1);
         }
       } else if (this.type === 'arcane_bolt') {
         if (Math.random() < 0.4) {
           engine.createHitParticles(this.x, this.y, Math.random() < 0.5 ? '#00f0ff' : '#9b5de5', 1);
+        }
+      } else if (this.type === 'lightning_bolt') {
+        if (Math.random() < 0.5) {
+          engine.createHitParticles(this.x, this.y, Math.random() < 0.5 ? '#fffb00' : '#00f0ff', 1);
+        }
+      } else if (this.type === 'frost_bolt') {
+        if (Math.random() < 0.45) {
+          engine.createHitParticles(this.x, this.y, '#38bdf8', 1);
+        }
+      } else if (this.type === 'wind_blade') {
+        if (Math.random() < 0.4) {
+          engine.createHitParticles(this.x, this.y, '#2dd4bf', 1);
         }
       } else if (this.isEnemy) {
         if (Math.random() < 0.3) {
@@ -139,6 +151,100 @@ export class Projectile {
       ctx.beginPath();
       ctx.arc(0, 0, r * 0.5, 0, Math.PI * 2);
       ctx.fill();
+    } else if (this.type === 'lightning_bolt') {
+      // Arc Voltaïque / Éclair de Foudre
+      ctx.rotate(this.angle);
+      
+      // Halo jaune et blanc éclatant
+      ctx.fillStyle = 'rgba(255, 230, 0, 0.28)';
+      ctx.beginPath();
+      ctx.arc(0, 0, this.radius * 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Zigzag d'éclair stylisé
+      ctx.strokeStyle = '#fffb00';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(-16, 0);
+      ctx.lineTo(-6, -5);
+      ctx.lineTo(2, 4);
+      ctx.lineTo(16, 0);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(-16, 0);
+      ctx.lineTo(-6, -5);
+      ctx.lineTo(2, 4);
+      ctx.lineTo(16, 0);
+      ctx.stroke();
+    } else if (this.type === 'frost_bolt') {
+      // Javelot de Givre cristallin
+      ctx.rotate(this.angle);
+
+      // Halo glacé cyan
+      const glow = ctx.createRadialGradient(0, 0, 1, 0, 0, this.radius * 1.8);
+      glow.addColorStop(0, '#ffffff');
+      glow.addColorStop(0.5, '#38bdf8');
+      glow.addColorStop(1, 'rgba(56, 189, 248, 0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(0, 0, this.radius * 1.8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Pieu de glace taillé
+      ctx.fillStyle = '#e0f2fe';
+      ctx.strokeStyle = '#0284c7';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(14, 0);
+      ctx.lineTo(0, -5);
+      ctx.lineTo(-12, 0);
+      ctx.lineTo(0, 5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    } else if (this.type === 'fire_orb') {
+      // Météore Ardent
+      ctx.rotate(this.angle);
+
+      const glow = ctx.createRadialGradient(0, 0, 2, 0, 0, this.radius * 2.0);
+      glow.addColorStop(0, '#fffbeb');
+      glow.addColorStop(0.35, '#f59e0b');
+      glow.addColorStop(0.7, '#dc2626');
+      glow.addColorStop(1, 'rgba(220, 38, 38, 0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(0, 0, this.radius * 2.0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Cœur magmatique
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(0, 0, this.radius * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (this.type === 'wind_blade') {
+      // Lame Zéphyr (Croissant tranchant de vent)
+      ctx.rotate(this.angle);
+
+      ctx.fillStyle = 'rgba(45, 212, 191, 0.35)';
+      ctx.beginPath();
+      ctx.arc(0, 0, this.radius * 1.6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Croissant de vent
+      ctx.strokeStyle = '#2dd4bf';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(4, 0, 14, -Math.PI / 2.2, Math.PI / 2.2);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(6, 0, 12, -Math.PI / 2.5, Math.PI / 2.5);
+      ctx.stroke();
     } else {
       // Projectile standard
       ctx.fillStyle = 'rgba(0, 240, 255, 0.35)';

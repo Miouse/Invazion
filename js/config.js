@@ -108,3 +108,95 @@ export const UPGRADE_CATALOG = [
     getDescription: () => 'Régénération passive +1.2 PV / seconde.'
   }
 ];
+
+// ==========================================
+// CATALOGUE DES GRIMOIRES ÉLÉMENTAIRES (ELDRIN LE MAGE)
+// ==========================================
+export const GRIMOIRES_CATALOG = {
+  arcane: {
+    id: 'arcane',
+    name: 'Grimoire des Arcanes',
+    element: 'arcane',
+    icon: '🔮',
+    color: '#00f0ff',
+    badge: 'Base • Gratuit',
+    price: 0,
+    mainWeapon: 'arcane_bolt',
+    mainName: 'Éclair d\'Arcane',
+    mainDesc: 'Projectiles cosmiques rapides (860 px/s, 42 dégâts) perforant les rangs',
+    specialSkill: 'arcane_nova',
+    specialName: 'Nova Stellaire',
+    specialDesc: 'Grande explosion cosmique à 360° repoussant tous les monstres au loin',
+    specialCd: 3.8,
+    desc: 'Livre des Arcanes originel offert aux mages instruits d\'Oakhaven.'
+  },
+  lightning: {
+    id: 'lightning',
+    name: 'Grimoire de Foudre',
+    element: 'lightning',
+    icon: '⚡',
+    color: '#ffd700',
+    badge: '40 🪙',
+    price: 40,
+    mainWeapon: 'lightning_bolt',
+    mainName: 'Arc Voltaïque',
+    mainDesc: 'Éclair fulgurant rebondissant en chaîne sur 3 monstres avec étincelles',
+    specialSkill: 'lightning_storm',
+    specialName: 'Tempête de Foudre',
+    specialDesc: 'Choc foudroyant de zone (220px) étourdissant tous les monstres (1.5s)',
+    specialCd: 4.2,
+    desc: 'Recueil ancestral imprégné de la furie des tempêtes et d\'étincelles vives.'
+  },
+  frost: {
+    id: 'frost',
+    name: 'Grimoire de Givre',
+    element: 'frost',
+    icon: '❄️',
+    color: '#38bdf8',
+    badge: '60 🪙',
+    price: 60,
+    mainWeapon: 'frost_bolt',
+    mainName: 'Javelot de Givre',
+    mainDesc: 'Pieu de glace perforant ralentissant les monstres touchés de 50% pendant 3s',
+    specialSkill: 'frost_blizzard',
+    specialName: 'Blizzard Polaire',
+    specialDesc: 'Vague glaciaire gelant et immobilisant tous les monstres (2.5s)',
+    specialCd: 4.5,
+    desc: 'Traité des glaces éternelles du Grand Nord capable de figer le sang des démons.'
+  },
+  fire: {
+    id: 'fire',
+    name: 'Grimoire des Flammes',
+    element: 'fire',
+    icon: '🔥',
+    color: '#ff4d4d',
+    badge: '90 🪙',
+    price: 90,
+    mainWeapon: 'fire_orb',
+    mainName: 'Météore Ardent',
+    mainDesc: 'Orbe ardent incandescent explosant à l\'impact en déflagration de zone (80px)',
+    specialSkill: 'fire_eruption',
+    specialName: 'Éruption Solaire',
+    specialDesc: 'Brasier dévastateur pulvérisant et embrasant les ennemis proches (130 dmg)',
+    specialCd: 4.0,
+    desc: 'Pages calcinées vibrant d\'une chaleur magique inextinguible.'
+  },
+  wind: {
+    id: 'wind',
+    name: 'Grimoire du Zéphyr',
+    element: 'wind',
+    icon: '🍃',
+    color: '#2dd4bf',
+    badge: '120 🪙',
+    price: 120,
+    mainWeapon: 'wind_blade',
+    mainName: 'Lame Zéphyr',
+    mainDesc: 'Rafales de vent tranchantes à haute vélocité perçant 3 monstres en ligne',
+    specialSkill: 'wind_cyclone',
+    specialName: 'Typhon Ascendant',
+    specialDesc: 'Vaste cyclone aspirant les monstres avant de les projeter au loin',
+    specialCd: 4.0,
+    desc: 'Manuscrit sylvestre dansant au gré des courants d\'air célestes.'
+  }
+};
+

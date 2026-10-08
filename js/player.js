@@ -4,6 +4,7 @@
 import { sfx } from './audio.js';
 import { Projectile } from './entities.js';
 import { CHARACTERS, spriteLoader, getSpriteRowFromAngle } from './sprites.js';
+import { GRIMOIRES_CATALOG } from './config.js';
 
 export class Player {
   constructor(x, y, characterId = 'warrior') {
@@ -60,8 +61,32 @@ export class Player {
     this.spearComboStep = 0;
     this.spearComboResetTimer = 0;
 
+    // Système de Grimoires Élémentaires (Eldrin le Mage)
+    this.unlockedGrimoires = ['arcane'];
+    this.equippedGrimoire = 'arcane';
+
     // Effets visuels des attaques au corps-à-corps (traînées de coups)
     this.attackVisuals = [];
+  }
+
+  equipGrimoire(grimoireId, engine) {
+    const g = GRIMOIRES_CATALOG[grimoireId];
+    if (!g) return;
+    this.equippedGrimoire = grimoireId;
+    this.mainWeapon = g.mainWeapon;
+    this.mainName = g.mainName;
+    this.specialSkill = g.specialSkill;
+    this.specialName = g.specialName;
+    this.specialCd = g.specialCd;
+    this.specialTimer = 0;
+
+    if (engine) {
+      engine.setupActionBar();
+      sfx.playBook();
+      engine.createHitParticles(this.x, this.y, g.color, 25);
+      engine.addShockwave(this.x, this.y, 110, g.color, 4);
+      engine.addFloatingText(this.x, this.y - 45, `📖 ${g.name.toUpperCase()} !`, g.color, 22);
+    }
   }
 
   // ==========================================
@@ -255,6 +280,54 @@ export class Player {
         break;
       }
 
+      case 'lightning_bolt': {
+        // Eldrin : Arc Voltaïque
+        this.mainAttackTimer = 0.32;
+        sfx.playLightning();
+        if (engine && engine.projectiles) {
+          engine.projectiles.push(
+            new Projectile(this.x, this.y, angle, 960, 38 * this.damageMultiplier, 1, 'lightning_bolt')
+          );
+        }
+        break;
+      }
+
+      case 'frost_bolt': {
+        // Eldrin : Javelot de Givre (Ralentissement)
+        this.mainAttackTimer = 0.38;
+        sfx.playFrost();
+        if (engine && engine.projectiles) {
+          engine.projectiles.push(
+            new Projectile(this.x, this.y, angle, 880, 44 * this.damageMultiplier, 1, 'frost_bolt')
+          );
+        }
+        break;
+      }
+
+      case 'fire_orb': {
+        // Eldrin : Météore Ardent
+        this.mainAttackTimer = 0.42;
+        sfx.playFireball();
+        if (engine && engine.projectiles) {
+          engine.projectiles.push(
+            new Projectile(this.x, this.y, angle, 800, 52 * this.damageMultiplier, 1, 'fire_orb')
+          );
+        }
+        break;
+      }
+
+      case 'wind_blade': {
+        // Eldrin : Lame Zéphyr (Perforante)
+        this.mainAttackTimer = 0.28;
+        sfx.playWind();
+        if (engine && engine.projectiles) {
+          engine.projectiles.push(
+            new Projectile(this.x, this.y, angle, 1020, 39 * this.damageMultiplier, 3, 'wind_blade')
+          );
+        }
+        break;
+      }
+
       case 'fireball': {
         // Ignis : Boule de Feu Explosive
         this.mainAttackTimer = 0.46;
@@ -430,6 +503,62 @@ export class Player {
         break;
       }
 
+      case 'lightning_storm': {
+        // Eldrin : Tempête de Foudre (Étourdissement 1.5s)
+        sfx.playLightning();
+        const radius = 220;
+        if (engine) {
+          engine.triggerScreenShake(7);
+          engine.addShockwave(this.x, this.y, radius, '#ffd700', 5);
+          engine.createHitParticles(this.x, this.y, '#fffb00', 30);
+          engine.addFloatingText(this.x, this.y - 45, '⚡ TEMPÊTE DE FOUDRE !', '#ffd700', 22);
+        }
+        this.hitRadialEnemies(engine, radius, 110 * this.damageMultiplier, 40, 1.5);
+        break;
+      }
+
+      case 'frost_blizzard': {
+        // Eldrin : Blizzard Polaire (Gel 2.5s)
+        sfx.playFreeze();
+        const radius = 190;
+        if (engine) {
+          engine.triggerScreenShake(5);
+          engine.addShockwave(this.x, this.y, radius, '#38bdf8', 6);
+          engine.createHitParticles(this.x, this.y, '#e0f2fe', 35);
+          engine.addFloatingText(this.x, this.y - 45, '❄️ BLIZZARD POLAIRE !', '#38bdf8', 22);
+        }
+        this.hitRadialEnemies(engine, radius, 85 * this.damageMultiplier, 20, 0, 2.5);
+        break;
+      }
+
+      case 'fire_eruption': {
+        // Eldrin : Éruption Solaire
+        sfx.playFireball();
+        const radius = 165;
+        if (engine) {
+          engine.triggerScreenShake(8);
+          engine.addShockwave(this.x, this.y, radius, '#ff4d4d', 7);
+          engine.createHitParticles(this.x, this.y, '#ff7700', 35);
+          engine.addFloatingText(this.x, this.y - 45, '🔥 ÉRUPTION SOLAIRE !', '#ff4d4d', 22);
+        }
+        this.hitRadialEnemies(engine, radius, 130 * this.damageMultiplier, 90);
+        break;
+      }
+
+      case 'wind_cyclone': {
+        // Eldrin : Typhon Ascendant
+        sfx.playWind();
+        const radius = 240;
+        if (engine) {
+          engine.triggerScreenShake(6);
+          engine.addShockwave(this.x, this.y, radius, '#2dd4bf', 5);
+          engine.createHitParticles(this.x, this.y, '#2dd4bf', 30);
+          engine.addFloatingText(this.x, this.y - 45, '🍃 TYPHON ASCENDANT !', '#2dd4bf', 22);
+        }
+        this.hitRadialEnemies(engine, radius, 95 * this.damageMultiplier, 100);
+        break;
+      }
+
       case 'flame_wave': {
         // Ignis : Vague Incendiaire
         sfx.playFireball();
@@ -496,24 +625,30 @@ export class Player {
     }
   }
 
-  hitRadialEnemies(engine, radius, damage, knockbackDist, stunDuration = 0) {
+  hitRadialEnemies(engine, radius, damage, knockbackDist, stunDuration = 0, freezeDuration = 0, slowDuration = 0) {
     if (!engine || !engine.enemies) return;
     for (const e of engine.enemies) {
       const dx = e.x - this.x;
       const dy = e.y - this.y;
       const dist = Math.hypot(dx, dy);
       if (dist <= radius + e.radius) {
-        this.applyHit(e, damage, knockbackDist, dx, dy, engine, stunDuration);
+        this.applyHit(e, damage, knockbackDist, dx, dy, engine, stunDuration, freezeDuration, slowDuration);
       }
     }
   }
 
-  applyHit(e, damage, knockbackDist, dirX, dirY, engine, stunDuration = 0) {
+  applyHit(e, damage, knockbackDist, dirX, dirY, engine, stunDuration = 0, freezeDuration = 0, slowDuration = 0) {
     e.hp -= damage;
     e.hitFlash = 0.12;
 
+    if (freezeDuration > 0) {
+      e.freezeTimer = Math.max(e.freezeTimer || 0, freezeDuration);
+    }
     if (stunDuration > 0) {
       e.stunTimer = Math.max(e.stunTimer || 0, stunDuration);
+    }
+    if (slowDuration > 0) {
+      e.slowTimer = Math.max(e.slowTimer || 0, slowDuration);
     }
 
     const len = Math.hypot(dirX, dirY) || 1;

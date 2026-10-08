@@ -4,7 +4,7 @@
  * les collisions, le spawner de vagues et l'interface utilisateur.
  */
 import { sfx } from './audio.js';
-import { UPGRADE_CATALOG } from './config.js';
+import { UPGRADE_CATALOG, GRIMOIRES_CATALOG } from './config.js';
 import { Player } from './player.js';
 import { Enemy } from './enemy.js';
 import { Projectile, Gem } from './entities.js';
@@ -26,6 +26,9 @@ export class GameEngine {
     this.levelupScreen = document.getElementById('levelup-screen');
     this.pauseScreen = document.getElementById('pause-screen');
     this.gameoverScreen = document.getElementById('gameover-screen');
+    this.libraryScreen = document.getElementById('library-screen');
+    this.grimoiresGrid = document.getElementById('grimoires-grid');
+    this.libraryGoldAmount = document.getElementById('library-gold-amount');
     this.upgradeContainer = document.getElementById('upgrade-cards-container');
     this.equipmentHud = document.getElementById('equipment-hud');
 
@@ -40,6 +43,8 @@ export class GameEngine {
     this.playerLevelSpan = document.getElementById('player-level');
     this.btnSound = document.getElementById('btn-sound');
     this.btnPause = document.getElementById('btn-pause');
+    this.btnLibrary = document.getElementById('btn-library');
+    this.btnCloseLibrary = document.getElementById('btn-close-library');
 
     // Boss HUD
     this.bossHud = document.getElementById('boss-hud');
@@ -292,6 +297,18 @@ export class GameEngine {
     this.btnPause.addEventListener('click', () => {
       this.togglePause();
     });
+
+    if (this.btnLibrary) {
+      this.btnLibrary.addEventListener('click', () => {
+        this.toggleLibrary();
+      });
+    }
+
+    if (this.btnCloseLibrary) {
+      this.btnCloseLibrary.addEventListener('click', () => {
+        this.closeLibrary();
+      });
+    }
   }
 
   startNewGame() {
@@ -299,6 +316,7 @@ export class GameEngine {
     this.gameoverScreen.classList.remove('active');
     this.pauseScreen.classList.remove('active');
     this.levelupScreen.classList.remove('active');
+    if (this.libraryScreen) this.libraryScreen.classList.remove('active');
     this.bossHud.classList.add('hidden');
 
     this.gameTime = 0;
@@ -345,6 +363,10 @@ export class GameEngine {
   }
 
   togglePause() {
+    if (this.state === 'LIBRARY') {
+      this.closeLibrary();
+      return;
+    }
     if (this.state === 'PLAYING') {
       this.state = 'PAUSED';
       this.pauseScreen.classList.add('active');
@@ -352,6 +374,135 @@ export class GameEngine {
       this.state = 'PLAYING';
       this.pauseScreen.classList.remove('active');
     }
+  }
+
+  // ==========================================
+  // GESTION DE LA BIBLIOTHÈQUE DES ARCANES & GRIMOIRES
+  // ==========================================
+  openLibrary() {
+    if (this.state !== 'PLAYING' && this.state !== 'PAUSED') return;
+    this.state = 'LIBRARY';
+    sfx.playBook();
+    if (this.libraryScreen) {
+      this.libraryScreen.classList.add('active');
+    }
+    this.renderGrimoiresGrid();
+  }
+
+  closeLibrary() {
+    if (this.state === 'LIBRARY') {
+      this.state = 'PLAYING';
+      if (this.libraryScreen) {
+        this.libraryScreen.classList.remove('active');
+      }
+    }
+  }
+
+  toggleLibrary() {
+    if (this.state === 'LIBRARY') {
+      this.closeLibrary();
+    } else if (this.state === 'PLAYING') {
+      this.openLibrary();
+    }
+  }
+
+  renderGrimoiresGrid() {
+    if (!this.grimoiresGrid) return;
+    this.grimoiresGrid.innerHTML = '';
+
+    const p = this.player;
+    const currentGold = p ? (p.gold || 0) : 0;
+    if (this.libraryGoldAmount) {
+      this.libraryGoldAmount.textContent = currentGold;
+    }
+
+    const isMage = p && p.characterId === 'mage';
+
+    Object.values(GRIMOIRES_CATALOG).forEach(g => {
+      const card = document.createElement('div');
+      card.className = 'grimoire-card';
+
+      const isUnlocked = p && p.unlockedGrimoires && p.unlockedGrimoires.includes(g.id);
+      const isEquipped = p && p.equippedGrimoire === g.id;
+
+      if (isEquipped) {
+        card.classList.add('active-book');
+      }
+
+      card.innerHTML = `
+        <div class="grimoire-top">
+          <span class="grimoire-icon" style="color: ${g.color};">${g.icon}</span>
+          <span class="grimoire-badge ${g.price > 0 ? 'gold' : ''}">${isUnlocked ? '✓ Acquis' : (g.price > 0 ? `${g.price} 🪙` : 'Gratuit')}</span>
+        </div>
+        <h3 class="grimoire-name" style="color: ${g.color};">${g.name}</h3>
+        <p class="grimoire-lore">${g.desc}</p>
+        <div class="grimoire-skills-preview">
+          <div class="grimoire-skill-row">
+            <span class="grimoire-skill-title">⚔️ ${g.mainName}</span>
+            <span class="grimoire-skill-desc">${g.mainDesc}</span>
+          </div>
+          <div class="grimoire-skill-row">
+            <span class="grimoire-skill-title">⚡ ${g.specialName} (${g.specialCd}s)</span>
+            <span class="grimoire-skill-desc">${g.specialDesc}</span>
+          </div>
+        </div>
+      `;
+
+      const btnContainer = document.createElement('div');
+      btnContainer.style.marginTop = 'auto';
+
+      if (!isMage) {
+        btnContainer.innerHTML = `<div class="badge-equipped" style="color: #94a3b8; border-color: #475569;">Réservé à Eldrin le Mage</div>`;
+      } else if (isEquipped) {
+        btnContainer.innerHTML = `<div class="badge-equipped">✨ ÉQUIPÉ EN MAIN</div>`;
+      } else if (isUnlocked) {
+        const equipBtn = document.createElement('button');
+        equipBtn.className = 'grimoire-action-btn btn-equip-book';
+        equipBtn.innerHTML = `<span>ÉQUIPER LE GRIMOIRE</span> <span>📖</span>`;
+        equipBtn.addEventListener('click', () => {
+          this.equipGrimoire(g.id);
+        });
+        btnContainer.appendChild(equipBtn);
+      } else {
+        const buyBtn = document.createElement('button');
+        buyBtn.className = 'grimoire-action-btn btn-buy-book';
+        const canAfford = currentGold >= g.price;
+        buyBtn.disabled = !canAfford;
+        buyBtn.innerHTML = canAfford 
+          ? `<span>ACHETER (${g.price} 🪙)</span> <span>✨</span>` 
+          : `<span>OR INSUFFISANT (${g.price} 🪙)</span> <span>🔒</span>`;
+        buyBtn.addEventListener('click', () => {
+          this.buyGrimoire(g.id);
+        });
+        btnContainer.appendChild(buyBtn);
+      }
+
+      card.appendChild(btnContainer);
+      this.grimoiresGrid.appendChild(card);
+    });
+  }
+
+  buyGrimoire(grimoireId) {
+    const g = GRIMOIRES_CATALOG[grimoireId];
+    if (!g || !this.player) return;
+
+    const currentGold = this.player.gold || 0;
+    if (currentGold < g.price) return;
+
+    this.player.gold -= g.price;
+    if (!this.player.unlockedGrimoires) this.player.unlockedGrimoires = ['arcane'];
+    this.player.unlockedGrimoires.push(grimoireId);
+
+    sfx.playLevelUp();
+    this.player.equipGrimoire(grimoireId, this);
+    this.renderGrimoiresGrid();
+    this.updateHUD();
+  }
+
+  equipGrimoire(grimoireId) {
+    if (!this.player) return;
+    this.player.equipGrimoire(grimoireId, this);
+    this.renderGrimoiresGrid();
   }
 
   // ==========================================
@@ -452,20 +603,33 @@ export class GameEngine {
       spear: '🗡️',
       bow: '🏹',
       arcane_bolt: '🔮',
+      lightning_bolt: '⚡',
+      frost_bolt: '❄️',
+      fire_orb: '🔥',
+      wind_blade: '🍃',
       fireball: '🔥',
       greatsword: '🪓',
       shield_bash: '🛡️',
       spear_charge: '⚡',
       multishot: '🏹',
       arcane_nova: '💫',
+      lightning_storm: '🌩️',
+      frost_blizzard: '❄️',
+      fire_eruption: '🌋',
+      wind_cyclone: '🌪️',
       flame_wave: '🌊',
       ground_slam: '💥'
     };
 
-    if (slotMainName) slotMainName.textContent = char.mainName || 'Attaque';
-    if (slotMainIcon) slotMainIcon.textContent = icons[char.mainWeapon] || '⚔️';
-    if (slotSpecialName) slotSpecialName.textContent = char.specialName || 'Compétence';
-    if (slotSpecialIcon) slotSpecialIcon.textContent = icons[char.specialSkill] || '🛡️';
+    const currentMain = this.player.mainWeapon || char.mainWeapon;
+    const currentMainName = this.player.mainName || char.mainName;
+    const currentSpecial = this.player.specialSkill || char.specialSkill;
+    const currentSpecialName = this.player.specialName || char.specialName;
+
+    if (slotMainName) slotMainName.textContent = currentMainName || 'Attaque';
+    if (slotMainIcon) slotMainIcon.textContent = icons[currentMain] || '⚔️';
+    if (slotSpecialName) slotSpecialName.textContent = currentSpecialName || 'Compétence';
+    if (slotSpecialIcon) slotSpecialIcon.textContent = icons[currentSpecial] || '🛡️';
   }
 
   // ==========================================
@@ -705,6 +869,70 @@ export class GameEngine {
     this.screenShake = Math.max(this.screenShake, intensity);
   }
 
+  // ==========================================
+  // EFFETS DE SORTS ÉLÉMENTAIRES (MAGE)
+  // ==========================================
+  triggerChainLightning(originX, originY, maxBounces, bounceDamage, initialEnemy = null) {
+    if (!this.enemies || this.enemies.length === 0) return;
+    let currentX = originX;
+    let currentY = originY;
+    const hitSet = new Set(initialEnemy ? [initialEnemy] : []);
+
+    for (let b = 0; b < maxBounces; b++) {
+      let closest = null;
+      let closestDist = 180;
+
+      for (const e of this.enemies) {
+        if (hitSet.has(e) || e.hp <= 0) continue;
+        const d = Math.hypot(e.x - currentX, e.y - currentY);
+        if (d < closestDist) {
+          closestDist = d;
+          closest = e;
+        }
+      }
+
+      if (!closest) break;
+
+      hitSet.add(closest);
+      closest.hp -= bounceDamage;
+      closest.hitFlash = 0.12;
+      closest.stunTimer = 0.4;
+      this.addFloatingText(closest.x, closest.y - 12, Math.round(bounceDamage), '#ffd700', 14);
+      this.createHitParticles(closest.x, closest.y, '#fffb00', 5);
+
+      if (this.player && this.player.attackVisuals) {
+        this.player.attackVisuals.push({
+          type: 'charge_trail',
+          startX: currentX,
+          startY: currentY,
+          endX: closest.x,
+          endY: closest.y,
+          color: '#ffd700',
+          time: 0,
+          duration: 0.14
+        });
+      }
+
+      currentX = closest.x;
+      currentY = closest.y;
+    }
+    sfx.playLightning();
+  }
+
+  triggerFireExplosion(x, y, radius, damage) {
+    this.triggerScreenShake(4);
+    this.addShockwave(x, y, radius, '#ff4d00', 4);
+    this.createHitParticles(x, y, '#ff7700', 16);
+    for (const e of this.enemies) {
+      const d = Math.hypot(e.x - x, e.y - y);
+      if (d <= radius + e.radius) {
+        e.hp -= damage;
+        e.hitFlash = 0.12;
+        this.addFloatingText(e.x, e.y - 12, Math.round(damage), '#ff4d00', 15);
+      }
+    }
+  }
+
   gameOver() {
     this.state = 'GAMEOVER';
     this.bossHud.classList.add('hidden');
@@ -835,6 +1063,13 @@ export class GameEngine {
           this.addFloatingText(d.x, d.y - 45, `🚪 ${d.name} (${d.sub})`, d.color || '#2ec4b6', 20);
         }
       }
+    }
+
+    // 5. Détection de proximité de l'Archimage Kaelen (Bibliothèque)
+    const distToKaelen = Math.hypot(this.player.x - 3260, this.player.y - 3490);
+    if (distToKaelen <= 50 && (!this._libraryAnnounced || this.gameTime - this._libraryAnnounced > 10)) {
+      this._libraryAnnounced = this.gameTime;
+      this.addFloatingText(3260, 3435, "📖 OUVREZ LA BIBLIOTHÈQUE (B)", '#c084fc', 20);
     }
   }
 
@@ -1058,6 +1293,17 @@ export class GameEngine {
             this.addFloatingText(enemy.x, enemy.y - 12, Math.round(proj.damage), '#ffffff', 14);
             this.createHitParticles(proj.x, proj.y, '#00f0ff', 3);
             sfx.playHit();
+
+            // EFFETS ÉLÉMENTAIRES D'IMPACT
+            if (proj.type === 'frost_bolt') {
+              enemy.slowTimer = 3.0;
+              this.createHitParticles(enemy.x, enemy.y, '#38bdf8', 6);
+            } else if (proj.type === 'lightning_bolt') {
+              enemy.stunTimer = 0.5;
+              this.triggerChainLightning(enemy.x, enemy.y, 2, proj.damage * 0.75, enemy);
+            } else if (proj.type === 'fire_orb') {
+              this.triggerFireExplosion(enemy.x, enemy.y, 80, proj.damage * 0.85);
+            }
 
             proj.hitList.add(enemy);
             proj.pierce--;

@@ -58,7 +58,12 @@ Invazion/
   - `warrior` (*Valérian*) : ⚔️ Combo d'Épée 3 coups (Entaille D ➔ Entaille G ➔ Estoc puissant perçant) + 🌪️ Tourbillon d'Acier à 360°.
   - `soldier` (*Marcus*) : 🗡️ Combo de Lance 3 temps (Estoc 1 ➔ Estoc 2 ➔ Balayage d'hast 180°) + ⚡ Charge Transperçante (ruée empalante 230 px).
   - `archer` (*Sylvia*) : 🏹 Arc Sylvestre (tirs véloces 1050 px/s) + 🍃 Volée de 5 Flèches en éventail avec recul tactique.
-  - `mage` (*Eldrin*) : 🔮 Éclair d'Arcane (projectiles énergétiques) + 💫 Nova Stellaire à 360°.
+  - `mage` (*Eldrin*) : 🔮 **Maître des Éléments & Bibliothèque des Arcanes** : Achète des Grimoires ancestraux avec ses pièces d'or 🪙 dans la Bibliothèque d'Oakhaven ou via le bouton HUD 📖 / touche `B` pour maîtriser chaque élément :
+    - 🔮 *Arcane* (Base) : Éclair d'Arcane (860 px/s) + 💫 Nova Stellaire à 360°.
+    - ⚡ *Foudre* (40 🪙) : Arc Voltaïque rebondissant en chaîne sur 3 cibles + 🌩️ Tempête de Foudre étourdissante (1.5s).
+    - ❄️ *Givre* (60 🪙) : Javelot de Givre perçant (ralentit -50% 3s) + ❄️ Blizzard Polaire gelant les ennemis (2.5s).
+    - 🔥 *Flammes* (90 🪙) : Météore Ardent explosif en zone + 🌋 Éruption Solaire dévastatrice (130 dmg).
+    - 🍃 *Zéphyr* (120 🪙) : Lames Zéphyr perçantes à haute vélocité + 🌪️ Typhon Ascendant aspirant puis projetant les hordes.
   - `pyro` (*Ignis*) : 🔥 Boule de Feu (projectiles incendiaires explosifs) + 🌊 Vague de Flammes.
   - `orc` (*Gorak*) : 🪓 Fendoir Barbare Lourd (fendage de zone puissant) + 💥 Séisme Terrestre avec étourdissement.
 - **Catalogue Monstres (`MONSTER_SPRITES`)** :

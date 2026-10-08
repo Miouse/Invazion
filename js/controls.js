@@ -100,6 +100,13 @@ export class ControlsManager {
         }
       }
 
+      // Bibliothèque des Arcanes avec touche B
+      if (e.key === 'b' || e.key === 'B') {
+        if (this.engine.state === 'PLAYING' || this.engine.state === 'LIBRARY') {
+          this.engine.toggleLibrary();
+        }
+      }
+
       // Pause avec Échap ou P
       if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
         this.engine.togglePause();
