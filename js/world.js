@@ -56,7 +56,16 @@ export class WorldMap {
     this.buildSpatialGrid();
 
     // 10. Grille de navigation pour Pathfinding A* (franchissement automatique des ponts)
-    this.initNavGrid();
+        this.initNavGrid();
+
+    // 11. Brouillard de Guerre & Système d'Exploration (Grille 70 x 70 de 100px)
+    this.fogCols = 70;
+    this.fogRows = 70;
+    this.fogCellSize = 100;
+    this.fogOfWar = new Uint8Array(this.fogCols * this.fogRows);
+    this.initTerrainGrid();
+    // Dévoilement initial de la place d'Oakhaven
+    this.revealFog(3160, 3540, 450);
   }
 
   loadImg(src) {
@@ -1269,6 +1278,45 @@ export class WorldMap {
       ctx.fillRect(-b.w / 2, -b.h / 2 + 10, b.w, b.h - 10);
       ctx.fillStyle = b.color;
       ctx.fillRect(-b.w / 2 - 3, -b.h / 2, b.w + 6, 12);
+
+      // Si c'est l'étal de Barnabé à Oakhaven (x=3080, y=3510)
+      if (Math.abs(b.x - 3080) < 5 && Math.abs(b.y - 3510) < 5) {
+        // PNJ Barnabé debout à côté de l'étal
+        ctx.save();
+        ctx.translate(22, 4);
+
+        // Ombre portée
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.beginPath();
+        ctx.ellipse(0, 8, 8, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Corps / Tunique marron
+        ctx.fillStyle = '#6b4226';
+        ctx.fillRect(-6, -4, 12, 12);
+
+        // Chapeau à plume d'explorateur
+        ctx.fillStyle = '#264653';
+        ctx.fillRect(-7, -10, 14, 5);
+        ctx.fillStyle = '#e76f51'; // Plume rouge
+        ctx.fillRect(4, -14, 3, 6);
+
+        // Visage
+        ctx.fillStyle = '#f6bd60';
+        ctx.fillRect(-4, -7, 8, 5);
+
+        // Lanterne suspendue
+        ctx.fillStyle = '#ffd700';
+        ctx.fillRect(8, -2, 4, 6);
+        ctx.restore();
+
+        // Bulle informative
+        const bubblePulse = Math.sin(time * 3) * 2;
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillStyle = '#ffd700';
+        ctx.textAlign = 'center';
+        ctx.fillText('🧭 ÉCHOPPE (F)', 0, -22 + bubblePulse);
+      }
     } else if (b.type === 'pier') {
       // Ponton de bois sur l'eau
       ctx.fillStyle = '#6f4518';
@@ -2669,6 +2717,21 @@ export class WorldMap {
           icon: '⛲'
         };
       }
+    }
+
+    
+    // E.2 Échoppe d'Aventure de Barnabé le Marchand (Oakhaven)
+    const dBarnabe = Math.hypot(px - 3080, py - 3520);
+    if (dBarnabe <= 65 && dBarnabe < minDist) {
+      minDist = dBarnabe;
+      closest = {
+        type: 'adventure_shop',
+        x: 3080,
+        y: 3510,
+        label: "Échoppe d'Aventure (Barnabé)",
+        actionText: "OUVRIR L'ÉCHOPPE D'AVENTURE",
+        icon: '🧭'
+      };
     }
 
     return closest;

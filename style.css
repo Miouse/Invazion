@@ -1674,3 +1674,311 @@ html, body {
 
 
 
+
+
+/* ==========================================================================
+   MINI-CARTE & BROUILLARD DE GUERRE (ÉCHOPPE DE BARNABÉ)
+   ========================================================================== */
+.minimap-container {
+  position: absolute;
+  top: 70px;
+  right: 18px;
+  z-index: 25;
+  background: rgba(11, 15, 25, 0.92);
+  border: 2px solid rgba(255, 215, 0, 0.45);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 25px rgba(255, 215, 0, 0.2);
+  border-radius: 14px;
+  padding: 8px 10px 10px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  backdrop-filter: blur(10px);
+  pointer-events: auto;
+  user-select: none;
+  animation: minimapFadeIn 0.3s ease;
+}
+
+@keyframes minimapFadeIn {
+  from { opacity: 0; transform: scale(0.92) translateY(-8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.minimap-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-family: var(--font-title);
+  font-size: 11.5px;
+  letter-spacing: 1px;
+  color: #ffd700;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+  padding-bottom: 4px;
+}
+
+.minimap-title-text {
+  font-weight: 700;
+}
+
+.minimap-coords {
+  font-size: 10px;
+  color: #94a3b8;
+  font-family: var(--font-sans);
+}
+
+.minimap-frame {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+#minimap-canvas {
+  width: 160px;
+  height: 160px;
+  border-radius: 8px;
+  background: #080b12;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: block;
+  image-rendering: pixelated;
+}
+
+.minimap-legend {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  width: 100%;
+  font-size: 10px;
+  color: #94a3b8;
+  font-family: var(--font-title);
+  letter-spacing: 0.5px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.legend-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.legend-dot.player-dot {
+  background: #00f0ff;
+  box-shadow: 0 0 6px #00f0ff;
+}
+
+.legend-dot.town-dot {
+  background: #ffd700;
+  box-shadow: 0 0 6px #ffd700;
+}
+
+.legend-dot.dungeon-dot {
+  background: #ef4444;
+  box-shadow: 0 0 6px #ef4444;
+}
+
+/* ==========================================================================
+   ÉCHOPPE D'AVENTURE (BARNABÉ LE MARCHAND)
+   ========================================================================== */
+.adventure-shop-modal-card {
+  max-width: 820px;
+  width: 95%;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  padding: 26px 30px;
+  background: rgba(16, 13, 22, 0.96);
+  border: 1px solid rgba(255, 183, 3, 0.45);
+  box-shadow: 0 0 45px rgba(255, 183, 3, 0.25), 0 20px 45px rgba(0, 0, 0, 0.9);
+  border-radius: 18px;
+}
+
+.card-glow.amber {
+  background: radial-gradient(circle, rgba(255, 183, 3, 0.25) 0%, transparent 70%);
+}
+
+.shop-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 183, 3, 0.25);
+  gap: 16px;
+}
+
+.shop-title-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.shop-main-icon {
+  font-size: 38px;
+  background: rgba(255, 183, 3, 0.15);
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 183, 3, 0.35);
+}
+
+.shop-title {
+  font-family: var(--font-title);
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #ffd700;
+  margin: 0;
+  text-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+}
+
+.shop-gold-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 215, 0, 0.12);
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-family: var(--font-title);
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffd700;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+}
+
+.shop-items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+  overflow-y: auto;
+  max-height: 54vh;
+  padding: 6px 4px 14px 4px;
+}
+
+.shop-item-card {
+  background: rgba(24, 20, 34, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  position: relative;
+}
+
+.shop-item-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 183, 3, 0.5);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 183, 3, 0.2);
+}
+
+.shop-item-card.purchased {
+  border-color: rgba(34, 197, 94, 0.4);
+  background: rgba(18, 28, 22, 0.75);
+}
+
+.shop-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.shop-item-icon-box {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  background: rgba(255, 183, 3, 0.12);
+  border: 1px solid rgba(255, 183, 3, 0.3);
+}
+
+.shop-item-cost {
+  font-family: var(--font-title);
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffd700;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 4px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 215, 0, 0.25);
+}
+
+.shop-item-name {
+  font-family: var(--font-title);
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 6px 0;
+}
+
+.shop-item-desc {
+  font-size: 12.5px;
+  color: #94a3b8;
+  line-height: 1.4;
+  margin-bottom: 16px;
+  min-height: 48px;
+}
+
+.btn-buy-shop-item {
+  margin-top: auto;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-family: var(--font-title);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s ease;
+  border: none;
+  background: linear-gradient(135deg, #ffd700, #ff8800);
+  color: #0b0f19;
+  box-shadow: 0 4px 14px rgba(255, 136, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-buy-shop-item:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
+}
+
+.btn-buy-shop-item:disabled {
+  background: #334155;
+  color: #64748b;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.badge-purchased {
+  margin-top: auto;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-family: var(--font-title);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  background: rgba(34, 197, 94, 0.18);
+  border: 1px solid #22c55e;
+  color: #4ade80;
+  letter-spacing: 1px;
+}
+
+.shop-footer {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}

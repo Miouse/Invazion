@@ -49,6 +49,28 @@ export class GameEngine {
     // Bouton & invite d'interaction universelle (Touche F)
     this.interactionHudContainer = document.getElementById('interaction-hud-container');
     this.btnInteract = document.getElementById('btn-interact');
+
+    // Cycle Jour / Nuit (300 secondes = 5 minutes = 24 heures)
+    this.dayCycleDuration = 300;
+    this.dayCycleOffset = 100; // Démarre le jeu à 08h00 du matin (Plein jour)
+
+    // Éléments de la Mini-Carte avec Brouillard de Guerre
+    this.minimapContainer = document.getElementById('minimap-container');
+    this.minimapCanvas = document.getElementById('minimap-canvas');
+    this.minimapCtx = this.minimapCanvas ? this.minimapCanvas.getContext('2d') : null;
+    this.minimapCoords = document.getElementById('minimap-coords');
+
+    // Éléments de l'Échoppe d'Aventure (Barnabé)
+    this.adventureShopScreen = document.getElementById('adventure-shop-screen');
+    this.shopItemsGrid = document.getElementById('shop-items-grid');
+    this.shopGoldAmount = document.getElementById('shop-gold-amount');
+    this.btnCloseShop = document.getElementById('btn-close-shop');
+
+    // Canvas hors-champ dédié à l'éclairage nocturne dynamique (60 FPS)
+    this.lightingCanvas = document.createElement('canvas');
+    this.lightingCanvas.width = this.width || window.innerWidth;
+    this.lightingCanvas.height = this.height || window.innerHeight;
+    this.lightingCtx = this.lightingCanvas.getContext('2d');
     this.interactIcon = document.getElementById('interact-icon');
     this.interactLabel = document.getElementById('interact-label');
 
@@ -257,6 +279,10 @@ export class GameEngine {
     this.height = window.innerHeight;
     this.canvas.width = this.width;
     this.canvas.height = this.height;
+    if (this.lightingCanvas) {
+      this.lightingCanvas.width = this.width;
+      this.lightingCanvas.height = this.height;
+    }
   }
 
   setupInputs() {
@@ -321,6 +347,12 @@ export class GameEngine {
       });
     }
 
+    if (this.btnCloseShop) {
+      this.btnCloseShop.addEventListener('click', () => {
+        this.closeShop();
+      });
+    }
+
     if (this.btnInteract) {
       this.btnInteract.addEventListener('click', () => {
         this.triggerInteraction();
@@ -334,6 +366,8 @@ export class GameEngine {
     this.pauseScreen.classList.remove('active');
     this.levelupScreen.classList.remove('active');
     if (this.libraryScreen) this.libraryScreen.classList.remove('active');
+    if (this.adventureShopScreen) this.adventureShopScreen.classList.remove('active');
+    if (this.minimapContainer) this.minimapContainer.classList.add('hidden');
     this.bossHud.classList.add('hidden');
 
     this.gameTime = 0;
@@ -393,6 +427,10 @@ export class GameEngine {
   togglePause() {
     if (this.state === 'LIBRARY') {
       this.closeLibrary();
+      return;
+    }
+    if (this.state === 'SHOP') {
+      this.closeShop();
       return;
     }
     if (this.state === 'PLAYING') {
@@ -595,6 +633,10 @@ export class GameEngine {
       case 'library_npc':
         this.openLibrary();
         break;
+
+      case 'adventure_shop':
+        this.openShop();
+        break;
     }
   }
 
@@ -613,6 +655,20 @@ export class GameEngine {
     const bName = (building && building.name) ? building.name : "l'Auberge";
     this.addFloatingText(3500, 9240, `🏠 Bienvenue dans ${bName} !`, '#ffd700', 22);
     this.updateInteractionPrompt();
+
+    // Mise à jour de l'exploration du Brouillard de Guerre
+    if (this.player && this.worldMap && !this.isInsideHouse) {
+      this.worldMap.revealFog(this.player.x, this.player.y, 350);
+    }
+
+    // Rendu de la Mini-Carte si l'objet Carte est possédé
+    if (this.player && this.player.hasMiniMap && this.minimapCtx && this.worldMap) {
+      this.worldMap.drawMiniMap(this.minimapCtx, this.player);
+      if (this.minimapCoords) {
+        const v = this.worldMap.getCurrentVillage(this.player.x, this.player.y);
+        this.minimapCoords.textContent = v ? v.name.toUpperCase() : "EXPLORATION";
+      }
+    }
   }
 
   exitHouse() {
@@ -1531,9 +1587,21 @@ export class GameEngine {
   }
 
   updateHUD() {
-    const min = Math.floor(this.gameTime / 60);
-    const sec = Math.floor(this.gameTime % 60);
-    this.timeDisplay.textContent = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+    // Calcul du cycle Jour / Nuit (300 secondes réelles = 24 heures en jeu)
+    const t = this.gameTime + this.dayCycleOffset;
+    const currentDay = Math.floor(t / this.dayCycleDuration) + 1;
+    const dayProgress = (t % this.dayCycleDuration) / this.dayCycleDuration;
+    const hourFloat = dayProgress * 24;
+    const hours = Math.floor(hourFloat);
+    const minutes = Math.floor((hourFloat - hours) * 60);
+
+    if (this.player && this.player.hasWatch) {
+      const isDay = hours >= 6 && hours < 20;
+      const icon = isDay ? '☀️' : '🌙';
+      this.timeDisplay.innerHTML = `${icon} J${currentDay} — ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    } else {
+      this.timeDisplay.innerHTML = `Jour ${currentDay} <span style="font-size:10px; color:#ffd700; opacity:0.85;">(🔒 Montre)</span>`;
+    }
     this.killsDisplay.textContent = this.kills;
     if (this.gemsDisplay) {
       this.gemsDisplay.textContent = this.player ? (this.player.gold || 0) : 0;
@@ -2240,26 +2308,131 @@ export class GameEngine {
   }
 
   renderDynamicLighting() {
-    // Lumière d'ambiance claire et nette sans obscurcir la salle
-    this.ctx.save();
-    const light = this.ctx.createRadialGradient(
-      this.player.x, this.player.y, 250,
-      this.player.x, this.player.y, 2500
-    );
-    light.addColorStop(0, 'rgba(0, 240, 255, 0.03)');
-    light.addColorStop(0.7, 'rgba(0, 0, 0, 0)');
-    light.addColorStop(1, 'rgba(0, 0, 0, 0.12)'); // Très léger dégradé uniquement aux confins absolus
+    if (!this.player || !this.lightingCtx) return;
 
-    this.ctx.fillStyle = light;
-    const viewW = this.width / this.zoom;
-    const viewH = this.height / this.zoom;
-    this.ctx.fillRect(
-      this.camera.x - viewW / 2 - 200,
-      this.camera.y - viewH / 2 - 200,
-      viewW + 400,
-      viewH + 400
-    );
-    this.ctx.restore();
+    // Calcul de l'heure actuelle
+    const t = this.gameTime + this.dayCycleOffset;
+    const dayProgress = (t % this.dayCycleDuration) / this.dayCycleDuration;
+    const hourFloat = dayProgress * 24;
+
+    let ambientDarkness = 0;
+    let tintColor = null;
+
+    if (this.isInsideHouse) {
+      // Ambiance tamisée chaleureuse constante dans l'auberge
+      ambientDarkness = 0.22;
+      tintColor = 'rgba(255, 140, 40, 0.05)';
+    } else {
+      // Dehors : 4 phases
+      if (hourFloat >= 8 && hourFloat < 18) {
+        // 1. Plein Jour (08h - 18h) : Clarté totale
+        ambientDarkness = 0;
+      } else if (hourFloat >= 18 && hourFloat < 21) {
+        // 2. Crépuscule (18h - 21h) : La pénombre s'installe
+        const p = (hourFloat - 18) / 3;
+        ambientDarkness = p * 0.86;
+        tintColor = `rgba(180, 50, 40, ${p * 0.22})`;
+      } else if (hourFloat >= 21 || hourFloat < 5) {
+        // 3. Nuit Noire (21h - 05h) : Obscurité profonde
+        ambientDarkness = 0.88;
+        tintColor = 'rgba(10, 20, 50, 0.12)';
+      } else {
+        // 4. Aube (05h - 08h) : Lueur dorée montante
+        const p = (hourFloat - 5) / 3;
+        ambientDarkness = (1 - p) * 0.86;
+        tintColor = `rgba(255, 150, 50, ${(1 - p) * 0.20})`;
+      }
+    }
+
+    // Tracé de l'obscurité avec découpes de lumière
+    if (ambientDarkness > 0.04) {
+      this.lightingCtx.clearRect(0, 0, this.width, this.height);
+      this.lightingCtx.fillStyle = `rgba(4, 7, 20, ${ambientDarkness})`;
+      this.lightingCtx.fillRect(0, 0, this.width, this.height);
+
+      // Découpe des sources de lumière (destination-out)
+      this.lightingCtx.save();
+      this.lightingCtx.globalCompositeOperation = 'destination-out';
+
+      // Source 1 : Halo du Joueur (Lanterne / Torche de ~300 px)
+      const pScreenX = (this.player.x - this.camera.x) * this.zoom + this.width / 2;
+      const pScreenY = (this.player.y - this.camera.y) * this.zoom + this.height / 2;
+      const pRadius = 310 * this.zoom;
+
+      const playerGrad = this.lightingCtx.createRadialGradient(
+        pScreenX, pScreenY, 40 * this.zoom,
+        pScreenX, pScreenY, pRadius
+      );
+      playerGrad.addColorStop(0, 'rgba(0, 0, 0, 1)');
+      playerGrad.addColorStop(0.7, 'rgba(0, 0, 0, 0.75)');
+      playerGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+      this.lightingCtx.fillStyle = playerGrad;
+      this.lightingCtx.beginPath();
+      this.lightingCtx.arc(pScreenX, pScreenY, pRadius, 0, Math.PI * 2);
+      this.lightingCtx.fill();
+
+      // Source 2 : Lumières du Monde (Feux de camp, fontaines, braseros, lanterne de Barnabé)
+      if (this.worldMap && this.worldMap.getLightSources) {
+        const lights = this.worldMap.getLightSources(this.isInsideHouse);
+        for (const l of lights) {
+          const sx = (l.x - this.camera.x) * this.zoom + this.width / 2;
+          const sy = (l.y - this.camera.y) * this.zoom + this.height / 2;
+          const sRad = l.radius * this.zoom;
+
+          // Frustum culling pour les lumières
+          if (sx + sRad > 0 && sx - sRad < this.width && sy + sRad > 0 && sy - sRad < this.height) {
+            const lightGrad = this.lightingCtx.createRadialGradient(
+              sx, sy, 20 * this.zoom,
+              sx, sy, sRad
+            );
+            lightGrad.addColorStop(0, 'rgba(0, 0, 0, 1)');
+            lightGrad.addColorStop(0.75, 'rgba(0, 0, 0, 0.7)');
+            lightGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+            this.lightingCtx.fillStyle = lightGrad;
+            this.lightingCtx.beginPath();
+            this.lightingCtx.arc(sx, sy, sRad, 0, Math.PI * 2);
+            this.lightingCtx.fill();
+          }
+        }
+      }
+
+      this.lightingCtx.restore();
+
+      // Application du calque d'éclairage sur le canvas principal
+      this.ctx.drawImage(this.lightingCanvas, 0, 0);
+
+      // Yeux rouges perçants des monstres dans l'obscurité
+      if (!this.isInsideHouse && ambientDarkness > 0.4 && this.enemies) {
+        this.ctx.save();
+        for (const e of this.enemies) {
+          const ex = (e.x - this.camera.x) * this.zoom + this.width / 2;
+          const ey = (e.y - this.camera.y) * this.zoom + this.height / 2;
+
+          // Si le monstre est dans la pénombre hors du halo direct du joueur
+          const distToPlayer = Math.hypot(e.x - this.player.x, e.y - this.player.y);
+          if (distToPlayer > 180 && distToPlayer < 900) {
+            this.ctx.fillStyle = '#ff2222';
+            this.ctx.shadowColor = '#ff0000';
+            this.ctx.shadowBlur = 6;
+            this.ctx.beginPath();
+            this.ctx.arc(ex - 4, ey - 10, 1.8, 0, Math.PI * 2);
+            this.ctx.arc(ex + 4, ey - 10, 1.8, 0, Math.PI * 2);
+            this.ctx.fill();
+          }
+        }
+        this.ctx.restore();
+      }
+    }
+
+    // Teinte d'ambiance chaude (Aube / Crépuscule)
+    if (tintColor) {
+      this.ctx.save();
+      this.ctx.fillStyle = tintColor;
+      this.ctx.fillRect(0, 0, this.width, this.height);
+      this.ctx.restore();
+    }
   }
 
   renderPlayerAura() {

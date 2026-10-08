@@ -78,6 +78,24 @@
         </button>
       </div>
 
+      
+      <!-- Mini-Carte avec Brouillard de Guerre (Débloquée via l'Échoppe de Barnabé) -->
+      <div id="minimap-container" class="minimap-container hidden">
+        <div class="minimap-header">
+          <span class="minimap-compass-needle">🧭</span>
+          <span class="minimap-title-text">CARTE DU ROYAUME</span>
+          <span id="minimap-coords" class="minimap-coords">OAKHAVEN</span>
+        </div>
+        <div class="minimap-frame">
+          <canvas id="minimap-canvas" width="160" height="160"></canvas>
+          <div class="minimap-legend">
+            <span class="legend-item"><span class="legend-dot player-dot"></span>Héros</span>
+            <span class="legend-item"><span class="legend-dot town-dot"></span>Cités</span>
+            <span class="legend-item"><span class="legend-dot dungeon-dot"></span>Donjons</span>
+          </div>
+        </div>
+      </div>
+
       <!-- Barre d'Action & Compétences Médiévales (Action Bar) -->
       <div id="combat-action-bar" class="combat-action-bar">
         <!-- Slot 1 : Attaque Principale -->
@@ -328,6 +346,38 @@
           <button id="btn-close-library" class="glow-btn">
             <span>FERMER LA BIBLIOTHÈQUE (B / Échap)</span>
             <span class="btn-arrow">✓</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    
+    <!-- Écran de l'Échoppe d'Aventure (Barnabé le Marchand) -->
+    <div id="adventure-shop-screen" class="overlay-modal">
+      <div class="modal-card adventure-shop-modal-card">
+        <div class="card-glow amber"></div>
+        <div class="shop-header">
+          <div class="shop-title-group">
+            <span class="shop-main-icon">🧭</span>
+            <div>
+              <h2 class="shop-title">ÉCHOPPE D'AVENTURE</h2>
+              <p class="subtitle">Barnabé le Marchand — Outils de survie & exploration d'Oakhaven</p>
+            </div>
+          </div>
+          <div class="shop-gold-badge">
+            <span class="gold-icon">🪙</span>
+            <span id="shop-gold-amount">0</span>
+          </div>
+        </div>
+
+        <div id="shop-items-grid" class="shop-items-grid">
+          <!-- Injecté dynamiquement par le moteur -->
+        </div>
+
+        <div class="shop-footer">
+          <button id="btn-close-shop" class="glow-btn">
+            <span>QUITTER L'ÉCHOPPE (Échap)</span>
+            <span class="btn-arrow">✕</span>
           </button>
         </div>
       </div>
