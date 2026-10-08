@@ -40,6 +40,10 @@ export class WorldMap {
 
     // 6. Accessoires, panneaux et feux de camp
     this.initPropsAndDecor();
+
+    // 7. Initialisation du moteur de collisions physiques (bâtiments, eau, ponts, falaises, arbres)
+    this.initColliders();
+    this.buildSpatialGrid();
   }
 
   loadImg(src) {
@@ -267,8 +271,14 @@ export class WorldMap {
         const x = cl.cx + Math.cos(ang) * dist;
         const y = cl.cy + Math.sin(ang) * dist;
 
-        // Éviter de planter un arbre directement dans la rivière ou dans les villages
-        if (this.isNearRiver(x, y, 110) || this.isInsideVillage(x, y, 160)) {
+        // Éviter de planter un arbre directement dans la rivière, villages, routes, ponts, falaises, spawn et portails
+        if (this.isNearRiver(x, y, 110) || 
+            this.isInsideVillage(x, y, 160) ||
+            this.isNearRoad(x, y, 55) ||
+            this.isNearBridge(x, y, 90) ||
+            this.isNearSpawn(x, y, 220) ||
+            this.isNearPortal(x, y, 280) ||
+            this.isInsideCliff(x, y)) {
           continue;
         }
 
@@ -301,6 +311,57 @@ export class WorldMap {
       const dx = x - v.x;
       const dy = y - v.y;
       if (dx * dx + dy * dy < (v.radius - margin) * (v.radius - margin)) return true;
+    }
+    return false;
+  }
+
+  isNearRoad(x, y, margin = 55) {
+    const marginSq = margin * margin;
+    for (const path of this.roadPaths) {
+      for (let i = 0; i < path.length - 1; i++) {
+        if (this.distToSegmentSq(x, y, path[i].x, path[i].y, path[i + 1].x, path[i + 1].y) < marginSq) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  isNearBridge(x, y, margin = 90) {
+    const marginSq = margin * margin;
+    for (const b of this.bridges) {
+      const dx = x - b.x;
+      const dy = y - b.y;
+      if (dx * dx + dy * dy < marginSq) return true;
+    }
+    return false;
+  }
+
+  isNearSpawn(x, y, margin = 220) {
+    const dx = x - 3500;
+    const dy = y - 3500;
+    return dx * dx + dy * dy < margin * margin;
+  }
+
+  isNearPortal(x, y, margin = 280) {
+    const portals = [
+      { x: 3500, y: 400 },
+      { x: 3500, y: 6600 },
+      { x: 400,  y: 3500 },
+      { x: 6600, y: 3500 }
+    ];
+    const marginSq = margin * margin;
+    for (const p of portals) {
+      const dx = x - p.x;
+      const dy = y - p.y;
+      if (dx * dx + dy * dy < marginSq) return true;
+    }
+    return false;
+  }
+
+  isInsideCliff(x, y) {
+    for (const c of this.cliffs) {
+      if (this.isPointInPolygon(x, y, c.points)) return true;
     }
     return false;
   }
@@ -860,5 +921,466 @@ export class WorldMap {
     }
 
     ctx.restore();
+  }
+
+  // ==========================================
+  // SYSTÈME DE COLLISIONS PHYSIQUES & GLISSEMENT
+  // ==========================================
+
+  initColliders() {
+    this.colliders = [];
+
+    // 1. Bâtiments des villages
+    for (const v of this.villages) {
+      for (const b of v.buildings) {
+        if (b.type === 'house') {
+          this.colliders.push({
+            type: 'box',
+            minX: b.x - b.w / 2,
+            maxX: b.x + b.w / 2,
+            minY: b.y - b.h / 2 + 18,
+            maxY: b.y + b.h / 2,
+            solid: true,
+            blocksMonsters: true
+          });
+        } else if (b.type === 'castle') {
+          this.colliders.push({
+            type: 'box',
+            minX: b.x - b.w / 2 - 12,
+            maxX: b.x + b.w / 2 + 12,
+            minY: b.y - b.h / 2 + 22,
+            maxY: b.y + b.h / 2,
+            solid: true,
+            blocksMonsters: true
+          });
+        } else if (b.type === 'tent') {
+          this.colliders.push({
+            type: 'circle',
+            x: b.x,
+            y: b.y + 6,
+            r: b.w * 0.38,
+            solid: true,
+            blocksMonsters: true
+          });
+        } else if (b.type === 'well') {
+          this.colliders.push({
+            type: 'circle',
+            x: b.x,
+            y: b.y,
+            r: b.radius + 2,
+            solid: true,
+            blocksMonsters: true
+          });
+        } else if (b.type === 'stall') {
+          this.colliders.push({
+            type: 'box',
+            minX: b.x - b.w / 2,
+            maxX: b.x + b.w / 2,
+            minY: b.y - b.h / 2 + 5,
+            maxY: b.y + b.h / 2,
+            solid: true,
+            blocksMonsters: true
+          });
+        } else if (b.type === 'campfire') {
+          this.colliders.push({
+            type: 'circle',
+            x: b.x,
+            y: b.y,
+            r: 16,
+            solid: true,
+            blocksMonsters: true
+          });
+        }
+      }
+    }
+
+    // 2. Décors et accessoires
+    for (const p of this.props) {
+      if (p.type === 'rock') {
+        this.colliders.push({
+          type: 'circle',
+          x: p.x,
+          y: p.y,
+          r: p.r,
+          solid: true,
+          blocksMonsters: true
+        });
+      } else if (p.type === 'logs') {
+        this.colliders.push({
+          type: 'box',
+          minX: p.x - 14,
+          maxX: p.x + 14,
+          minY: p.y - 12,
+          maxY: p.y + 4,
+          solid: true,
+          blocksMonsters: true
+        });
+      }
+    }
+
+    // 3. Troncs d'arbres et souches (bloquent le joueur à la base)
+    for (const t of this.trees) {
+      if (t.isStump) {
+        this.colliders.push({
+          type: 'circle',
+          x: t.x,
+          y: t.y,
+          r: 10,
+          isTree: true,
+          solid: false,
+          blocksMonsters: false
+        });
+      } else {
+        const trunkR = Math.max(9, t.size * 0.18);
+        this.colliders.push({
+          type: 'circle',
+          x: t.x,
+          y: t.y + 6,
+          r: trunkR,
+          isTree: true,
+          solid: false,
+          blocksMonsters: false
+        });
+      }
+    }
+
+    // 4. Falaises et plateaux rocheux
+    for (const c of this.cliffs) {
+      this.colliders.push({
+        type: 'polygon',
+        points: c.points,
+        solid: true,
+        blocksMonsters: true
+      });
+    }
+
+    // 5. Segments de rivière (l'eau bloquante, franchissable uniquement sur les ponts)
+    for (const seg of this.riverSegments) {
+      this.colliders.push({
+        type: 'river',
+        x: seg.x,
+        y: seg.y,
+        r: 66,
+        solid: false,
+        blocksMonsters: true
+      });
+    }
+  }
+
+  // Grille spatiale (Spatial Grid) pour des tests O(1) ultra-rapides à 60-120 FPS
+  buildSpatialGrid() {
+    this.gridSize = 250;
+    this.spatialGrid = new Map();
+    this.queryCounter = 0;
+
+    const maxCols = Math.ceil(this.worldSize / this.gridSize);
+    const maxRows = Math.ceil(this.worldSize / this.gridSize);
+
+    const addToCell = (col, row, collider) => {
+      if (col < 0 || col >= maxCols || row < 0 || row >= maxRows) return;
+      const key = `${col},${row}`;
+      let cell = this.spatialGrid.get(key);
+      if (!cell) {
+        cell = [];
+        this.spatialGrid.set(key, cell);
+      }
+      cell.push(collider);
+    };
+
+    let idGen = 0;
+    for (const c of this.colliders) {
+      c.id = ++idGen;
+      c._lastQuery = 0;
+
+      if (c.type === 'circle' || c.type === 'river') {
+        const minC = Math.floor((c.x - c.r) / this.gridSize);
+        const maxC = Math.floor((c.x + c.r) / this.gridSize);
+        const minR = Math.floor((c.y - c.r) / this.gridSize);
+        const maxR = Math.floor((c.y + c.r) / this.gridSize);
+        for (let col = minC; col <= maxC; col++) {
+          for (let row = minR; row <= maxR; row++) {
+            addToCell(col, row, c);
+          }
+        }
+      } else if (c.type === 'box') {
+        const minC = Math.floor(c.minX / this.gridSize);
+        const maxC = Math.floor(c.maxX / this.gridSize);
+        const minR = Math.floor(c.minY / this.gridSize);
+        const maxR = Math.floor(c.maxY / this.gridSize);
+        for (let col = minC; col <= maxC; col++) {
+          for (let row = minR; row <= maxR; row++) {
+            addToCell(col, row, c);
+          }
+        }
+      } else if (c.type === 'polygon') {
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        for (const pt of c.points) {
+          if (pt.x < minX) minX = pt.x;
+          if (pt.x > maxX) maxX = pt.x;
+          if (pt.y < minY) minY = pt.y;
+          if (pt.y > maxY) maxY = pt.y;
+        }
+        const minC = Math.floor(minX / this.gridSize);
+        const maxC = Math.floor(maxX / this.gridSize);
+        const minR = Math.floor(minY / this.gridSize);
+        const maxR = Math.floor(maxY / this.gridSize);
+        for (let col = minC; col <= maxC; col++) {
+          for (let row = minR; row <= maxR; row++) {
+            addToCell(col, row, c);
+          }
+        }
+      }
+    }
+  }
+
+  // Vérifie si une entité est sur un pont en bois praticable
+  isOnBridge(px, py) {
+    for (const b of this.bridges) {
+      const dx = px - b.x;
+      const dy = py - b.y;
+      const cos = Math.cos(-b.angle);
+      const sin = Math.sin(-b.angle);
+      const localX = dx * cos - dy * sin;
+      const localY = dx * sin + dy * cos;
+      // Tolérance supplémentaire de 25px sur les berges d'accès et largeur du tablier
+      if (Math.abs(localX) <= (b.w / 2 + 25) && Math.abs(localY) <= (b.h / 2 + 8)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Vérifie si une entité est sur un ponton de pêche
+  isOnPier(px, py) {
+    for (const v of this.villages) {
+      for (const b of v.buildings) {
+        if (b.type === 'pier') {
+          if (Math.abs(px - b.x) <= (b.w / 2 + 10) && Math.abs(py - b.y) <= (b.h / 2 + 8)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  // Teste si une position entre en collision
+  isColliding(x, y, radius, isPlayer = true) {
+    // 1. Limites du monde
+    if (x - radius < 25 || x + radius > this.worldSize - 25 ||
+        y - radius < 25 || y + radius > this.worldSize - 25) {
+      return true;
+    }
+
+    const minCx = Math.max(0, Math.floor((x - radius - 20) / this.gridSize));
+    const maxCx = Math.min(Math.floor(this.worldSize / this.gridSize), Math.floor((x + radius + 20) / this.gridSize));
+    const minCy = Math.max(0, Math.floor((y - radius - 20) / this.gridSize));
+    const maxCy = Math.min(Math.floor(this.worldSize / this.gridSize), Math.floor((y + radius + 20) / this.gridSize));
+
+    const onBridgeOrPier = this.isOnBridge(x, y) || this.isOnPier(x, y);
+
+    this.queryCounter++;
+    const qId = this.queryCounter;
+
+    for (let cx = minCx; cx <= maxCx; cx++) {
+      for (let cy = minCy; cy <= maxCy; cy++) {
+        const cell = this.spatialGrid.get(`${cx},${cy}`);
+        if (!cell) continue;
+
+        for (let i = 0; i < cell.length; i++) {
+          const c = cell[i];
+          if (c._lastQuery === qId) continue;
+          c._lastQuery = qId;
+
+          // Si c'est un monstre et que l'objet ne bloque pas les monstres (ex: arbres)
+          if (!isPlayer && !c.blocksMonsters) continue;
+
+          if (c.type === 'circle') {
+            const dx = x - c.x;
+            const dy = y - c.y;
+            const minDist = c.r + radius;
+            if (dx * dx + dy * dy < minDist * minDist) {
+              return true;
+            }
+          } else if (c.type === 'box') {
+            const nearX = Math.max(c.minX, Math.min(x, c.maxX));
+            const nearY = Math.max(c.minY, Math.min(y, c.maxY));
+            const dx = x - nearX;
+            const dy = y - nearY;
+            if (dx * dx + dy * dy < radius * radius) {
+              return true;
+            }
+          } else if (c.type === 'river') {
+            // L'eau ne bloque pas si on se trouve sur un pont ou un ponton
+            if (onBridgeOrPier) continue;
+            const dx = x - c.x;
+            const dy = y - c.y;
+            const minDist = c.r + radius;
+            if (dx * dx + dy * dy < minDist * minDist) {
+              return true;
+            }
+          } else if (c.type === 'polygon') {
+            if (this.checkPolygonCollision(x, y, radius, c.points)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+
+    return false;
+  }
+
+  // Vérifie si un projectile heurte un obstacle solide (maison, château, rocher, falaise)
+  isCollidingSolid(x, y, radius) {
+    const minCx = Math.max(0, Math.floor((x - radius - 20) / this.gridSize));
+    const maxCx = Math.min(Math.floor(this.worldSize / this.gridSize), Math.floor((x + radius + 20) / this.gridSize));
+    const minCy = Math.max(0, Math.floor((y - radius - 20) / this.gridSize));
+    const maxCy = Math.min(Math.floor(this.worldSize / this.gridSize), Math.floor((y + radius + 20) / this.gridSize));
+
+    this.queryCounter++;
+    const qId = this.queryCounter;
+
+    for (let cx = minCx; cx <= maxCx; cx++) {
+      for (let cy = minCy; cy <= maxCy; cy++) {
+        const cell = this.spatialGrid.get(`${cx},${cy}`);
+        if (!cell) continue;
+
+        for (let i = 0; i < cell.length; i++) {
+          const c = cell[i];
+          if (!c.solid) continue;
+          if (c._lastQuery === qId) continue;
+          c._lastQuery = qId;
+
+          if (c.type === 'box') {
+            const nearX = Math.max(c.minX, Math.min(x, c.maxX));
+            const nearY = Math.max(c.minY, Math.min(y, c.maxY));
+            const dx = x - nearX;
+            const dy = y - nearY;
+            if (dx * dx + dy * dy < radius * radius) return true;
+          } else if (c.type === 'circle') {
+            const dx = x - c.x;
+            const dy = y - c.y;
+            const minDist = c.r + radius;
+            if (dx * dx + dy * dy < minDist * minDist) return true;
+          } else if (c.type === 'polygon') {
+            if (this.checkPolygonCollision(x, y, radius, c.points)) return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  // Collision exacte cercle / polygone
+  checkPolygonCollision(px, py, radius, points) {
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const p of points) {
+      if (p.x < minX) minX = p.x;
+      if (p.x > maxX) maxX = p.x;
+      if (p.y < minY) minY = p.y;
+      if (p.y > maxY) maxY = p.y;
+    }
+    if (px + radius < minX || px - radius > maxX || py + radius < minY || py - radius > maxY) {
+      return false;
+    }
+
+    const rSq = radius * radius;
+    for (let i = 0; i < points.length; i++) {
+      const p1 = points[i];
+      const p2 = points[(i + 1) % points.length];
+      if (this.distToSegmentSq(px, py, p1.x, p1.y, p2.x, p2.y) < rSq) {
+        return true;
+      }
+    }
+
+    return this.isPointInPolygon(px, py, points);
+  }
+
+  // Distance au carré entre un point et un segment de droite
+  distToSegmentSq(px, py, x1, y1, x2, y2) {
+    const l2 = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
+    if (l2 === 0) return (px - x1) * (px - x1) + (py - y1) * (py - y1);
+    let t = ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / l2;
+    t = Math.max(0, Math.min(1, t));
+    const projX = x1 + t * (x2 - x1);
+    const projY = y1 + t * (y2 - y1);
+    const dx = px - projX;
+    const dy = py - projY;
+    return dx * dx + dy * dy;
+  }
+
+  // Test de point dans un polygone (Ray casting)
+  isPointInPolygon(px, py, points) {
+    let inside = false;
+    for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+      const xi = points[i].x, yi = points[i].y;
+      const xj = points[j].x, yj = points[j].y;
+      const intersect = ((yi > py) !== (yj > py)) && (px < (xj - xi) * (py - yi) / (yj - yi) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+
+  // Résolution de déplacement fluide avec glissement d'axe séparé (Sliding Collision)
+  resolveMove(currX, currY, targetX, targetY, radius, isPlayer = true) {
+    if (currX === targetX && currY === targetY) {
+      return { x: currX, y: currY };
+    }
+
+    let finalX = currX;
+    let finalY = currY;
+
+    // 1. Essayer le mouvement complet (X et Y)
+    if (!this.isColliding(targetX, targetY, radius, isPlayer)) {
+      return { x: targetX, y: targetY };
+    }
+
+    // 2. Glissement sur l'axe X seul
+    if (targetX !== currX) {
+      if (!this.isColliding(targetX, currY, radius, isPlayer)) {
+        finalX = targetX;
+      }
+    }
+
+    // 3. Glissement sur l'axe Y seul
+    if (targetY !== currY) {
+      if (!this.isColliding(finalX, targetY, radius, isPlayer)) {
+        finalY = targetY;
+      } else if (finalX === currX && !this.isColliding(currX, targetY, radius, isPlayer)) {
+        finalY = targetY;
+      }
+    }
+
+    // 4. Si bloqué sur les deux axes et déjà en pénétration, libération automatique
+    if (finalX === currX && finalY === currY && (targetX !== currX || targetY !== currY)) {
+      if (this.isColliding(currX, currY, radius, isPlayer)) {
+        const unstick = this.findUnstickPosition(currX, currY, radius, isPlayer);
+        if (unstick) {
+          finalX = unstick.x;
+          finalY = unstick.y;
+        }
+      }
+    }
+
+    return { x: finalX, y: finalY };
+  }
+
+  // Aide à débloquer une entité qui serait apparue ou repoussée dans un obstacle
+  findUnstickPosition(x, y, radius, isPlayer = true) {
+    const dirs = [
+      { dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 },
+      { dx: 0.7, dy: -0.7 }, { dx: 0.7, dy: 0.7 }, { dx: -0.7, dy: 0.7 }, { dx: -0.7, dy: -0.7 }
+    ];
+    for (let step = 3; step <= 25; step += 3) {
+      for (const d of dirs) {
+        const testX = x + d.dx * step;
+        const testY = y + d.dy * step;
+        if (!this.isColliding(testX, testY, radius, isPlayer)) {
+          return { x: testX, y: testY };
+        }
+      }
+    }
+    return null;
   }
 }

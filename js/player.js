@@ -66,7 +66,7 @@ export class Player {
     }
   }
 
-  update(dt, moveX, moveY, worldSize) {
+  update(dt, moveX, moveY, worldSize, engine) {
     let currentSpeed = this.speed;
     if (this.dashRemaining > 0) {
       this.dashRemaining -= dt;
@@ -84,8 +84,19 @@ export class Player {
       const length = Math.hypot(moveX, moveY);
       const nx = moveX / length;
       const ny = moveY / length;
-      this.x += nx * currentSpeed * dt;
-      this.y += ny * currentSpeed * dt;
+      const targetX = this.x + nx * currentSpeed * dt;
+      const targetY = this.y + ny * currentSpeed * dt;
+
+      // Gestion des collisions avec glissement fluide (WorldMap)
+      if (engine && engine.worldMap) {
+        const resolved = engine.worldMap.resolveMove(this.x, this.y, targetX, targetY, this.radius, true);
+        this.x = resolved.x;
+        this.y = resolved.y;
+      } else {
+        this.x = targetX;
+        this.y = targetY;
+      }
+
       this.facingAngle = Math.atan2(ny, nx);
       this.walkTimer += dt * 8.5;
       this.isMoving = true;

@@ -19,6 +19,11 @@ Affrontez des vagues de monstres incessantes, récoltez des gemmes d'âme, monte
 - 🧭 **Flèches Rouges de Menace en Bordure d'Écran** : Indiquent en temps réel la direction et la distance des portails actifs et des Boss hors de votre champ de vision, positionnées sous le HUD supérieur.
 - ⛩️ **4 Portails Démoniaques Cardinaux** : Les monstres n'apparaissent plus au hasard mais déferlent depuis d'immenses brèches animées (Nord, Sud, Est, Ouest) avec alertes visuelles.
 - 🗺️ **Grande Carte Ouverte RPG Vivante (7 000 × 7 000 px)** : Un monde immense et organique inspiré de l'asset pack *Puny World*, comprenant **3 villages et campements** (Hameau d'Oakhaven, Camp des Éclaireurs, Bourgade de Riverbend), une **rivière sinueuse animée** avec ponts en bois, un réseau de chemins de terre, des forêts denses d'arbres pixel-art, pommiers et des falaises rocheuses en relief.
+- 🧱 **Moteur de Collisions Physiques & Glissement Fluide** : Collisions en temps réel gérées par une grille spatiale ultra-rapide ($O(1)$) :
+  - **Bâtiments & Châteaux** : Les murs bloquent le joueur, les monstres et les projectiles directs (couverture tactique).
+  - **Rivière Infranchissable & Ponts Stratégiques** : L'eau bloque le passage direct, obligeant à emprunter les ponts en bois ou les pontons pour traverser (véritables goulots d'étranglement stratégiques face aux hordes).
+  - **Arbres & Souches** : Tronc solide bloquant à la base tout en permettant de marcher sous la cime des feuilles.
+  - **Glissement d'Axe Séparé (Sliding Collision)** : Aucune saccade ni blocage lors des déplacements en diagonale le long des murs et clôtures.
 - ⚡ **Fluidité Optimisée (60-120+ FPS)** : Moteur Canvas 2D ultra-rapide avec répulsion naturelle de horde sans lag, suppression des CPU gaussian blurs et gestion mémoire propre.
 - 🪄 **Attaques & Sorts Automatiques** : Visée rééquilibrée (580 px) pour n'attaquer que les monstres visibles à l'écran.
 - ⭐ **Améliorations à la Demande** : Le jeu ne s'arrête plus en plein combat. Gagnez vos niveaux, stockez-les et activez vos cartes quand vous le souhaitez (Bouton HUD ou touche `U`).

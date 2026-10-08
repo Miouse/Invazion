@@ -833,8 +833,8 @@ export class GameEngine {
       this.player.facingAngle = Math.atan2(moveY, moveX);
     }
 
-    // Mise à jour Joueur
-    this.player.update(dt, moveX, moveY, this.worldSize);
+    // Mise à jour Joueur (avec moteur de collision WorldMap)
+    this.player.update(dt, moveX, moveY, this.worldSize, this);
 
     // Mise à jour des spores vertes ambiantes
     for (const spore of this.ambientSpores) {
@@ -950,7 +950,13 @@ export class GameEngine {
       const proj = this.projectiles[i];
       proj.update(dt, this);
 
-      if (proj.isEnemy) {
+      // Collision avec les structures solides (murs de maisons, château, falaises, rochers)
+      if (this.worldMap && this.worldMap.isCollidingSolid(proj.x, proj.y, proj.radius)) {
+        this.createHitParticles(proj.x, proj.y, proj.isEnemy ? '#ff0055' : '#00f0ff', 5);
+        proj.dead = true;
+      }
+
+      if (!proj.dead && proj.isEnemy) {
         const d = Math.hypot(proj.x - this.player.x, proj.y - this.player.y);
         if (d < proj.radius + this.player.radius && this.player.invulnTimer <= 0) {
           this.player.takeDamage(proj.damage);
@@ -963,7 +969,7 @@ export class GameEngine {
             return;
           }
         }
-      } else {
+      } else if (!proj.dead) {
         for (const enemy of this.enemies) {
           if (proj.hitList.has(enemy)) continue;
 
@@ -973,8 +979,17 @@ export class GameEngine {
             enemy.hitFlash = 0.1;
             
             const angle = Math.atan2(enemy.y - proj.y, enemy.x - proj.x);
-            enemy.x += Math.cos(angle) * proj.knockback;
-            enemy.y += Math.sin(angle) * proj.knockback;
+            const kbX = Math.cos(angle) * proj.knockback;
+            const kbY = Math.sin(angle) * proj.knockback;
+
+            if (this.worldMap) {
+              const resolved = this.worldMap.resolveMove(enemy.x, enemy.y, enemy.x + kbX, enemy.y + kbY, enemy.radius, false);
+              enemy.x = resolved.x;
+              enemy.y = resolved.y;
+            } else {
+              enemy.x += kbX;
+              enemy.y += kbY;
+            }
 
             this.addFloatingText(enemy.x, enemy.y - 12, Math.round(proj.damage), '#ffffff', 14);
             this.createHitParticles(proj.x, proj.y, '#00f0ff', 3);

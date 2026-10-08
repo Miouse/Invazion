@@ -86,8 +86,18 @@ export class Enemy {
       }
     }
 
-    this.x += vx * dt;
-    this.y += vy * dt;
+    const targetX = this.x + vx * dt;
+    const targetY = this.y + vy * dt;
+
+    if (engine && engine.worldMap) {
+      const resolved = engine.worldMap.resolveMove(this.x, this.y, targetX, targetY, this.radius, false);
+      this.x = resolved.x;
+      this.y = resolved.y;
+    } else {
+      this.x = targetX;
+      this.y = targetY;
+    }
+
     this.facingAngle = angle;
     this.animTimer += dt;
 
