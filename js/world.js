@@ -163,24 +163,24 @@ export class WorldMap {
       }
     }
 
-    // 2 Ponts de bois traversant la rivière
+    // 2 Ponts de bois traversant la rivière (orientés perpendiculairement au flux de l'eau)
     this.bridges = [
-      // Pont 1 : Central (relie Oakhaven et le Camp des Éclaireurs)
+      // Pont 1 : Central (relie Oakhaven et le Camp des Éclaireurs, traverse la rivière d'un bord à l'autre)
       {
         x: 3750,
         y: 3150,
-        w: 170,
-        h: 75,
-        angle: 0.15,
+        w: 190,
+        h: 84,
+        angle: 1.49, // Perpendiculaire au lit horizontal de la rivière (~85.4°)
         name: "Pont d'Oakhaven"
       },
-      // Pont 2 : Sud-Ouest (près de la sortie)
+      // Pont 2 : Sud-Ouest (relie Oakhaven aux plaines sud-ouest)
       {
         x: 1950,
         y: 3950,
-        w: 165,
-        h: 70,
-        angle: -0.65,
+        w: 190,
+        h: 82,
+        angle: 0.70, // Perpendiculaire au lit diagonal de la rivière (~40°)
         name: "Passage des Saules"
       }
     ];
@@ -193,17 +193,21 @@ export class WorldMap {
     this.roadPaths = [
       // Route 1 : Portail Nord ➔ Camp des Éclaireurs
       [ { x: 3500, y: 500 }, { x: 3700, y: 1100 }, { x: 4200, y: 1700 }, { x: 4300, y: 1950 } ],
-      // Route 2 : Camp des Éclaireurs ➔ Pont d'Oakhaven
-      [ { x: 4300, y: 2050 }, { x: 4100, y: 2600 }, { x: 3750, y: 3150 } ],
-      // Route 3 : Pont d'Oakhaven ➔ Village Oakhaven
-      [ { x: 3750, y: 3150 }, { x: 3500, y: 3350 }, { x: 3200, y: 3500 } ],
+      // Route 2 : Camp des Éclaireurs ➔ Pont d'Oakhaven (entrée Nord)
+      [ { x: 4300, y: 2050 }, { x: 4100, y: 2600 }, { x: 3750, y: 3045 } ],
+      // Route 3 : Pont d'Oakhaven (sortie Sud) ➔ Village Oakhaven
+      [ { x: 3750, y: 3255 }, { x: 3500, y: 3350 }, { x: 3200, y: 3500 } ],
       // Route 4 : Oakhaven ➔ Portail Ouest
       [ { x: 2950, y: 3520 }, { x: 2100, y: 3520 }, { x: 1200, y: 3500 }, { x: 500, y: 3500 } ],
       // Route 5 : Oakhaven ➔ Village Riverbend
       [ { x: 3300, y: 3650 }, { x: 3700, y: 4100 }, { x: 4100, y: 4500 }, { x: 4550, y: 4850 } ],
       // Route 6 : Riverbend ➔ Portail Sud & Est
       [ { x: 4600, y: 5000 }, { x: 4300, y: 5600 }, { x: 3600, y: 6400 } ],
-      [ { x: 4750, y: 4850 }, { x: 5400, y: 4500 }, { x: 6400, y: 3600 } ]
+      [ { x: 4750, y: 4850 }, { x: 5400, y: 4500 }, { x: 6400, y: 3600 } ],
+      // Route 7 : Oakhaven ➔ Passage des Saules (entrée Nord)
+      [ { x: 3000, y: 3550 }, { x: 2450, y: 3700 }, { x: 1880, y: 3890 } ],
+      // Route 8 : Passage des Saules (sortie Sud) ➔ Plaines Sud-Ouest
+      [ { x: 2020, y: 4010 }, { x: 2150, y: 4400 }, { x: 1800, y: 5000 } ]
     ];
   }
 
@@ -541,6 +545,11 @@ export class WorldMap {
       ctx.fillStyle = '#4a2c0f';
       ctx.fillRect(-b.w / 2, -b.h / 2, b.w, 8);
       ctx.fillRect(-b.w / 2, b.h / 2 - 8, b.w, 8);
+
+      // Poutres d'ancrage en bois massif sur les berges
+      ctx.fillStyle = '#3a200b';
+      ctx.fillRect(-b.w / 2 - 2, -b.h / 2, 8, b.h);
+      ctx.fillRect(b.w / 2 - 6, -b.h / 2, 8, b.h);
 
       // Poteaux de rambarde
       ctx.fillStyle = '#2d1804';
