@@ -16,13 +16,13 @@ export const CHARACTERS = {
     dmgMult: 1.0,
     dashCdMult: 1.0,
     mainWeapon: 'sword',
-    mainName: 'Épée Royale',
-    mainDesc: 'Coup de taille en arc circulaire (dégâts rapprochés et recul)',
-    specialSkill: 'shield_bash',
-    specialName: 'Coup de Bouclier & Parade',
-    specialDesc: 'Onde de choc étourdissante (1.2s) et -60% dégâts subis',
-    specialCd: 3.5,
-    desc: '⚔️ Épée de taille percutante • 🛡️ Parade & étourdissement au bouclier'
+    mainName: 'Combo d\'Épée',
+    mainDesc: 'Combo 3 coups : Entaille droite -> Entaille gauche -> Estoc perforant',
+    specialSkill: 'whirlwind',
+    specialName: 'Tourbillon d\'Acier',
+    specialDesc: 'Attaque tournoyante à 360° fauchant tous les ennemis alentour',
+    specialCd: 3.8,
+    desc: '⚔️ Combo 3 coups tranchants • 🌪️ Tourbillon d\'Acier à 360°'
   },
   soldier: {
     id: 'soldier',

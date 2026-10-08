@@ -52,6 +52,10 @@ export class Player {
     // Buff temporaire de garde au bouclier
     this.shieldGuardTimer = 0;
 
+    // Gestion du Combo de l'Épée (Valérian : 3 coups)
+    this.swordComboStep = 0; // 0: Entaille droite, 1: Entaille gauche, 2: Estoc puissant
+    this.swordComboResetTimer = 0;
+
     // Effets visuels des attaques au corps-à-corps (traînées de coups)
     this.attackVisuals = [];
   }
@@ -85,22 +89,71 @@ export class Player {
 
     switch (this.mainWeapon) {
       case 'sword': {
-        // Valérian : Coup d'Épée Royale en arc de cercle
-        this.mainAttackTimer = 0.32;
-        sfx.playSword();
-        const range = 85;
-        const arc = 1.9; // ~110 degrés
-        this.attackVisuals.push({
-          type: 'slash',
-          angle,
-          radius: range,
-          arc,
-          color: '#e0f7fa',
-          edgeColor: '#00f0ff',
-          time: 0,
-          duration: 0.14
-        });
-        this.hitConeEnemies(engine, angle, range, arc, 42 * this.damageMultiplier, 32);
+        // Valérian : Combo d'Épée en 3 temps
+        if (this.swordComboStep === 0) {
+          // Coup 1 : Entaille Droite Rapide
+          this.mainAttackTimer = 0.20;
+          this.swordComboResetTimer = 0.85;
+          sfx.playSword(1);
+          const range = 88;
+          const arc = 1.8;
+          this.attackVisuals.push({
+            type: 'slash',
+            angle,
+            direction: 1,
+            radius: range,
+            arc,
+            color: '#e0f7fa',
+            edgeColor: '#00f0ff',
+            time: 0,
+            duration: 0.13
+          });
+          this.hitConeEnemies(engine, angle, range, arc, 38 * this.damageMultiplier, 24);
+          this.swordComboStep = 1;
+        } else if (this.swordComboStep === 1) {
+          // Coup 2 : Entaille Gauche Rapide
+          this.mainAttackTimer = 0.20;
+          this.swordComboResetTimer = 0.85;
+          sfx.playSword(2);
+          const range = 92;
+          const arc = 1.9;
+          this.attackVisuals.push({
+            type: 'slash',
+            angle,
+            direction: -1,
+            radius: range,
+            arc,
+            color: '#cffafe',
+            edgeColor: '#38bdf8',
+            time: 0,
+            duration: 0.13
+          });
+          this.hitConeEnemies(engine, angle, range, arc, 45 * this.damageMultiplier, 28);
+          this.swordComboStep = 2;
+        } else {
+          // Coup 3 : Estoc Puissant Perçant (Finish dévastateur)
+          this.mainAttackTimer = 0.38;
+          this.swordComboResetTimer = 0;
+          this.swordComboStep = 0;
+          sfx.playSword(3);
+          const length = 165;
+          const width = 46;
+          this.attackVisuals.push({
+            type: 'thrust',
+            angle,
+            length,
+            width,
+            color: '#ffffff',
+            edgeColor: '#00f0ff',
+            time: 0,
+            duration: 0.20
+          });
+          if (engine) {
+            engine.triggerScreenShake(5);
+            engine.addShockwave(this.x + Math.cos(angle) * 55, this.y + Math.sin(angle) * 55, 70, '#00f0ff', 3);
+          }
+          this.hitLineEnemies(engine, angle, length, width, 82 * this.damageMultiplier, 55);
+        }
         break;
       }
 
@@ -193,6 +246,28 @@ export class Player {
     this.facingAngle = angle;
 
     switch (this.specialSkill) {
+      case 'whirlwind': {
+        // Valérian : Tourbillon d'Acier à 360 degrés
+        sfx.playWhirlwind();
+        const range = 135;
+        this.attackVisuals.push({
+          type: 'whirlwind',
+          radius: range,
+          time: 0,
+          duration: 0.36,
+          color: '#00f0ff',
+          edgeColor: '#ffffff'
+        });
+        if (engine) {
+          engine.triggerScreenShake(7);
+          engine.addShockwave(this.x, this.y, range, '#00f0ff', 5);
+          engine.createHitParticles(this.x, this.y, '#00f0ff', 24);
+          engine.addFloatingText(this.x, this.y - 45, '🌪️ TOURBILLON D\'ACIER !', '#00f0ff', 22);
+        }
+        this.hitRadialEnemies(engine, range, 95 * this.damageMultiplier, 60);
+        break;
+      }
+
       case 'shield_bash': {
         // Valérian : Coup de Bouclier étourdissant & Parade renforcée
         sfx.playShield();
@@ -405,6 +480,14 @@ export class Player {
       this.shieldGuardTimer -= dt;
     }
 
+    // Gestion du reset combo d'épée (Valérian)
+    if (this.swordComboResetTimer > 0) {
+      this.swordComboResetTimer -= dt;
+      if (this.swordComboResetTimer <= 0) {
+        this.swordComboStep = 0;
+      }
+    }
+
     // Animation des visuels d'attaques
     for (let i = this.attackVisuals.length - 1; i >= 0; i--) {
       this.attackVisuals[i].time += dt;
@@ -529,7 +612,11 @@ export class Player {
         ctx.strokeStyle = v.color;
         ctx.lineWidth = 5 * alpha;
         ctx.beginPath();
-        ctx.arc(0, 0, v.radius, -v.arc / 2, v.arc / 2);
+        if (v.direction === -1) {
+          ctx.arc(0, 0, v.radius, v.arc / 2, -v.arc / 2, true);
+        } else {
+          ctx.arc(0, 0, v.radius, -v.arc / 2, v.arc / 2, false);
+        }
         ctx.stroke();
 
         // Lame brillante
@@ -555,6 +642,35 @@ export class Player {
         ctx.lineTo(v.length - 18, 8);
         ctx.closePath();
         ctx.fill();
+        ctx.restore();
+      } else if (v.type === 'whirlwind') {
+        ctx.save();
+        const spin = progress * Math.PI * 4; // 2 rotations
+        ctx.rotate(spin);
+
+        // Anneau d'acier tournoyant
+        ctx.strokeStyle = v.color || '#00f0ff';
+        ctx.lineWidth = 6 * alpha;
+        ctx.beginPath();
+        ctx.arc(0, 0, v.radius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // 2 Lames d'énergie tranchante opposées
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3.5 * alpha;
+        ctx.beginPath();
+        ctx.arc(0, 0, v.radius - 8, 0, Math.PI * 0.7);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(0, 0, v.radius - 8, Math.PI, Math.PI * 1.7);
+        ctx.stroke();
+
+        // Remplissage d'énergie cyan
+        ctx.fillStyle = `rgba(0, 240, 255, ${0.15 * alpha})`;
+        ctx.beginPath();
+        ctx.arc(0, 0, v.radius, 0, Math.PI * 2);
+        ctx.fill();
+
         ctx.restore();
       } else if (v.type === 'shield') {
         ctx.save();

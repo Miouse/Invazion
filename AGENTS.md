@@ -55,7 +55,7 @@ Invazion/
 ### 1. `js/sprites.js` — Registre & Moteur 8-Directions
 - **Rôle** : Centralise tous les assets graphiques et fournit les configurations d'armes médiévales des classes.
 - **Roster Héros & Armes Dédiées (`CHARACTERS`) — Option A** :
-  - `warrior` (*Valérian*) : ⚔️ Épée Royale (slash en cône 110°) + 🛡️ Coup de Bouclier & Parade (-60% dmg).
+  - `warrior` (*Valérian*) : ⚔️ Combo d'Épée 3 coups (Entaille D ➔ Entaille G ➔ Estoc puissant perçant) + 🌪️ Tourbillon d'Acier à 360°.
   - `soldier` (*Marcus*) : 🗡️ Lance de Soldat (estoc perforant) + ⚡ Charge de Lance traversante.
   - `archer` (*Sylvia*) : 🏹 Arc Sylvestre (flèches véloces) + 🏹 Volée de 5 Flèches en éventail.
   - `mage` (*Eldrin*) : 🔮 Éclair d'Arcane (projectiles énergétiques) + 💫 Nova Stellaire à 360°.
