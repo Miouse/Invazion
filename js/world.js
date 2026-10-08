@@ -79,8 +79,8 @@ export class WorldMap {
         safeZone: true,
         fountain: { x: 3160, y: 3510, radius: 150, healPerSec: 16 },
         dungeonEntrance: {
-          x: 3160,
-          y: 3260,
+          x: 3040,
+          y: 3380,
           id: 'dungeon_oakhaven',
           name: "Crypte d'Oakhaven",
           sub: "Donjon I • Catacombes Oubliées",
@@ -239,18 +239,19 @@ export class WorldMap {
   // ==========================================
   initRoads() {
     this.roadPaths = [
-      // Route 1 : Oakhaven (3200, 3500) ➔ Forteresse de Val-des-Ombres (2100, 1700)
+      // Route 1 : Route Royale : Sortie Nord du Pont d'Oakhaven (3750, 3045) ➔ Val-des-Ombres (2100, 1780)
       [
-        { x: 3160, y: 3400 },
-        { x: 3050, y: 3000 },
-        { x: 2800, y: 2500 },
-        { x: 2450, y: 2100 },
-        { x: 2100, y: 1780 }
+        { x: 3750, y: 3045 },
+        { x: 3350, y: 2600 },
+        { x: 2850, y: 2200 },
+        { x: 2500, y: 2000 }, // Panneau indicateur "Route du Nord ⬆ Val-des-Ombres"
+        { x: 2250, y: 1880 },
+        { x: 2100, y: 1780 }  // Entrée de la citadelle de Val-des-Ombres
       ],
-      // Route 2 : Oakhaven (3200, 3500) ➔ Pont d'Oakhaven ➔ Rives du Nord
+      // Route 2 : Oakhaven (3200, 3500) ➔ Pont d'Oakhaven (3750, 3255) ➔ Rives du Nord
       [
-        { x: 3250, y: 3450 },
-        { x: 3500, y: 3320 },
+        { x: 3200, y: 3480 },
+        { x: 3450, y: 3350 },
         { x: 3750, y: 3255 }, // Entrée Sud du Pont
         { x: 3750, y: 3045 }, // Sortie Nord du Pont
         { x: 4000, y: 2600 },
@@ -289,12 +290,19 @@ export class WorldMap {
   // ==========================================
   initCliffs() {
     this.cliffs = [
-      // Falaise 1 : Plateau rocheux de Val-des-Ombres (Nord-Ouest)
+      // Falaise 1 : Crêtes rocheuses du Nord (surplombant Val-des-Ombres par le Nord)
       {
         points: [
-          { x: 1400, y: 1300 }, { x: 1900, y: 1250 }, { x: 2450, y: 1400 },
-          { x: 2550, y: 1850 }, { x: 2300, y: 2200 }, { x: 1600, y: 2150 },
-          { x: 1300, y: 1700 }
+          { x: 1500, y: 1100 }, { x: 2100, y: 1050 }, { x: 2750, y: 1150 },
+          { x: 2700, y: 1350 }, { x: 2200, y: 1320 }, { x: 1550, y: 1320 }
+        ],
+        h: 55
+      },
+      // Falaise 1b : Crête rocheuse occidentale (flanc Ouest de Val-des-Ombres)
+      {
+        points: [
+          { x: 1200, y: 1400 }, { x: 1620, y: 1440 }, { x: 1580, y: 2050 },
+          { x: 1150, y: 2000 }
         ],
         h: 55
       },
