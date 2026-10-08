@@ -240,16 +240,10 @@ export class GameEngine {
   }
 
   setupInputs() {
-    // Molette souris pour ajuster le zoom en jeu (entre 0.30 et 1.15)
+    // Zoom fixe verrouillé : la molette ne modifie plus le zoom de la carte
     window.addEventListener('wheel', (e) => {
-      if (this.state === 'PLAYING') {
-        if (e.deltaY > 0) {
-          this.zoom = Math.max(0.30, +(this.zoom - 0.04).toFixed(2));
-        } else {
-          this.zoom = Math.min(1.15, +(this.zoom + 0.04).toFixed(2));
-        }
-      }
-    }, { passive: true });
+      e.preventDefault();
+    }, { passive: false });
   }
 
   setupUIEvents() {
