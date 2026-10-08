@@ -61,7 +61,17 @@ export class Enemy {
   }
 
   update(dt, player, engine) {
-    const angle = Math.atan2(player.y - this.y, player.x - this.x);
+    let aimX = player.x;
+    let aimY = player.y;
+
+    // Navigation intelligente de la horde vers les ponts si séparée par la rivière
+    if (engine && engine.worldMap && engine.worldMap.getMonsterNavTarget) {
+      const navTarget = engine.worldMap.getMonsterNavTarget(this.x, this.y, player.x, player.y);
+      aimX = navTarget.x;
+      aimY = navTarget.y;
+    }
+
+    const angle = Math.atan2(aimY - this.y, aimX - this.x);
     let vx = Math.cos(angle) * this.speed;
     let vy = Math.sin(angle) * this.speed;
 

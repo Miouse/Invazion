@@ -1399,6 +1399,55 @@ export class WorldMap {
   // ==========================================
   // SYSTÈME DE PATHFINDING A* & FRANCHISSEMENT DES PONTS
   // ==========================================
+  // Calcule la coordonnée Y du lit de la rivière à une position X donnée
+  getRiverY(x) {
+    if (x >= this.riverPoints[0].x) return this.riverPoints[0].y;
+    if (x <= this.riverPoints[this.riverPoints.length - 1].x) return this.riverPoints[this.riverPoints.length - 1].y;
+    for (let i = 0; i < this.riverPoints.length - 1; i++) {
+      const p1 = this.riverPoints[i];     // X plus élevé
+      const p2 = this.riverPoints[i + 1]; // X moins élevé
+      if (x <= p1.x && x >= p2.x) {
+        const t = (x - p2.x) / (p1.x - p2.x);
+        return p2.y + t * (p1.y - p2.y);
+      }
+    }
+    return 3500;
+  }
+
+  // Détermine si une position se trouve sur la rive Nord (au-dessus) de la rivière
+  isNorthOfRiver(x, y) {
+    return y < this.getRiverY(x);
+  }
+
+  // Calcul instantané (O(1), 60 FPS garanti) de la cible de navigation pour monstres et boss
+  getMonsterNavTarget(monsterX, monsterY, playerX, playerY) {
+    const monsterNorth = this.isNorthOfRiver(monsterX, monsterY);
+    const playerNorth = this.isNorthOfRiver(playerX, playerY);
+
+    // Si le monstre et le joueur sont du même côté de la rive, charge directe vers le joueur
+    if (monsterNorth === playerNorth) {
+      return { x: playerX, y: playerY };
+    }
+
+    // Si séparés par la rivière, diriger la horde vers le pont le plus proche
+    // Pont 1 (Oakhaven) : (3750, 3150)
+    // Pont 2 (Saules)   : (1950, 3950)
+    const distB1 = Math.hypot(monsterX - 3750, monsterY - 3150);
+    const distB2 = Math.hypot(monsterX - 1950, monsterY - 3950);
+    const useBridge1 = distB1 <= distB2;
+
+    const bNorth = useBridge1 ? { x: 3750, y: 3030 } : { x: 1880, y: 3890 };
+    const bSouth = useBridge1 ? { x: 3750, y: 3270 } : { x: 2020, y: 4010 };
+
+    // Si le monstre est sur le pont, il court vers la sortie du côté du joueur
+    if (this.isOnBridge(monsterX, monsterY)) {
+      return playerNorth ? bNorth : bSouth;
+    }
+
+    // Sinon, il court vers l'entrée du pont de son côté
+    return monsterNorth ? bNorth : bSouth;
+  }
+
   initNavGrid() {
     this.navCellSize = 50;
     this.navCols = Math.ceil(this.worldSize / this.navCellSize);
