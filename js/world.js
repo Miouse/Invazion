@@ -2603,7 +2603,7 @@ export class WorldMap {
 
     // --- MONDE EXTÉRIEUR ---
     let closest = null;
-    let minDist = 55;
+    let minDist = 75;
 
     // A. Portes des maisons et bâtiments des villages
     if (this.villages) {
@@ -2705,14 +2705,14 @@ export class WorldMap {
     const fountain = this.getNearbyFountain(px, py);
     if (fountain) {
       const d = Math.hypot(px - fountain.x, py - fountain.y);
-      if (d <= 55 && d < minDist) {
+      if (d <= 95 && (!closest || d < minDist)) {
         minDist = d;
         closest = {
           type: 'fountain',
           fountain,
           x: fountain.x,
           y: fountain.y,
-          label: 'Boire l\'Eau Bénie (Soin continu)',
+          label: 'Boire l\'Eau Bénie (Soin & Bouclier)',
           actionText: 'BOIRE L\'EAU BÉNIE',
           icon: '⛲'
         };

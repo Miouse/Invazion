@@ -337,8 +337,13 @@ export class GameEngine {
     }
 
     if (this.btnInteract) {
-      this.btnInteract.addEventListener('click', () => {
+      this.btnInteract.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         this.triggerInteraction();
+      });
+      this.btnInteract.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
       });
     }
   }
@@ -856,10 +861,25 @@ export class GameEngine {
 
   drinkFountain(fountain) {
     if (!this.player) return;
-    this.player.heal(40);
+    this.player.applyDivineBlessing(40, 50);
     sfx.playPickup();
-    this.createHitParticles(this.player.x, this.player.y, '#2ec4b6', 15);
-    this.addFloatingText(this.player.x, this.player.y - 25, "+40 PV (Eau Sacrée)", '#2ec4b6', 20);
+    this.createHitParticles(this.player.x, this.player.y, '#2ec4b6', 22);
+    this.createShockwave(this.player.x, this.player.y, '#2ec4b6', 80);
+    this.addFloatingText(this.player.x, this.player.y - 30, "✨ Eau Bénite : +40 Bouclier Divin !", '#2ec4b6', 22);
+
+    // Animation et feedback immédiat sur le bouton d'interaction
+    if (this.btnInteract) {
+      this.btnInteract.classList.add('blessed-active');
+      const label = document.getElementById('interact-label');
+      const icon = document.getElementById('interact-icon');
+      if (label) label.textContent = '✓ BÉNÉDICTION ACTIVÉE !';
+      if (icon) icon.textContent = '✨';
+      setTimeout(() => {
+        if (this.btnInteract) this.btnInteract.classList.remove('blessed-active');
+        this.updateInteractionPrompt();
+      }, 1800);
+    }
+
     this.updateHUD();
   }
 
@@ -1751,10 +1771,16 @@ export class GameEngine {
     }
   }
 
-    // HP
+    // HP & Bouclier Sacré
     const hpRatio = Math.max(0, this.player.hp / this.player.maxHp);
     this.hpBarFill.style.width = `${hpRatio * 100}%`;
-    this.hpNumbers.textContent = `${Math.ceil(this.player.hp)} / ${this.player.maxHp}`;
+    if (this.player.divineShield && this.player.divineShield > 0) {
+      this.hpNumbers.innerHTML = `${Math.ceil(this.player.hp)} <span style="color:#2ec4b6; font-size:9.5px; font-weight:800;">(+${Math.ceil(this.player.divineShield)} 🛡️)</span> / ${this.player.maxHp}`;
+      this.hpBarFill.style.boxShadow = '0 0 10px #2ec4b6, inset 0 0 6px #ffffff';
+    } else {
+      this.hpNumbers.textContent = `${Math.ceil(this.player.hp)} / ${this.player.maxHp}`;
+      this.hpBarFill.style.boxShadow = '';
+    }
 
     // Dash Bar
     if (this.dashBarFill) {

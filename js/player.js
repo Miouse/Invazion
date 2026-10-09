@@ -66,6 +66,9 @@ export class Player {
     this.unlockedGrimoires = ['arcane'];
     this.equippedGrimoire = 'arcane';
 
+    // Bénédiction de l'Eau Bénite & Bouclier Sacré
+    this.divineShield = 0;
+
     // Effets visuels des attaques au corps-à-corps (traînées de coups)
     this.attackVisuals = [];
   }
@@ -766,12 +769,30 @@ export class Player {
       amount *= 0.40; // Réduction de 60% des dégâts pendant la parade
       sfx.playShield();
     }
-    this.hp -= amount;
-    this.invulnTimer = 0.35;
+    // Absorption prioritaire par le Bouclier Divin de l'Eau Bénite
+    if (this.divineShield && this.divineShield > 0) {
+      sfx.playShield();
+      if (this.divineShield >= amount) {
+        this.divineShield -= amount;
+        amount = 0;
+      } else {
+        amount -= this.divineShield;
+        this.divineShield = 0;
+      }
+    }
+    if (amount > 0) {
+      this.hp -= amount;
+      this.invulnTimer = 0.35;
+    }
   }
 
   heal(amount) {
     this.hp = Math.min(this.maxHp, this.hp + amount);
+  }
+
+  applyDivineBlessing(shieldAmount = 40, healAmount = 50) {
+    this.heal(healAmount);
+    this.divineShield = Math.min(60, (this.divineShield || 0) + shieldAmount);
   }
 
   // ==========================================
@@ -806,6 +827,30 @@ export class Player {
       ctx.arc(0, 0, this.radius * 1.8, 0, Math.PI * 2);
       ctx.stroke();
       ctx.fillStyle = 'rgba(0, 240, 255, 0.2)';
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Halo de Bénédiction d'Eau Sacrée (Bouclier Divin)
+    if (this.divineShield > 0) {
+      ctx.save();
+      const pulse = Math.sin(Date.now() / 160) * 0.12 + 0.88;
+      ctx.strokeStyle = '#2ec4b6';
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.arc(0, 0, (this.radius * 1.65) * pulse, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(46, 196, 182, 0.18)';
+      ctx.fill();
+      // Petite orbe céleste en orbite
+      const orbAngle = Date.now() / 350;
+      const orbDist = this.radius * 1.65;
+      const orbX = Math.cos(orbAngle) * orbDist;
+      const orbY = Math.sin(orbAngle) * orbDist;
+      ctx.fillStyle = '#ffd700';
+      ctx.beginPath();
+      ctx.arc(orbX, orbY, 4, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     }

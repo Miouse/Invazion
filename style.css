@@ -374,6 +374,13 @@ html, body {
   transform: scale(0.98) translateY(1px);
 }
 
+.interact-btn.blessed-active {
+  background: linear-gradient(135deg, rgba(20, 80, 70, 0.98), rgba(46, 196, 182, 0.98)) !important;
+  border-color: #2ec4b6 !important;
+  box-shadow: 0 0 28px rgba(46, 196, 182, 0.8), 0 0 10px #ffffff !important;
+  transform: scale(1.08) !important;
+  animation: none !important;
+}
 .interact-key-pill {
   background: linear-gradient(135deg, #ffd700, #ff9900);
   color: #0b0f19;

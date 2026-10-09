@@ -101,7 +101,7 @@ export class ControlsManager {
       }
 
       // Interaction universelle avec touche F (Entrer dans les maisons, coffres, sanctuaires, lit)
-      if (e.key === 'f' || e.key === 'F') {
+      if (e.code === 'KeyF' || e.key === 'f' || e.key === 'F') {
         if (this.engine.state === 'PLAYING') {
           this.engine.triggerInteraction();
         }
@@ -141,6 +141,16 @@ export class ControlsManager {
 
       const worldCoords = this.screenToWorld(e.clientX, e.clientY);
       this.lastMouseWorld = worldCoords;
+
+      // Détection de clic direct sur la fontaine ou un objet interactif dans le monde
+      if (e.button === 0 && this.engine.currentInteractable) {
+        const it = this.engine.currentInteractable;
+        const distToInteract = Math.hypot(worldCoords.x - it.x, worldCoords.y - it.y);
+        if (distToInteract <= 60) {
+          this.engine.triggerInteraction();
+          return;
+        }
+      }
 
       if (this.mode === 'mouse_lol') {
         // Clic Droit (Bouton 2) = Déplacement style League of Legends (MOBA)
