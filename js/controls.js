@@ -142,11 +142,12 @@ export class ControlsManager {
       const worldCoords = this.screenToWorld(e.clientX, e.clientY);
       this.lastMouseWorld = worldCoords;
 
-      // Détection de clic direct sur la fontaine ou un objet interactif dans le monde
+      // Détection de clic direct sur la fontaine, porte de cité ou un objet interactif dans le monde
       if (e.button === 0 && this.engine.currentInteractable) {
         const it = this.engine.currentInteractable;
         const distToInteract = Math.hypot(worldCoords.x - it.x, worldCoords.y - it.y);
-        if (distToInteract <= 60) {
+        const maxClickDist = it.type === 'city_gate' ? 100 : 65;
+        if (distToInteract <= maxClickDist) {
           this.engine.triggerInteraction();
           return;
         }

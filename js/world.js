@@ -12,7 +12,7 @@
  */
 
 export class WorldMap {
-  constructor(worldSize = 7000) {
+  constructor(worldSize = 10000) {
     this.worldSize = worldSize;
 
     // Chargement des textures d'environnement pixel-art
@@ -56,12 +56,12 @@ export class WorldMap {
     this.buildSpatialGrid();
 
     // 10. Grille de navigation pour Pathfinding A* (franchissement automatique des ponts)
-        this.initNavGrid();
+    this.initNavGrid();
 
-    // 11. Brouillard de Guerre & Système d'Exploration (Grille 70 x 70 de 100px)
-    this.fogCols = 70;
-    this.fogRows = 70;
+    // 11. Brouillard de Guerre & Système d'Exploration (Grille de 100px)
     this.fogCellSize = 100;
+    this.fogCols = Math.ceil(this.worldSize / this.fogCellSize);
+    this.fogRows = Math.ceil(this.worldSize / this.fogCellSize);
     this.fogOfWar = new Uint8Array(this.fogCols * this.fogRows);
     this.initTerrainGrid();
     // Dévoilement initial de la place d'Oakhaven
@@ -98,6 +98,27 @@ export class WorldMap {
           sub: "Donjon I • Catacombes Oubliées",
           icon: "🏛️",
           color: "#2ec4b6"
+        },
+        walls: {
+          minX: 2840,
+          maxX: 3560,
+          minY: 3220,
+          maxY: 3800,
+          thickness: 28,
+          towerRadius: 36,
+          bannerColor: '#2ec4b6',
+          bannerAccent: '#ffd700',
+          stoneColor: '#3d405b',
+          stoneHighlight: '#5b618a',
+          gate: {
+            x: 3200,
+            y: 3800,
+            width: 90,
+            side: 'south',
+            outerPos: { x: 3200, y: 3890 },
+            innerPos: { x: 3200, y: 3720 },
+            name: "Grande Herse d'Oakhaven"
+          }
         },
         buildings: [
           // Grand Manoir / Château central fortifié
@@ -136,6 +157,27 @@ export class WorldMap {
           icon: "🏰",
           color: "#e74c3c"
         },
+        walls: {
+          minX: 1820,
+          maxX: 2380,
+          minY: 1420,
+          maxY: 1960,
+          thickness: 28,
+          towerRadius: 36,
+          bannerColor: '#8d0801',
+          bannerAccent: '#e74c3c',
+          stoneColor: '#2b2d42',
+          stoneHighlight: '#4a4e69',
+          gate: {
+            x: 2100,
+            y: 1960,
+            width: 90,
+            side: 'south',
+            outerPos: { x: 2100, y: 2045 },
+            innerPos: { x: 2100, y: 1885 },
+            name: "Porte de Sang de Val-des-Ombres"
+          }
+        },
         buildings: [
           // Tour de guet et manoir de pierre sombre
           { type: 'castle', x: 2100, y: 1580, w: 130, h: 100, roofColor: '#3a3a4a', trim: '#e74c3c' },
@@ -170,6 +212,27 @@ export class WorldMap {
           icon: "🌊",
           color: "#00b4d8"
         },
+        walls: {
+          minX: 4360,
+          maxX: 4920,
+          minY: 4640,
+          maxY: 5160,
+          thickness: 28,
+          towerRadius: 36,
+          bannerColor: '#0077b6',
+          bannerAccent: '#90e0ef',
+          stoneColor: '#354f52',
+          stoneHighlight: '#52796f',
+          gate: {
+            x: 4360,
+            y: 4900,
+            width: 90,
+            side: 'west',
+            outerPos: { x: 4275, y: 4900 },
+            innerPos: { x: 4435, y: 4900 },
+            name: "Porte Fluviale de Riverbend"
+          }
+        },
         buildings: [
           // Huttes et maisons de pêcheurs sur pilotis
           { type: 'house', x: 4500, y: 4820, w: 74, h: 62, roofColor: '#2a9d8f' },
@@ -201,14 +264,16 @@ export class WorldMap {
       { x: 4950, y: 2200 },
       { x: 4750, y: 2700 },
       { x: 4350, y: 3100 },
-      { x: 3750, y: 3150 },
-      { x: 3100, y: 3200 },
-      { x: 2500, y: 3450 },
+      { x: 3750, y: 3120 },
+      { x: 3100, y: 3080 },
+      { x: 2500, y: 3350 },
       { x: 1950, y: 3950 },
       { x: 1450, y: 4700 },
       { x: 1100, y: 5500 },
       { x: 750,  y: 6300 },
-      { x: 400,  y: 7000 }
+      { x: 550,  y: 7500 },
+      { x: 400,  y: 8700 },
+      { x: 250,  y: 10000 }
     ];
 
     // Échantillonnage de la rivière en segments denses pour un tracé fluide
@@ -432,6 +497,76 @@ export class WorldMap {
           { type: 'web', x: 1800, y: 5500 },
           { type: 'rock', x: 1830, y: 5480, r: 22 }
         ]
+      },
+      {
+        id: 'demons_east',
+        name: "Terres Désolées de l'Est",
+        x: 8200,
+        y: 5200,
+        radius: 420,
+        monsterType: 'demon',
+        count: 8,
+        respawnTimer: 25,
+        decors: [
+          { type: 'campfire', x: 8200, y: 5200, radius: 24 },
+          { type: 'tent', x: 8140, y: 5160, w: 56, h: 48, color: '#8d0801', accent: '#370617' }
+        ]
+      },
+      {
+        id: 'skeletons_ashes',
+        name: "Sépulcre des Cendres",
+        x: 8000,
+        y: 2400,
+        radius: 400,
+        monsterType: 'skeleton',
+        count: 8,
+        respawnTimer: 25,
+        decors: [
+          { type: 'ruins_pillar', x: 7980, y: 2380 },
+          { type: 'bones', x: 8020, y: 2420 }
+        ]
+      },
+      {
+        id: 'slimes_deep',
+        name: "Gouffre des Marais Profonds",
+        x: 6800,
+        y: 8200,
+        radius: 420,
+        monsterType: 'zombie',
+        count: 10,
+        respawnTimer: 25,
+        decors: [
+          { type: 'slime_pool', x: 6800, y: 8200, radius: 50 },
+          { type: 'logs', x: 6760, y: 8170 }
+        ]
+      },
+      {
+        id: 'wolves_west',
+        name: "Tanière des Loups de l'Ouest",
+        x: 1200,
+        y: 7800,
+        radius: 380,
+        monsterType: 'skeleton',
+        count: 8,
+        respawnTimer: 25,
+        decors: [
+          { type: 'bones', x: 1200, y: 7800 },
+          { type: 'rock', x: 1240, y: 7780, r: 24 }
+        ]
+      },
+      {
+        id: 'spiders_dread',
+        name: "Sanctuaire des Araignées Noires",
+        x: 8500,
+        y: 8000,
+        radius: 400,
+        monsterType: 'bat',
+        count: 9,
+        respawnTimer: 25,
+        decors: [
+          { type: 'web', x: 8500, y: 8000 },
+          { type: 'rock', x: 8460, y: 7980, r: 22 }
+        ]
       }
     ];
   }
@@ -448,7 +583,13 @@ export class WorldMap {
       { id: 5, x: 6450, y: 4400, opened: false, type: 'gold', xpGems: 9, hp: 45, title: "Butin des Berserkers" },
       { id: 6, x: 4200, y: 6000, opened: false, type: 'wood', xpGems: 5, hp: 30, title: "Coffre des Marais" },
       { id: 7, x: 1680, y: 1800, opened: false, type: 'gold', xpGems: 7, hp: 35, title: "Coffre de la Falaise" },
-      { id: 8, x: 2800, y: 2200, opened: false, type: 'wood', xpGems: 4, hp: 25, title: "Coffre Rustique" }
+      { id: 8, x: 2800, y: 2200, opened: false, type: 'wood', xpGems: 4, hp: 25, title: "Coffre Rustique" },
+      { id: 9, x: 7800, y: 3500, opened: false, type: 'gold', xpGems: 10, hp: 50, title: "Trésor Antique de l'Est" },
+      { id: 10, x: 8800, y: 6500, opened: false, type: 'gold', xpGems: 10, hp: 50, title: "Coffre des Terres Brûlées" },
+      { id: 11, x: 6200, y: 7800, opened: false, type: 'wood', xpGems: 6, hp: 35, title: "Coffre Caché du Fleuve" },
+      { id: 12, x: 2200, y: 8200, opened: false, type: 'wood', xpGems: 6, hp: 35, title: "Butin des Marais du Sud" },
+      { id: 13, x: 8200, y: 1500, opened: false, type: 'gold', xpGems: 12, hp: 55, title: "Relique des Hautes Terres" },
+      { id: 14, x: 1200, y: 3800, opened: false, type: 'wood', xpGems: 6, hp: 30, title: "Coffre du Sous-Bois" }
     ];
   }
 
@@ -457,12 +598,15 @@ export class WorldMap {
       { id: 1, x: 2700, y: 3200, buff: 'speed', name: "Stèle des Vents Vifs", desc: "+40% Vitesse (25s)", color: '#00f0ff', activeTimer: 0 },
       { id: 2, x: 4000, y: 4400, buff: 'regen', name: "Stèle de Vitalité Solaire", desc: "+8 PV/s Régénération (25s)", color: '#2ecc71', activeTimer: 0 },
       { id: 3, x: 5200, y: 1900, buff: 'might', name: "Stèle de Fureur Titanesque", desc: "+40% Dégâts (25s)", color: '#ff2a55', activeTimer: 0 },
-      { id: 4, x: 2050, y: 4950, buff: 'magnet', name: "Stèle d'Aimant Stellaire", desc: "+120% Aimant (25s)", color: '#ffd700', activeTimer: 0 }
+      { id: 4, x: 2050, y: 4950, buff: 'magnet', name: "Stèle d'Aimant Stellaire", desc: "+120% Aimant (25s)", color: '#ffd700', activeTimer: 0 },
+      { id: 5, x: 7500, y: 4800, buff: 'might', name: "Stèle du Dieu Guerrier", desc: "+50% Dégâts (30s)", color: '#ff0055', activeTimer: 0 },
+      { id: 6, x: 6500, y: 7200, buff: 'speed', name: "Stèle des Coursiers Célestes", desc: "+45% Vitesse (30s)", color: '#00f0ff', activeTimer: 0 },
+      { id: 7, x: 2500, y: 7500, buff: 'regen', name: "Stèle de la Source Éternelle", desc: "+12 PV/s Régénération (30s)", color: '#2ecc71', activeTimer: 0 }
     ];
   }
 
   // ==========================================
-  // 7. FORÊTS MÉDIÉVALES TRÈS DENSES (1400+ ARBRES)
+  // 7. FORÊTS MÉDIÉVALES TRÈS DENSES (2000+ ARBRES)
   // ==========================================
   initTreesAndFoliage() {
     this.trees = [];
@@ -472,7 +616,7 @@ export class WorldMap {
     };
 
     let seed = 42;
-    // 14 massifs forestiers médiévaux majeurs recouvrant la carte de façon dense
+    // 21 massifs forestiers médiévaux majeurs recouvrant l'immense carte de 10 000 px
     const clusters = [
       { cx: 1600, cy: 2700, count: 120, radius: 750 }, // Forêt Ouest Sauvage
       { cx: 2400, cy: 1100, count: 100, radius: 650 }, // Forêt Nord-Ouest des Cimes
@@ -487,7 +631,15 @@ export class WorldMap {
       { cx: 6200, cy: 3000, count: 90,  radius: 600 }, // Bois des Murmures Est
       { cx: 4500, cy: 5800, count: 95,  radius: 650 }, // Massif Fluvial Sud
       { cx: 2600, cy: 6200, count: 90,  radius: 600 }, // Sous-Bois du Midi
-      { cx: 3600, cy: 1700, count: 80,  radius: 550 }  // Bosquets de la Clairière Nord
+      { cx: 3600, cy: 1700, count: 80,  radius: 550 }, // Bosquets de la Clairière Nord
+      // Nouveaux massifs forestiers pour les terres sauvages étendues (10 000 px)
+      { cx: 7800, cy: 3000, count: 120, radius: 800 }, // Grande Forêt de l'Est Lointain
+      { cx: 8600, cy: 5500, count: 120, radius: 800 }, // Bois Obscurs des Confins Est
+      { cx: 7400, cy: 7500, count: 120, radius: 800 }, // Sylve Sauvage du Sud-Est
+      { cx: 3800, cy: 8200, count: 110, radius: 750 }, // Forêt Marécageuse du Grand Sud
+      { cx: 1800, cy: 7800, count: 110, radius: 750 }, // Massif Rocheux du Sud-Ouest
+      { cx: 8800, cy: 1500, count: 100, radius: 700 }, // Taïga Nord-Est des Cendres
+      { cx: 5500, cy: 8800, count: 110, radius: 750 }  // Bois des Brumes du Bout du Monde
     ];
 
     for (const cl of clusters) {
@@ -606,10 +758,10 @@ export class WorldMap {
 
   isNearPortal(x, y, margin = 280) {
     const portals = [
-      { x: 3500, y: 400 },
-      { x: 3500, y: 6600 },
-      { x: 400,  y: 3500 },
-      { x: 6600, y: 3500 }
+      { x: 5000, y: 500 },
+      { x: 5000, y: 9500 },
+      { x: 500,  y: 5000 },
+      { x: 9500, y: 5000 }
     ];
     const marginSq = margin * margin;
     for (const p of portals) {
@@ -661,15 +813,21 @@ export class WorldMap {
     ];
   }
 
-  // Détermine si une position se trouve dans une Safe Zone (ville protégée)
+  // Détermine si une position se trouve dans une Safe Zone (ville fortifiée protégée)
   isInsideSafeZone(x, y) {
     if (!this.villages) return false;
     for (const v of this.villages) {
       if (!v.safeZone) continue;
-      const dx = x - v.x;
-      const dy = y - v.y;
-      if (dx * dx + dy * dy < v.radius * v.radius) {
-        return true;
+      if (v.walls) {
+        if (x >= v.walls.minX && x <= v.walls.maxX && y >= v.walls.minY && y <= v.walls.maxY) {
+          return true;
+        }
+      } else {
+        const dx = x - v.x;
+        const dy = y - v.y;
+        if (dx * dx + dy * dy < v.radius * v.radius) {
+          return true;
+        }
       }
     }
     return false;
@@ -679,10 +837,16 @@ export class WorldMap {
   getCurrentVillage(x, y) {
     if (!this.villages) return null;
     for (const v of this.villages) {
-      const dx = x - v.x;
-      const dy = y - v.y;
-      if (dx * dx + dy * dy < v.radius * v.radius) {
-        return v;
+      if (v.walls) {
+        if (x >= v.walls.minX && x <= v.walls.maxX && y >= v.walls.minY && y <= v.walls.maxY) {
+          return v;
+        }
+      } else {
+        const dx = x - v.x;
+        const dy = y - v.y;
+        if (dx * dx + dy * dy < v.radius * v.radius) {
+          return v;
+        }
       }
     }
     return null;
@@ -734,6 +898,9 @@ export class WorldMap {
 
     // 5. Falaises rocheuses
     this.renderCliffs(ctx, left, right, top, bottom);
+
+    // 5.b Murailles fortifiées, bastions et herses des cités
+    this.renderCityWalls(ctx, left, right, top, bottom, engine.gameTime);
 
     // 6. Entités du décor ordonnées en Y (Bâtiments, Arbres, Tentes, Feux de camp)
     this.renderYOrderedEntities(ctx, engine.gameTime, left, right, top, bottom, engine.player);
@@ -913,6 +1080,319 @@ export class WorldMap {
 
       ctx.restore();
     }
+  }
+
+  // 5.b Murailles fortifiées, bastions et herses des cités
+  renderCityWalls(ctx, left, right, top, bottom, time) {
+    if (!this.villages) return;
+
+    for (const v of this.villages) {
+      if (!v.walls) continue;
+      const w = v.walls;
+      const g = w.gate;
+
+      // Culling de la forteresse entière
+      if (w.maxX < left || w.minX > right || w.maxY < top || w.minY > bottom) {
+        continue;
+      }
+
+      const thick = w.thickness || 28;
+      const stoneColor = w.stoneColor || '#3d405b';
+      const stoneHighlight = w.stoneHighlight || '#5b618a';
+      const stoneDark = '#1d1e2c';
+
+      ctx.save();
+
+      // --- A. REMPARTS DE PIERRE TAILLÉE ---
+      // 1. Mur Nord
+      this.drawWallSegment(ctx, w.minX, w.minY - thick / 2, w.maxX - w.minX, thick, 'horizontal', stoneColor, stoneHighlight, stoneDark);
+
+      // 2. Mur Sud
+      if (g && g.side === 'south') {
+        const halfGate = g.width / 2;
+        this.drawWallSegment(ctx, w.minX, w.maxY - thick / 2, (g.x - halfGate) - w.minX, thick, 'horizontal', stoneColor, stoneHighlight, stoneDark);
+        this.drawWallSegment(ctx, g.x + halfGate, w.maxY - thick / 2, w.maxX - (g.x + halfGate), thick, 'horizontal', stoneColor, stoneHighlight, stoneDark);
+      } else {
+        this.drawWallSegment(ctx, w.minX, w.maxY - thick / 2, w.maxX - w.minX, thick, 'horizontal', stoneColor, stoneHighlight, stoneDark);
+      }
+
+      // 3. Mur Ouest
+      if (g && g.side === 'west') {
+        const halfGate = g.width / 2;
+        this.drawWallSegment(ctx, w.minX - thick / 2, w.minY, thick, (g.y - halfGate) - w.minY, 'vertical', stoneColor, stoneHighlight, stoneDark);
+        this.drawWallSegment(ctx, w.minX - thick / 2, g.y + halfGate, thick, w.maxY - (g.y + halfGate), 'vertical', stoneColor, stoneHighlight, stoneDark);
+      } else {
+        this.drawWallSegment(ctx, w.minX - thick / 2, w.minY, thick, w.maxY - w.minY, 'vertical', stoneColor, stoneHighlight, stoneDark);
+      }
+
+      // 4. Mur Est
+      this.drawWallSegment(ctx, w.maxX - thick / 2, w.minY, thick, w.maxY - w.minY, 'vertical', stoneColor, stoneHighlight, stoneDark);
+
+      // --- B. 4 TOURS BASTIONS CIRCULAIRES AUX ANGLES ---
+      const r = w.towerRadius || 36;
+      const cornerTowers = [
+        { x: w.minX, y: w.minY },
+        { x: w.maxX, y: w.minY },
+        { x: w.minX, y: w.maxY },
+        { x: w.maxX, y: w.maxY }
+      ];
+      for (const t of cornerTowers) {
+        this.drawTower(ctx, t.x, t.y, r, stoneColor, stoneHighlight, stoneDark, w.bannerColor);
+      }
+
+      // --- C. GRANDE PORTE FORTIFIÉE (CHÂTELET & HERSE DE FER) ---
+      if (g) {
+        this.drawCityGate(ctx, g, w, v, time, stoneColor, stoneHighlight, stoneDark);
+      }
+
+      ctx.restore();
+    }
+  }
+
+  drawWallSegment(ctx, x, y, width, height, orientation, stoneColor, highlightColor, darkColor) {
+    if (width <= 0 || height <= 0) return;
+
+    // Ombre portée au sol
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.fillRect(x + 4, y + height, width, 8);
+
+    // Corps du mur en pierre taillée
+    ctx.fillStyle = stoneColor;
+    ctx.fillRect(x, y, width, height);
+
+    // Rebords et joints de maçonnerie
+    ctx.strokeStyle = darkColor;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(x, y, width, height);
+
+    // Ligne de crête lumineuse
+    ctx.fillStyle = highlightColor;
+    if (orientation === 'horizontal') {
+      ctx.fillRect(x, y, width, 4);
+      // Créneaux (merlons)
+      const merlonW = 16;
+      const gapW = 12;
+      const step = merlonW + gapW;
+      for (let mx = x; mx < x + width - merlonW; mx += step) {
+        ctx.fillRect(mx, y - 6, merlonW, 6);
+        ctx.strokeStyle = darkColor;
+        ctx.strokeRect(mx, y - 6, merlonW, 6);
+      }
+    } else {
+      ctx.fillRect(x, y, 4, height);
+      // Créneaux verticaux
+      const merlonH = 16;
+      const gapH = 12;
+      const step = merlonH + gapH;
+      for (let my = y; my < y + height - merlonH; my += step) {
+        ctx.fillRect(x - 6, my, 6, merlonH);
+        ctx.strokeStyle = darkColor;
+        ctx.strokeRect(x - 6, my, 6, merlonH);
+      }
+    }
+  }
+
+  drawTower(ctx, x, y, radius, stoneColor, highlightColor, darkColor, roofColor = '#1b7a6f') {
+    // Ombre circulaire
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+    ctx.beginPath();
+    ctx.ellipse(x + 4, y + 8, radius * 1.1, radius * 0.7, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Base circulaire en maçonnerie
+    ctx.fillStyle = stoneColor;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = darkColor;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    // Chemin de ronde
+    ctx.fillStyle = highlightColor;
+    ctx.beginPath();
+    ctx.arc(x, y, radius - 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Toit conique en ardoise
+    const roofR = radius * 0.8;
+    ctx.fillStyle = roofColor;
+    ctx.beginPath();
+    ctx.arc(x, y - 4, roofR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = darkColor;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Reflet sur le toit conique
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.beginPath();
+    ctx.arc(x - 3, y - 7, roofR * 0.45, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Épi de faîtage doré
+    ctx.fillStyle = '#ffd700';
+    ctx.beginPath();
+    ctx.arc(x, y - 4, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  drawCityGate(ctx, g, w, v, time, stoneColor, highlightColor, darkColor) {
+    const isSouth = g.side === 'south';
+    const halfW = g.width / 2;
+
+    // 1. Deux tours de garde flanquant la porte
+    const towerR = 26;
+    if (isSouth) {
+      this.drawTower(ctx, g.x - halfW - 4, g.y, towerR, stoneColor, highlightColor, darkColor, w.bannerColor);
+      this.drawTower(ctx, g.x + halfW + 4, g.y, towerR, stoneColor, highlightColor, darkColor, w.bannerColor);
+    } else {
+      this.drawTower(ctx, g.x, g.y - halfW - 4, towerR, stoneColor, highlightColor, darkColor, w.bannerColor);
+      this.drawTower(ctx, g.x, g.y + halfW + 4, towerR, stoneColor, highlightColor, darkColor, w.bannerColor);
+    }
+
+    // 2. Arche de pierre supérieure
+    ctx.fillStyle = stoneColor;
+    if (isSouth) {
+      ctx.fillRect(g.x - halfW, g.y - 14, g.width, 28);
+      ctx.strokeStyle = darkColor;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(g.x - halfW, g.y - 14, g.width, 28);
+
+      // Arche voûtée
+      ctx.fillStyle = '#12131a';
+      ctx.beginPath();
+      ctx.arc(g.x, g.y + 4, halfW * 0.72, Math.PI, 0);
+      ctx.lineTo(g.x + halfW * 0.72, g.y + 14);
+      ctx.lineTo(g.x - halfW * 0.72, g.y + 14);
+      ctx.closePath();
+      ctx.fill();
+
+      // Grille / Herse de fer forgé (Portcullis)
+      ctx.strokeStyle = '#8d99ae';
+      ctx.lineWidth = 2.5;
+      const barCount = 7;
+      const barStep = (g.width * 0.6) / barCount;
+      const startBx = g.x - (g.width * 0.3);
+      for (let i = 0; i <= barCount; i++) {
+        const bx = startBx + i * barStep;
+        ctx.beginPath();
+        ctx.moveTo(bx, g.y - 8);
+        ctx.lineTo(bx, g.y + 14);
+        ctx.stroke();
+        // Pointes de herse
+        ctx.fillStyle = '#edf2f4';
+        ctx.beginPath();
+        ctx.moveTo(bx - 2, g.y + 14);
+        ctx.lineTo(bx + 2, g.y + 14);
+        ctx.lineTo(bx, g.y + 18);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.beginPath();
+      ctx.moveTo(startBx, g.y - 2);
+      ctx.lineTo(g.x + (g.width * 0.3), g.y - 2);
+      ctx.moveTo(startBx, g.y + 6);
+      ctx.lineTo(g.x + (g.width * 0.3), g.y + 6);
+      ctx.stroke();
+
+      // Bannières héraldiques sur chaque tour
+      this.drawHeraldicBanner(ctx, g.x - halfW - 4, g.y + 20, w.bannerColor, w.bannerAccent || '#ffd700', time);
+      this.drawHeraldicBanner(ctx, g.x + halfW + 4, g.y + 20, w.bannerColor, w.bannerAccent || '#ffd700', time);
+
+      // Braseros / Torches allumées
+      this.drawTorch(ctx, g.x - halfW + 6, g.y - 4, time);
+      this.drawTorch(ctx, g.x + halfW - 6, g.y - 4, time);
+
+      // Écusson central
+      ctx.fillStyle = '#ffd700';
+      ctx.beginPath();
+      ctx.arc(g.x, g.y - 12, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#2b2d42';
+      ctx.stroke();
+
+    } else {
+      // Porte latérale (Ouest)
+      ctx.fillRect(g.x - 14, g.y - halfW, 28, g.width);
+      ctx.strokeStyle = darkColor;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(g.x - 14, g.y - halfW, 28, g.width);
+
+      // Arche voûtée
+      ctx.fillStyle = '#12131a';
+      ctx.beginPath();
+      ctx.arc(g.x + 4, g.y, halfW * 0.72, -Math.PI / 2, Math.PI / 2);
+      ctx.lineTo(g.x + 14, g.y + halfW * 0.72);
+      ctx.lineTo(g.x + 14, g.y - halfW * 0.72);
+      ctx.closePath();
+      ctx.fill();
+
+      // Herse verticale
+      ctx.strokeStyle = '#8d99ae';
+      ctx.lineWidth = 2.5;
+      const barCount = 7;
+      const barStep = (g.width * 0.6) / barCount;
+      const startBy = g.y - (g.width * 0.3);
+      for (let i = 0; i <= barCount; i++) {
+        const by = startBy + i * barStep;
+        ctx.beginPath();
+        ctx.moveTo(g.x - 8, by);
+        ctx.lineTo(g.x + 14, by);
+        ctx.stroke();
+      }
+
+      this.drawTorch(ctx, g.x - 4, g.y - halfW + 6, time);
+      this.drawTorch(ctx, g.x - 4, g.y + halfW - 6, time);
+    }
+
+    // Effet d'aura interactive / pulsation dorée au sol de la porte
+    const pulse = Math.sin(time * 3) * 0.25 + 0.75;
+    ctx.strokeStyle = `rgba(255, 215, 0, ${0.4 * pulse})`;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(g.x - 28, g.y - 12, 56, 24);
+  }
+
+  drawHeraldicBanner(ctx, x, y, mainColor, accentColor, time) {
+    const wave = Math.sin(time * 3 + x) * 2;
+    ctx.fillStyle = mainColor;
+    ctx.beginPath();
+    ctx.moveTo(x - 6, y);
+    ctx.lineTo(x + 6, y);
+    ctx.lineTo(x + 6 + wave, y + 26);
+    ctx.lineTo(x + wave, y + 32);
+    ctx.lineTo(x - 6 + wave, y + 26);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = accentColor;
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // Motif au centre
+    ctx.fillStyle = accentColor;
+    ctx.beginPath();
+    ctx.arc(x + wave * 0.5, y + 14, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  drawTorch(ctx, x, y, time) {
+    // Hampe de fer
+    ctx.fillStyle = '#495057';
+    ctx.fillRect(x - 2, y, 4, 10);
+
+    // Flamme vacillante
+    const flicker = Math.sin(time * 12 + x) * 2;
+    const flameR = 5 + flicker;
+    ctx.fillStyle = 'rgba(255, 140, 0, 0.9)';
+    ctx.beginPath();
+    ctx.arc(x, y - 2, flameR, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = 'rgba(255, 230, 100, 0.95)';
+    ctx.beginPath();
+    ctx.arc(x, y - 2, flameR * 0.5, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   // 6. Entités ordonnées en Y (Bâtiments, Arbres, Tentes, Feux) pour un relief naturel
@@ -1747,6 +2227,179 @@ export class WorldMap {
   initColliders() {
     this.colliders = [];
 
+    // 0. Murailles Fortifiées & Portes des Cités (Infranchissables, bloquent joueurs & monstres)
+    for (const v of this.villages) {
+      if (!v.walls) continue;
+      const w = v.walls;
+      const g = w.gate;
+      const thick = w.thickness || 28;
+      const halfT = thick / 2;
+
+      // 4 Tours d'Angles (bastions circulaires)
+      const corners = [
+        { x: w.minX, y: w.minY },
+        { x: w.maxX, y: w.minY },
+        { x: w.minX, y: w.maxY },
+        { x: w.maxX, y: w.maxY }
+      ];
+      for (const corner of corners) {
+        this.colliders.push({
+          type: 'circle',
+          x: corner.x,
+          y: corner.y,
+          r: w.towerRadius || 36,
+          solid: true,
+          blocksMonsters: true
+        });
+      }
+
+      // Mur Nord
+      this.colliders.push({
+        type: 'box',
+        minX: w.minX,
+        maxX: w.maxX,
+        minY: w.minY - halfT,
+        maxY: w.minY + halfT,
+        solid: true,
+        blocksMonsters: true
+      });
+
+      // Mur Sud
+      if (g && g.side === 'south') {
+        const halfGate = g.width / 2;
+        // Segment Sud Gauche
+        this.colliders.push({
+          type: 'box',
+          minX: w.minX,
+          maxX: g.x - halfGate,
+          minY: w.maxY - halfT,
+          maxY: w.maxY + halfT,
+          solid: true,
+          blocksMonsters: true
+        });
+        // Segment Sud Droit
+        this.colliders.push({
+          type: 'box',
+          minX: g.x + halfGate,
+          maxX: w.maxX,
+          minY: w.maxY - halfT,
+          maxY: w.maxY + halfT,
+          solid: true,
+          blocksMonsters: true
+        });
+        // Blocker de la herse (fermé, nécessite F ou clic pour traverser)
+        this.colliders.push({
+          type: 'box',
+          minX: g.x - halfGate,
+          maxX: g.x + halfGate,
+          minY: w.maxY - halfT,
+          maxY: w.maxY + halfT,
+          solid: true,
+          blocksMonsters: true
+        });
+        // 2 Tours flanquant la herse
+        this.colliders.push({
+          type: 'circle',
+          x: g.x - halfGate - 4,
+          y: w.maxY,
+          r: 26,
+          solid: true,
+          blocksMonsters: true
+        });
+        this.colliders.push({
+          type: 'circle',
+          x: g.x + halfGate + 4,
+          y: w.maxY,
+          r: 26,
+          solid: true,
+          blocksMonsters: true
+        });
+      } else {
+        this.colliders.push({
+          type: 'box',
+          minX: w.minX,
+          maxX: w.maxX,
+          minY: w.maxY - halfT,
+          maxY: w.maxY + halfT,
+          solid: true,
+          blocksMonsters: true
+        });
+      }
+
+      // Mur Ouest
+      if (g && g.side === 'west') {
+        const halfGate = g.width / 2;
+        // Segment Ouest Haut
+        this.colliders.push({
+          type: 'box',
+          minX: w.minX - halfT,
+          maxX: w.minX + halfT,
+          minY: w.minY,
+          maxY: g.y - halfGate,
+          solid: true,
+          blocksMonsters: true
+        });
+        // Segment Ouest Bas
+        this.colliders.push({
+          type: 'box',
+          minX: w.minX - halfT,
+          maxX: w.minX + halfT,
+          minY: g.y + halfGate,
+          maxY: w.maxY,
+          solid: true,
+          blocksMonsters: true
+        });
+        // Blocker de la herse
+        this.colliders.push({
+          type: 'box',
+          minX: w.minX - halfT,
+          maxX: w.minX + halfT,
+          minY: g.y - halfGate,
+          maxY: g.y + halfGate,
+          solid: true,
+          blocksMonsters: true
+        });
+        // 2 Tours flanquant la herse
+        this.colliders.push({
+          type: 'circle',
+          x: w.minX,
+          y: g.y - halfGate - 4,
+          r: 26,
+          solid: true,
+          blocksMonsters: true
+        });
+        this.colliders.push({
+          type: 'circle',
+          x: w.minX,
+          y: g.y + halfGate + 4,
+          r: 26,
+          solid: true,
+          blocksMonsters: true
+        });
+      } else {
+        this.colliders.push({
+          type: 'box',
+          minX: w.minX - halfT,
+          maxX: w.minX + halfT,
+          minY: w.minY,
+          maxY: w.maxY,
+          solid: true,
+          blocksMonsters: true
+        });
+      }
+
+      // Mur Est
+      this.colliders.push({
+        type: 'box',
+        minX: w.maxX - halfT,
+        maxX: w.maxX + halfT,
+        minY: w.minY,
+        maxY: w.maxY,
+        solid: true,
+        blocksMonsters: true
+      });
+    }
+
     // 1. Bâtiments des villages
     for (const v of this.villages) {
       for (const b of v.buildings) {
@@ -1974,9 +2627,9 @@ export class WorldMap {
 
   // Teste si une position entre en collision
   isColliding(x, y, radius, isPlayer = true) {
-    // 0. Si le joueur est à l'intérieur d'une maison (zone isolée x: 3500, y: 9200)
-    if (y > 8500) {
-      const cx = 3500, cy = 9200, w = 480, h = 340;
+    // 0. Si le joueur est à l'intérieur d'une maison (zone isolée x: 3500, y: 30000)
+    if (y > 20000) {
+      const cx = 3500, cy = 30000, w = 480, h = 340;
       const minX = cx - w / 2 + 10;
       const maxX = cx + w / 2 - 10;
       const minY = cy - h / 2 + 15;
@@ -1988,15 +2641,15 @@ export class WorldMap {
       }
 
       // Lit à baldaquin (en haut à droite)
-      if (x + radius > 3625 && x - radius < 3705 && y + radius > 9045 && y - radius < 9130) {
+      if (x + radius > 3625 && x - radius < 3705 && y + radius > 29845 && y - radius < 29930) {
         return true;
       }
       // Table de banquet (au centre)
-      if (x + radius > 3385 && x - radius < 3475 && y + radius > 9155 && y - radius < 9205) {
+      if (x + radius > 3385 && x - radius < 3475 && y + radius > 29955 && y - radius < 30005) {
         return true;
       }
       // Cheminée en pierre (en haut au centre)
-      if (x + radius > 3455 && x - radius < 3545 && y + radius > 9030 && y - radius < 9075) {
+      if (x + radius > 3455 && x - radius < 3545 && y + radius > 29830 && y - radius < 29875) {
         return true;
       }
       return false;
@@ -2545,12 +3198,12 @@ export class WorldMap {
   getNearbyInteractable(px, py, isInsideHouse = false) {
     if (isInsideHouse) {
       // 1. Porte de sortie (au bas de la pièce)
-      const dExit = Math.hypot(px - 3500, py - 9345);
+      const dExit = Math.hypot(px - 3500, py - 30145);
       if (dExit <= 55) {
         return {
           type: 'exit_door',
           x: 3500,
-          y: 9345,
+          y: 30145,
           label: 'Sortir dehors',
           actionText: 'SORTIR DEHORS',
           icon: '🚪'
@@ -2558,12 +3211,12 @@ export class WorldMap {
       }
 
       // 2. Lit douillet
-      const dBed = Math.hypot(px - 3660, py - 9110);
+      const dBed = Math.hypot(px - 3660, py - 29910);
       if (dBed <= 60) {
         return {
           type: 'bed',
           x: 3660,
-          y: 9110,
+          y: 29910,
           label: 'Se reposer dans le lit (Restaure 100% PV)',
           actionText: 'SE REPOSER (100% PV)',
           icon: '🛏️'
@@ -2571,12 +3224,12 @@ export class WorldMap {
       }
 
       // 3. Cheminée crépitante
-      const dFire = Math.hypot(px - 3500, py - 9080);
+      const dFire = Math.hypot(px - 3500, py - 29880);
       if (dFire <= 55) {
         return {
           type: 'fireplace',
           x: 3500,
-          y: 9080,
+          y: 29880,
           label: 'Se réchauffer au foyer',
           actionText: 'SE RÉCHAUFFER AU FEU',
           icon: '🔥'
@@ -2585,12 +3238,12 @@ export class WorldMap {
 
       // 4. Coffre secret intérieur
       if (!this.interiorChestOpened) {
-        const dChest = Math.hypot(px - 3320, py - 9120);
+        const dChest = Math.hypot(px - 3320, py - 29920);
         if (dChest <= 50) {
           return {
             type: 'interior_chest',
             x: 3320,
-            y: 9120,
+            y: 29920,
             label: 'Fouiller le coffre de la maison',
             actionText: 'FOUILLER LE COFFRE',
             icon: '💰'
@@ -2604,6 +3257,38 @@ export class WorldMap {
     // --- MONDE EXTÉRIEUR ---
     let closest = null;
     let minDist = 75;
+
+    // A.0 Portes Fortifiées des Cités (Entrée / Sortie)
+    if (this.villages) {
+      for (const v of this.villages) {
+        if (v.walls && v.walls.gate) {
+          const g = v.walls.gate;
+          const dGate = Math.hypot(px - g.x, py - g.y);
+          const dOuter = Math.hypot(px - g.outerPos.x, py - g.outerPos.y);
+          const dInner = Math.hypot(px - g.innerPos.x, py - g.innerPos.y);
+          const minGateD = Math.min(dGate, dOuter, dInner);
+
+          if (minGateD <= 95) {
+            const isInside = (px >= v.walls.minX && px <= v.walls.maxX && py >= v.walls.minY && py <= v.walls.maxY);
+            if (!closest || minGateD < minDist) {
+              minDist = minGateD;
+              closest = {
+                type: 'city_gate',
+                gate: g,
+                village: v,
+                isInside,
+                targetPos: isInside ? g.outerPos : g.innerPos,
+                x: g.x,
+                y: g.y,
+                label: isInside ? `Sortir de ${v.name}` : `Entrer dans ${v.name} (Zone Sûre)`,
+                actionText: isInside ? `SORTIR DANS LES TERRES SAUVAGES` : `ENTRER DANS ${v.name.toUpperCase()} (ZONE SÛRE)`,
+                icon: '🏰'
+              };
+            }
+          }
+        }
+      }
+    }
 
     // A. Portes des maisons et bâtiments des villages
     if (this.villages) {
@@ -2742,7 +3427,7 @@ export class WorldMap {
   // ==========================================
   renderHouseInterior(ctx, engine, time) {
     const cx = 3500;
-    const cy = 9200;
+    const cy = 30000;
     const w = 480;
     const h = 340;
 
@@ -2801,7 +3486,7 @@ export class WorldMap {
     ctx.fillStyle = '#3a2010';
     ctx.fillRect(cx - w / 2 - 16, cy - h / 2 - 24, w + 32, 10);
 
-    // 4. Paillasson & Porte de sortie au Sud (3500, 9345)
+    // 4. Paillasson & Porte de sortie au Sud (3500, cy + 145)
     ctx.fillStyle = '#b08968';
     ctx.fillRect(cx - 32, cy + h / 2 - 22, 64, 22);
     ctx.strokeStyle = '#7f5539';
@@ -2812,7 +3497,7 @@ export class WorldMap {
     ctx.fillStyle = 'rgba(255, 230, 100, 0.4)';
     ctx.fillRect(cx - 24, cy + h / 2 - 4, 48, 8);
 
-    // 5. Grande Cheminée avec feu crépitant (3500, 9050)
+    // 5. Grande Cheminée avec feu crépitant (3500, cy - 150)
     ctx.fillStyle = '#3f3d47';
     ctx.fillRect(cx - 42, cy - h / 2 - 10, 84, 44);
     ctx.strokeStyle = '#1f1e24';
@@ -2842,72 +3527,72 @@ export class WorldMap {
     ctx.arc(cx, cy - h / 2 + 25, 110, 0, Math.PI * 2);
     ctx.fill();
 
-    // 6. Lit à baldaquin douillet (3660, 9090)
+    // 6. Lit à baldaquin douillet (3660, cy - 110)
     ctx.fillStyle = '#4a2810';
-    ctx.fillRect(3630, 9050, 70, 80);
+    ctx.fillRect(3630, cy - 150, 70, 80);
     // Couette carmin
     ctx.fillStyle = '#800f2f';
-    ctx.fillRect(3634, 9070, 62, 56);
+    ctx.fillRect(3634, cy - 130, 62, 56);
     // Oreillers crème
     ctx.fillStyle = '#fdf0d5';
-    ctx.fillRect(3640, 9054, 24, 14);
-    ctx.fillRect(3668, 9054, 24, 14);
+    ctx.fillRect(3640, cy - 146, 24, 14);
+    ctx.fillRect(3668, cy - 146, 24, 14);
     // Poteaux d'angle
     ctx.fillStyle = '#ffd700';
-    ctx.fillRect(3628, 9046, 6, 6);
-    ctx.fillRect(3696, 9046, 6, 6);
-    ctx.fillRect(3628, 9126, 6, 6);
-    ctx.fillRect(3696, 9126, 6, 6);
+    ctx.fillRect(3628, cy - 154, 6, 6);
+    ctx.fillRect(3696, cy - 154, 6, 6);
+    ctx.fillRect(3628, cy - 74, 6, 6);
+    ctx.fillRect(3696, cy - 74, 6, 6);
 
-    // 7. Grande Table de banquet & victuailles (3430, 9180)
+    // 7. Grande Table de banquet & victuailles (3430, cy - 20)
     ctx.fillStyle = '#533e2d';
-    ctx.fillRect(3390, 9160, 78, 44);
+    ctx.fillRect(3390, cy - 40, 78, 44);
     ctx.strokeStyle = '#2b1e15';
     ctx.lineWidth = 2;
-    ctx.strokeRect(3390, 9160, 78, 44);
+    ctx.strokeRect(3390, cy - 40, 78, 44);
 
     // Victuailles sur la table (assiette, pain, chope)
     ctx.fillStyle = '#e2e8f0';
     ctx.beginPath();
-    ctx.arc(3425, 9180, 8, 0, Math.PI * 2);
+    ctx.arc(3425, cy - 20, 8, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#d4a373';
     ctx.beginPath();
-    ctx.arc(3425, 9180, 5, 0, Math.PI * 2); // Pain
+    ctx.arc(3425, cy - 20, 5, 0, Math.PI * 2); // Pain
     ctx.fill();
     ctx.fillStyle = '#ffd166';
-    ctx.fillRect(3446, 9174, 7, 10); // Chope d'or/bière
+    ctx.fillRect(3446, cy - 26, 7, 10); // Chope d'or/bière
 
     // Chaises
     ctx.fillStyle = '#3d2b1f';
-    ctx.fillRect(3410, 9146, 20, 10);
-    ctx.fillRect(3440, 9146, 20, 10);
-    ctx.fillRect(3410, 9208, 20, 10);
-    ctx.fillRect(3440, 9208, 20, 10);
+    ctx.fillRect(3410, cy - 54, 20, 10);
+    ctx.fillRect(3440, cy - 54, 20, 10);
+    ctx.fillRect(3410, cy + 8, 20, 10);
+    ctx.fillRect(3440, cy + 8, 20, 10);
 
-    // 8. Coffre secret intérieur (3320, 9120)
+    // 8. Coffre secret intérieur (3320, cy - 80)
     this.drawChest(ctx, {
       x: 3320,
-      y: 9120,
+      y: cy - 80,
       opened: this.interiorChestOpened,
       type: 'gold'
     }, time);
 
-    // 9. Étagère de potions et livres au mur (3310, 9045)
+    // 9. Étagère de potions et livres au mur (3310, cy - 155)
     ctx.fillStyle = '#4a2810';
-    ctx.fillRect(3280, 9032, 65, 14);
+    ctx.fillRect(3280, cy - 168, 65, 14);
     // Fioles
     ctx.fillStyle = '#ef233c';
     ctx.beginPath();
-    ctx.arc(3295, 9036, 4, 0, Math.PI * 2);
+    ctx.arc(3295, cy - 164, 4, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#00f0ff';
     ctx.beginPath();
-    ctx.arc(3310, 9036, 4, 0, Math.PI * 2);
+    ctx.arc(3310, cy - 164, 4, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#2ec4b6';
     ctx.beginPath();
-    ctx.arc(3325, 9036, 4, 0, Math.PI * 2);
+    ctx.arc(3325, cy - 164, 4, 0, Math.PI * 2);
     ctx.fill();
 
     // 10. Chandeliers muraux avec lueurs chaudes
@@ -3064,14 +3749,23 @@ export class WorldMap {
   getLightSources(isInsideHouse) {
     if (isInsideHouse) {
       return [
-        { x: 3500, y: 9080, radius: 280, color: 'rgba(255, 140, 30, 0.95)' },
-        { x: 3480, y: 9220, radius: 160, color: 'rgba(255, 200, 60, 0.85)' }
+        { x: 3500, y: 29880, radius: 280, color: 'rgba(255, 140, 30, 0.95)' },
+        { x: 3480, y: 30020, radius: 160, color: 'rgba(255, 200, 60, 0.85)' }
       ];
     }
 
     const lights = [
       { x: 3160, y: 3510, radius: 240, color: 'rgba(46, 196, 182, 0.85)' },
       { x: 3080, y: 3510, radius: 210, color: 'rgba(255, 183, 3, 0.95)' },
+      // Torches de la porte d'Oakhaven
+      { x: 3140, y: 3810, radius: 170, color: 'rgba(255, 140, 30, 0.9)' },
+      { x: 3260, y: 3810, radius: 170, color: 'rgba(255, 140, 30, 0.9)' },
+      // Torches de la porte de Val-des-Ombres
+      { x: 2040, y: 1970, radius: 170, color: 'rgba(255, 100, 20, 0.9)' },
+      { x: 2160, y: 1970, radius: 170, color: 'rgba(255, 100, 20, 0.9)' },
+      // Torches de la porte de Riverbend
+      { x: 4350, y: 4840, radius: 170, color: 'rgba(0, 180, 255, 0.85)' },
+      { x: 4350, y: 4960, radius: 170, color: 'rgba(0, 180, 255, 0.85)' },
       { x: 2020, y: 1730, radius: 220, color: 'rgba(255, 120, 20, 0.85)' },
       { x: 2180, y: 1730, radius: 220, color: 'rgba(255, 120, 20, 0.85)' },
       { x: 4570, y: 4930, radius: 220, color: 'rgba(255, 120, 20, 0.85)' },

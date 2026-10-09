@@ -108,8 +108,8 @@ export class GameEngine {
     this.skipTimerBadge = document.getElementById('skip-timer-badge');
     this.pendingUpgrades = 0;
 
-    // Dimensions arène agrandie (7000 px) & Caméra zoomée de près (0.85)
-    this.worldSize = 7000;
+    // Dimensions arène agrandie (10000 px) & Caméra zoomée de près (0.85)
+    this.worldSize = 10000;
     this.zoom = 0.85; // Caméra plus rapprochée pour mettre en valeur les personnages et décors
     this.camera = { x: 3500, y: 3500 };
     this.screenShake = 0;
@@ -119,10 +119,10 @@ export class GameEngine {
 
     // 4 Portails Démoniaques Cardinaux
     this.portals = [
-      { id: 'north', name: 'PORTAIL NORD', x: 3500, y: 400, angle: Math.PI / 2, active: false, pulse: 0 },
-      { id: 'south', name: 'PORTAIL SUD', x: 3500, y: 6600, angle: -Math.PI / 2, active: false, pulse: 0 },
-      { id: 'west',  name: 'PORTAIL OUEST', x: 400, y: 3500, angle: 0, active: false, pulse: 0 },
-      { id: 'east',  name: 'PORTAIL EST', x: 6600, y: 3500, angle: Math.PI, active: false, pulse: 0 }
+      { id: 'north', name: 'PORTAIL NORD', x: 5000, y: 500, angle: Math.PI / 2, active: false, pulse: 0 },
+      { id: 'south', name: 'PORTAIL SUD', x: 5000, y: 9500, angle: -Math.PI / 2, active: false, pulse: 0 },
+      { id: 'west',  name: 'PORTAIL OUEST', x: 500, y: 5000, angle: 0, active: false, pulse: 0 },
+      { id: 'east',  name: 'PORTAIL EST', x: 9500, y: 5000, angle: Math.PI, active: false, pulse: 0 }
     ];
 
     // Particules de spores vertes ambiantes (Moisissure en lévitation)
@@ -749,7 +749,49 @@ export class GameEngine {
       case 'adventure_shop':
         this.openShop();
         break;
+
+      case 'city_gate':
+        this.traverseCityGate(it);
+        break;
     }
+  }
+
+  traverseCityGate(it) {
+    if (!it || !it.targetPos) return;
+    sfx.playDoor();
+
+    const entering = !it.isInside;
+    const target = it.targetPos;
+
+    // Déplacement instantané et sans collision à travers la herse
+    this.player.x = target.x;
+    this.player.y = target.y;
+    this.camera.x = target.x;
+    this.camera.y = target.y;
+
+    if (entering) {
+      this.addFloatingText(target.x, target.y - 35, `🏰 ${it.village.name} (Zone Sûre)`, '#2ec4b6', 22);
+      for (let i = 0; i < 18; i++) {
+        this.particles.push(new Particle(target.x + (Math.random() - 0.5) * 40, target.y + (Math.random() - 0.5) * 40, '#ffd700', 3, 24));
+      }
+    } else {
+      this.addFloatingText(target.x, target.y - 35, `🌲 Terres Sauvages (Zone Hostile)`, '#e74c3c', 22);
+      for (let i = 0; i < 18; i++) {
+        this.particles.push(new Particle(target.x + (Math.random() - 0.5) * 40, target.y + (Math.random() - 0.5) * 40, '#8d99ae', 3, 22));
+      }
+    }
+
+    this.shockwaves.push(new Shockwave(it.x, it.y, 75, entering ? '#2ec4b6' : '#e74c3c', 0.45));
+
+    if (this.worldMap) {
+      this.worldMap.revealFog(this.player.x, this.player.y, 400);
+      if (this.player.hasMiniMap && this.minimapCtx) {
+        this.worldMap.drawMiniMap(this.minimapCtx, this.player);
+      }
+    }
+
+    this.updateHUD();
+    this.updateInteractionPrompt();
   }
 
   enterHouse(building) {
@@ -759,13 +801,13 @@ export class GameEngine {
 
     // Positionner le joueur sur le paillasson de l'entrée intérieure
     this.player.x = 3500;
-    this.player.y = 9325;
+    this.player.y = 30125;
     this.player.facingAngle = -Math.PI / 2; // Regard vers le haut
     this.camera.x = 3500;
-    this.camera.y = 9200;
+    this.camera.y = 30000;
 
     const bName = (building && building.name) ? building.name : "l'Auberge";
-    this.addFloatingText(3500, 9240, `🏠 Bienvenue dans ${bName} !`, '#ffd700', 22);
+    this.addFloatingText(3500, 30040, `🏠 Bienvenue dans ${bName} !`, '#ffd700', 22);
     this.updateInteractionPrompt();
 
     // Mise à jour de l'exploration du Brouillard de Guerre
@@ -806,7 +848,7 @@ export class GameEngine {
     if (!this.player) return;
     this.player.hp = this.player.maxHp;
     sfx.playRest();
-    this.addFloatingText(3660, 9070, "💤 Sommeil revigorant ! PV 100%", '#00ff88', 22);
+    this.addFloatingText(3660, 29870, "💤 Sommeil revigorant ! PV 100%", '#00ff88', 22);
     this.createHitParticles(this.player.x, this.player.y, '#00ff88', 25);
     this.updateHUD();
   }
@@ -814,8 +856,8 @@ export class GameEngine {
   warmAtFire() {
     sfx.playLevelUp();
     this.applyShrineBuff('regen', 25);
-    this.addFloatingText(3500, 9040, "🔥 Réconfort du foyer (+8 PV/s)", '#ff7b00', 20);
-    this.createHitParticles(3500, 9060, '#ffaa00', 16);
+    this.addFloatingText(3500, 29840, "🔥 Réconfort du foyer (+8 PV/s)", '#ff7b00', 20);
+    this.createHitParticles(3500, 29860, '#ffaa00', 16);
   }
 
   openInteriorChest() {
@@ -823,10 +865,10 @@ export class GameEngine {
     this.worldMap.interiorChestOpened = true;
     sfx.playLevelUp();
     this.triggerScreenShake(3);
-    this.createHitParticles(3320, 9120, '#ffd700', 20);
-    this.addFloatingText(3320, 9090, "💰 +15 🪙 OR DU MANOIR !", '#ffd700', 22);
+    this.createHitParticles(3320, 29920, '#ffd700', 20);
+    this.addFloatingText(3320, 29890, "💰 +15 🪙 OR DU MANOIR !", '#ffd700', 22);
     this.player.gold = (this.player.gold || 0) + 15;
-    this.gems.push(new Gem(3320, 9140, 0, 'heart'));
+    this.gems.push(new Gem(3320, 29940, 0, 'heart'));
     this.updateHUD();
     this.updateInteractionPrompt();
   }
@@ -1494,7 +1536,7 @@ export class GameEngine {
     // Caméra lisse centrée sur le joueur (ou sur l'intérieur de la maison)
     if (this.isInsideHouse) {
       this.camera.x += (3500 - this.camera.x) * 0.15;
-      this.camera.y += (9200 - this.camera.y) * 0.15;
+      this.camera.y += (30000 - this.camera.y) * 0.15;
     } else {
       this.camera.x += (this.player.x - this.camera.x) * 0.12;
       this.camera.y += (this.player.y - this.camera.y) * 0.12;
