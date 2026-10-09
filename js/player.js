@@ -69,6 +69,15 @@ export class Player {
     // Bénédiction de l'Eau Bénite & Bouclier Sacré
     this.divineShield = 0;
 
+    // Passifs uniques de combat des 6 Héros
+    this.characterId = characterId;
+    this.damageReduction = characterId === 'warrior' ? 0.85 : 1.0; // Valérian : -15% dégâts reçus
+    this.appliesBurn = characterId === 'pyro'; // Ignis : Brûlure DoT
+    this.arrowPierce = characterId === 'archer' ? 2 : 1; // Sylvia : Perforation double
+    this.berserkRageLevel = 0; // Gorak : Fureur Berserker
+    this.berserkDmgMult = 1.0;
+    this.berserkAtkSpeedMult = 1.0;
+
     // Effets visuels des attaques au corps-à-corps (traînées de coups)
     this.attackVisuals = [];
   }
@@ -164,13 +173,14 @@ export class Player {
           this.hitConeEnemies(engine, angle, range, arc, 45 * this.damageMultiplier, 28);
           this.swordComboStep = 2;
         } else {
-          // Coup 3 : Estoc Puissant Perçant (Finish dévastateur)
+          // Coup 3 : Estoc Puissant Perçant (Finish dévastateur + Parade Royale)
           this.mainAttackTimer = 0.38;
           this.swordComboResetTimer = 0;
           this.swordComboStep = 0;
+          this.shieldGuardTimer = 1.5; // Valérian : Parade Royale automatique (-40% dégâts)
           sfx.playSword(3);
-          const length = 165;
-          const width = 46;
+          const length = 170;
+          const width = 48;
           this.attackVisuals.push({
             type: 'thrust',
             angle,
@@ -183,22 +193,23 @@ export class Player {
           });
           if (engine) {
             engine.triggerScreenShake(5);
-            engine.addShockwave(this.x + Math.cos(angle) * 55, this.y + Math.sin(angle) * 55, 70, '#00f0ff', 3);
+            engine.addShockwave(this.x + Math.cos(angle) * 55, this.y + Math.sin(angle) * 55, 75, '#00f0ff', 3);
+            engine.addFloatingText(this.x, this.y - 45, '🛡️ PARADE ROYALE (-40%)', '#00f0ff', 16);
           }
-          this.hitLineEnemies(engine, angle, length, width, 82 * this.damageMultiplier, 55);
+          this.hitLineEnemies(engine, angle, length, width, 85 * this.damageMultiplier, 55);
         }
         break;
       }
 
       case 'spear': {
-        // Marcus : Combo de Lance en 3 temps (2 estocs perforants + 1 balayage d'hast 180°)
+        // Marcus : Combo de Lance en 3 temps (2 estocs perforants + 1 balayage d'hast 180° critique)
         if (this.spearComboStep === 0) {
-          // Coup 1 : Estoc Perforant Rapide 1
+          // Coup 1 : Estoc Perforant Rapide 1 (Portée allongée +20%)
           this.mainAttackTimer = 0.20;
           this.spearComboResetTimer = 0.85;
           sfx.playSpear(1);
-          const length = 160;
-          const width = 36;
+          const length = 180;
+          const width = 38;
           this.attackVisuals.push({
             type: 'thrust',
             angle,
@@ -209,15 +220,15 @@ export class Player {
             time: 0,
             duration: 0.13
           });
-          this.hitLineEnemies(engine, angle, length, width, 42 * this.damageMultiplier, 22);
+          this.hitLineEnemies(engine, angle, length, width, 44 * this.damageMultiplier, 22);
           this.spearComboStep = 1;
         } else if (this.spearComboStep === 1) {
           // Coup 2 : Estoc Perforant Rapide 2
           this.mainAttackTimer = 0.20;
           this.spearComboResetTimer = 0.85;
           sfx.playSpear(2);
-          const length = 175;
-          const width = 38;
+          const length = 195;
+          const width = 40;
           this.attackVisuals.push({
             type: 'thrust',
             angle,
@@ -228,15 +239,15 @@ export class Player {
             time: 0,
             duration: 0.13
           });
-          this.hitLineEnemies(engine, angle, length, width, 48 * this.damageMultiplier, 26);
+          this.hitLineEnemies(engine, angle, length, width, 52 * this.damageMultiplier, 26);
           this.spearComboStep = 2;
         } else {
-          // Coup 3 : Balayage Circulaire d'Hast à 180° (Finish de zone dévastateur)
+          // Coup 3 : Balayage Circulaire d'Hast à 180° (Coup Critique x1.6 garanti)
           this.mainAttackTimer = 0.38;
           this.spearComboResetTimer = 0;
           this.spearComboStep = 0;
           sfx.playSpear(3);
-          const range = 130;
+          const range = 145;
           const arc = Math.PI; // 180 degrés
           this.attackVisuals.push({
             type: 'slash',
@@ -249,25 +260,26 @@ export class Player {
             duration: 0.18
           });
           if (engine) {
-            engine.triggerScreenShake(4);
-            engine.addShockwave(this.x + Math.cos(angle) * 45, this.y + Math.sin(angle) * 45, 75, '#ffd700', 3);
+            engine.triggerScreenShake(5);
+            engine.addShockwave(this.x + Math.cos(angle) * 45, this.y + Math.sin(angle) * 45, 85, '#ffd700', 3.5);
+            engine.addFloatingText(this.x + Math.cos(angle) * 60, this.y + Math.sin(angle) * 60, '💥 CRITIQUE !', '#ffd700', 20);
           }
-          this.hitConeEnemies(engine, angle, range, arc, 75 * this.damageMultiplier, 48);
+          this.hitConeEnemies(engine, angle, range, arc, 80 * this.damageMultiplier * 1.6, 52);
         }
         break;
       }
 
       case 'bow': {
-        // Sylvia : Tir de Flèche Véloce Sylvestre (Cadence rapide & haute vélocité)
+        // Sylvia : Tir de Flèche Véloce Sylvestre (Perforation double)
         this.mainAttackTimer = 0.22;
         sfx.playBow();
         if (engine && engine.projectiles) {
           const spawnX = this.x + Math.cos(angle) * 18;
           const spawnY = this.y + Math.sin(angle) * 18;
           engine.projectiles.push(
-            new Projectile(spawnX, spawnY, angle, 1050, 38 * this.damageMultiplier, 1, 'arrow')
+            new Projectile(spawnX, spawnY, angle, 1050, 40 * this.damageMultiplier, this.arrowPierce || 2, 'arrow')
           );
-          engine.createHitParticles(spawnX, spawnY, '#2ecc71', 3);
+          engine.createHitParticles(spawnX, spawnY, '#2ecc71', 4);
         }
         break;
       }
@@ -333,7 +345,7 @@ export class Player {
       }
 
       case 'fireball': {
-        // Ignis : Boule de Feu Explosive
+        // Ignis : Boule de Feu Explosive (Embrasement)
         this.mainAttackTimer = 0.46;
         sfx.playFireball();
         if (engine && engine.projectiles) {
@@ -345,23 +357,25 @@ export class Player {
       }
 
       case 'greatsword': {
-        // Gorak : Fendoir Barbare Lourd
-        this.mainAttackTimer = 0.50;
+        // Gorak : Fendoir Barbare Lourd (Fureur Berserker)
+        const atkSpeedMult = this.berserkAtkSpeedMult || 1.0;
+        const dmgMult = (this.damageMultiplier || 1.0) * (this.berserkDmgMult || 1.0);
+        this.mainAttackTimer = 0.50 * atkSpeedMult;
         sfx.playHeavySlam();
-        if (engine) engine.triggerScreenShake(4);
-        const range = 105;
+        if (engine) engine.triggerScreenShake(5);
+        const range = 115;
         const arc = 2.6; // ~150 degrés
         this.attackVisuals.push({
           type: 'slash',
           angle,
           radius: range,
           arc,
-          color: '#ff7b00',
-          edgeColor: '#e63946',
+          color: this.berserkRageLevel >= 2 ? '#e63946' : '#ff7b00',
+          edgeColor: '#ff0055',
           time: 0,
-          duration: 0.18
+          duration: 0.18 * atkSpeedMult
         });
-        this.hitConeEnemies(engine, angle, range, arc, 65 * this.damageMultiplier, 50);
+        this.hitConeEnemies(engine, angle, range, arc, 70 * dmgMult, 55);
         break;
       }
     }
@@ -641,7 +655,7 @@ export class Player {
     }
   }
 
-  applyHit(e, damage, knockbackDist, dirX, dirY, engine, stunDuration = 0, freezeDuration = 0, slowDuration = 0) {
+  applyHit(e, damage, knockbackDist, dirX, dirY, engine, stunDuration = 0, freezeDuration = 0, slowDuration = 0, burnDuration = 0) {
     e.hp -= damage;
     e.hitFlash = 0.12;
 
@@ -653,6 +667,18 @@ export class Player {
     }
     if (slowDuration > 0) {
       e.slowTimer = Math.max(e.slowTimer || 0, slowDuration);
+    }
+
+    // Passif Ignis : Embrasement (Brûlure DoT)
+    if (this.appliesBurn || burnDuration > 0) {
+      e.burnTimer = Math.max(e.burnTimer || 0, burnDuration || 3.0);
+      e.burnDps = 14;
+    }
+
+    // Passif Gorak : Vol de vie sanguinaire sur élimination sous Rage maximale (Palier 3)
+    if (this.characterId === 'orc' && this.berserkRageLevel === 3 && e.hp <= 0) {
+      this.heal(4);
+      if (engine) engine.addFloatingText(this.x, this.y - 20, '+4 PV (Saignée)', '#e63946', 15);
     }
 
     const len = Math.hypot(dirX, dirY) || 1;
@@ -691,6 +717,43 @@ export class Player {
     }
     if (this.dashTimer > 0) {
       this.dashTimer -= dt;
+    }
+
+    // Passif Sylvia : Traînée de vent sylvestre lors du Dash (ralentit les monstres)
+    if (this.characterId === 'archer' && this.isDashing && engine && engine.enemies) {
+      if (Math.random() < 0.35) {
+        engine.createHitParticles(this.x, this.y, '#2ecc71', 1);
+      }
+      for (const e of engine.enemies) {
+        if (Math.hypot(e.x - this.x, e.y - this.y) <= 90) {
+          e.slowTimer = Math.max(e.slowTimer || 0, 2.0);
+        }
+      }
+    }
+
+    // Passif Gorak : Fureur Berserker (plus ses PV sont bas, plus il tape vite et fort)
+    if (this.characterId === 'orc') {
+      const hpRatio = Math.max(0, this.hp / this.maxHp);
+      if (hpRatio <= 0.25) {
+        this.berserkRageLevel = 3;
+        this.berserkDmgMult = 1.60; // +60% dégâts
+        this.berserkAtkSpeedMult = 0.65; // +35% vitesse d'attaque
+        if (Math.random() < 0.20 && engine) {
+          engine.createHitParticles(this.x, this.y, '#e63946', 1);
+        }
+      } else if (hpRatio <= 0.50) {
+        this.berserkRageLevel = 2;
+        this.berserkDmgMult = 1.35; // +35% dégâts
+        this.berserkAtkSpeedMult = 0.78;
+      } else if (hpRatio <= 0.75) {
+        this.berserkRageLevel = 1;
+        this.berserkDmgMult = 1.18; // +18% dégâts
+        this.berserkAtkSpeedMult = 0.88;
+      } else {
+        this.berserkRageLevel = 0;
+        this.berserkDmgMult = 1.0;
+        this.berserkAtkSpeedMult = 1.0;
+      }
     }
 
     // Décompte Cooldowns de Combat
@@ -765,6 +828,9 @@ export class Player {
   }
 
   takeDamage(amount) {
+    if (this.damageReduction && this.damageReduction < 1) {
+      amount *= this.damageReduction; // Valérian : -15% de dégâts subis en permanence
+    }
     if (this.shieldGuardTimer > 0) {
       amount *= 0.40; // Réduction de 60% des dégâts pendant la parade
       sfx.playShield();
@@ -818,7 +884,7 @@ export class Player {
       ctx.shadowBlur = 24;
     }
 
-    // Halo protecteur de parade au bouclier
+    // Halo protecteur de parade au bouclier (Valérian)
     if (this.shieldGuardTimer > 0) {
       ctx.save();
       ctx.strokeStyle = '#00f0ff';
@@ -827,6 +893,22 @@ export class Player {
       ctx.arc(0, 0, this.radius * 1.8, 0, Math.PI * 2);
       ctx.stroke();
       ctx.fillStyle = 'rgba(0, 240, 255, 0.2)';
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Aura de Fureur Berserker (Gorak)
+    if (this.characterId === 'orc' && this.berserkRageLevel > 0) {
+      ctx.save();
+      const rLevel = this.berserkRageLevel;
+      const pulseSpeed = rLevel === 3 ? 75 : (rLevel === 2 ? 110 : 160);
+      const pulse = Math.sin(Date.now() / pulseSpeed) * 0.15 + 0.85;
+      ctx.strokeStyle = rLevel === 3 ? '#ff0033' : (rLevel === 2 ? '#e63946' : '#ff7b00');
+      ctx.lineWidth = 2 + rLevel;
+      ctx.beginPath();
+      ctx.arc(0, 0, (this.radius * 1.55) * pulse, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = rLevel === 3 ? 'rgba(255, 0, 51, 0.25)' : 'rgba(230, 57, 70, 0.14)';
       ctx.fill();
       ctx.restore();
     }

@@ -22,7 +22,7 @@ export const CHARACTERS = {
     specialName: 'Tourbillon d\'Acier',
     specialDesc: 'Attaque tournoyante à 360° fauchant tous les ennemis alentour',
     specialCd: 3.8,
-    desc: '⚔️ Combo 3 coups tranchants • 🌪️ Tourbillon d\'Acier à 360°'
+    desc: '⚔️ Combo Épée & Parade Royale • 🛡️ -15% Dégâts subis'
   },
   soldier: {
     id: 'soldier',
@@ -37,12 +37,12 @@ export const CHARACTERS = {
     dashCdMult: 0.90,
     mainWeapon: 'spear',
     mainName: 'Combo de Lance',
-    mainDesc: 'Double estoc perforant ➔ Balayage circulaire d\'hast à 180°',
+    mainDesc: 'Double estoc perforant ➔ Balayage d\'hast critique x1.6',
     specialSkill: 'spear_charge',
     specialName: 'Charge Transperçante',
     specialDesc: 'Ruée fulgurante vers l\'avant empalant et traversant tous les ennemis',
     specialCd: 3.5,
-    desc: '🗡️ Double estoc & balayage d\'hast • ⚡ Ruée transperçante'
+    desc: '🗡️ Allonge & Critique x1.6 • ⚡ Ruée transperçante'
   },
   archer: {
     id: 'archer',
@@ -57,12 +57,12 @@ export const CHARACTERS = {
     dashCdMult: 0.70,
     mainWeapon: 'bow',
     mainName: 'Arc Sylvestre',
-    mainDesc: 'Tirs de flèches véloces et précises à longue portée',
+    mainDesc: 'Tirs de flèches véloces perforant 2 ennemis à longue portée',
     specialSkill: 'multishot',
     specialName: 'Volée Sylvestre',
     specialDesc: 'Volée de 5 flèches en éventail avec recul tactique',
     specialCd: 3.2,
-    desc: '🏹 Flèches véloces longue portée • 🍃 Volée de 5 flèches en éventail'
+    desc: '🏹 Flèches perforantes & Vent • 💨 Dash nerveux (-30% CD)'
   },
   mage: {
     id: 'mage',
@@ -80,9 +80,9 @@ export const CHARACTERS = {
     mainDesc: 'Orbes mystiques scintillants tirés vers le curseur',
     specialSkill: 'arcane_nova',
     specialName: 'Nova Stellaire',
-    specialDesc: 'Grande explosion cosmique à 360° repoussant tous les monstres',
+    specialDesc: 'Grande explosion cosmique à 360° repoussant les monstres et rechargeant le dash',
     specialCd: 4.0,
-    desc: '🔮 Projectiles arcaniques magiques • 💫 Nova répulsive à 360°'
+    desc: '🔮 5 Grimoires Élémentaires (Touche B) • 💫 Nova & Reset Dash'
   },
   pyro: {
     id: 'pyro',
@@ -97,12 +97,12 @@ export const CHARACTERS = {
     dashCdMult: 1.0,
     mainWeapon: 'fireball',
     mainName: 'Boule de Feu',
-    mainDesc: 'Projectile explosif infligeant des dégâts de zone',
+    mainDesc: 'Projectile explosif enflammant et brûlant les monstres',
     specialSkill: 'flame_wave',
     specialName: 'Vague Incendiaire',
     specialDesc: 'Mur de braises embrasant et brûlant tous les monstres devant',
     specialCd: 3.8,
-    desc: '🔥 Boules de feu explosives • 🌋 Vague de braises et mur de flammes'
+    desc: '🔥 Brasier Perpétuel (Brûlure DoT) • 🌋 Vague de flammes'
   },
   orc: {
     id: 'orc',
@@ -122,7 +122,7 @@ export const CHARACTERS = {
     specialName: 'Séisme Terrestre',
     specialDesc: 'Frappe lourde au sol fissurant la terre et étourdissant les monstres',
     specialCd: 4.2,
-    desc: '🪓 Fendoir lourd dévastateur • 💥 Séisme tellurique étourdissant'
+    desc: '🪓 Rage Berserker (+60% Dmg) • 💥 Séisme assommant'
   }
 };
 

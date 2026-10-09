@@ -28,6 +28,8 @@ export class Enemy {
     this.stunTimer = 0;
     this.freezeTimer = 0;
     this.slowTimer = 0;
+    this.burnTimer = 0;
+    this.burnDps = 0;
 
     const hpScale = 1 + (gameTime / 240) * 0.5;
 
@@ -97,6 +99,15 @@ export class Enemy {
     } else if (this.slowTimer > 0) {
       this.slowTimer -= dt;
       moveSpeed = this.baseSpeed * 0.50;
+    }
+
+    // Dégâts résiduels de brûlure (DoT du Pyromancien Ignis)
+    if (this.burnTimer > 0) {
+      this.burnTimer -= dt;
+      this.hp -= (this.burnDps || 14) * dt;
+      if (Math.random() < 0.24 && engine) {
+        engine.createHitParticles(this.x, this.y, '#ff4500', 1);
+      }
     }
 
     // IA contextuelle si attaché à un camp
@@ -415,6 +426,39 @@ export class Enemy {
       ctx.beginPath();
       ctx.arc(0, 0, this.radius + 6, 0, Math.PI * 2);
       ctx.stroke();
+      ctx.restore();
+    }
+
+    // EFFET VISUEL D'ÉTOURDISSEMENT (Séisme Terrestre de Gorak)
+    if (this.stunTimer > 0) {
+      ctx.save();
+      const starAngle = Date.now() / 200;
+      for (let s = 0; s < 3; s++) {
+        const a = starAngle + (s * Math.PI * 2 / 3);
+        const sx = Math.cos(a) * (this.radius * 0.9);
+        const sy = -this.radius - 12 + Math.sin(a) * 4;
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath();
+        ctx.arc(sx, sy, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    // EFFET VISUEL D'EMBRASEMENT (Brûlure du Pyromancien Ignis)
+    if (this.burnTimer > 0) {
+      ctx.save();
+      const flamePulse = Math.sin(Date.now() / 100) * 0.15 + 0.85;
+      ctx.strokeStyle = '#ff4500';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, (this.radius + 4) * flamePulse, 0, Math.PI * 2);
+      ctx.stroke();
+      // Petite étincelle de braise
+      ctx.fillStyle = '#ff9900';
+      ctx.beginPath();
+      ctx.arc((Math.random() - 0.5) * this.radius, -this.radius - Math.random() * 8, 2.5, 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
     }
 
